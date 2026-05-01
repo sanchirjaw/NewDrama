@@ -485,11 +485,15 @@ select.form-input option{background:var(--dark);}
               <label class="form-label">Дан кино (₮)</label>
               <input class="form-input" type="number" id="priceMovie" value="3400">
             </div>
+            <div class="form-group">
+              <label class="form-label">Үнэгүй preview (минут)</label>
+              <input class="form-input" type="number" id="previewMinutes" value="3" min="0" max="60">
+            </div>
           </div>
           <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:10px;padding:.875rem;margin-top:.75rem;font-size:.78rem;color:var(--text-dim);">
-            ℹ️ Хадгалсны дараа бүх хуудаст автоматаар тусгагдана
+            ℹ️ Preview = 0 бол шууд paywall. Хадгалсны дараа бүх хуудаст тусгагдана.
           </div>
-          <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="savePrices()">💾 Үнэ хадгалах</button>
+          <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="savePrices()">💾 Хадгалах</button>
         </div>
         <div class="settings-card">
           <div class="settings-title">⚙️ Системийн тохиргоо</div>
@@ -1268,17 +1272,18 @@ function getPrices() {
   return saved ? JSON.parse(saved) : { monthly:12000, quarterly:20000, movie:3400 };
 }
 async function savePrices() {
-  const m = parseInt(document.getElementById('priceMonthly').value)  || 12000;
-  const q = parseInt(document.getElementById('priceQuarterly').value) || 20000;
-  const mv= parseInt(document.getElementById('priceMovie').value)     || 3400;
+  const m   = parseInt(document.getElementById('priceMonthly').value)    || 12000;
+  const q   = parseInt(document.getElementById('priceQuarterly').value)  || 20000;
+  const mv  = parseInt(document.getElementById('priceMovie').value)      || 3400;
+  const pre = parseInt(document.getElementById('previewMinutes').value);
+  const previewMinutes = isNaN(pre) ? 3 : Math.max(0, pre);
   const prices = { monthly:m, quarterly:q, movie:mv };
   localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
-  await saveSettings({ prices });
-  // update payments data display
+  await saveSettings({ prices, previewMinutes });
   plans.monthly.amount   = m;
   plans.quarterly.amount = q;
   plans.movie.amount     = mv;
-  toast(`✓ Үнэ хадгалагдлаа — ${m.toLocaleString()}₮ / ${q.toLocaleString()}₮ / ${mv.toLocaleString()}₮`);
+  toast(`✓ Хадгалагдлаа — ${m.toLocaleString()}₮ / ${q.toLocaleString()}₮ / ${mv.toLocaleString()}₮ · Preview: ${previewMinutes}мин`);
 }
 async function loadPricesIntoInputs() {
   const settings = await loadSettings();
@@ -1287,6 +1292,7 @@ async function loadPricesIntoInputs() {
   document.getElementById('priceMonthly').value   = p.monthly;
   document.getElementById('priceQuarterly').value = p.quarterly;
   document.getElementById('priceMovie').value     = p.movie;
+  document.getElementById('previewMinutes').value = settings.previewMinutes ?? 3;
 }
 
 async function loadSettings() {

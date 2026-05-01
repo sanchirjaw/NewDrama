@@ -306,12 +306,21 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 
       <!-- Bunny.net embed — VIDEO_LIBRARY_ID, VIDEO_ID-г солих -->
       <iframe
-        id="bunnyFrame"
+        id="playerFrame"
         src="about:blank"
         style="width:100%;height:100%;border:none;display:none;"
         allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture"
         allowfullscreen>
       </iframe>
+
+      <!-- Preview countdown bar -->
+      <div id="previewBar" style="display:none;position:absolute;top:0;left:0;right:0;z-index:10;background:rgba(0,0,0,0.75);padding:.5rem 1rem;display:none;align-items:center;gap:1rem;">
+        <span style="font-size:.78rem;color:#fff;white-space:nowrap;">🎬 Үнэгүй preview: <span id="previewTime">3:00</span></span>
+        <div style="flex:1;height:4px;background:rgba(255,255,255,0.15);border-radius:4px;">
+          <div id="previewFill" style="height:100%;width:0%;background:var(--grad);border-radius:4px;transition:width .9s linear;"></div>
+        </div>
+        <span style="font-size:.72rem;color:var(--text-dim);white-space:nowrap;">Дараа нь төлбөр</span>
+      </div>
 
       <!-- Thumbnail -->
       <div class="player-thumb" id="playerThumb" onclick="tryPlay()">
@@ -579,26 +588,79 @@ const planInfo = {
   quarterly: { title:'3 Сарын багц', amount:`${_qu}₮`, desc:'3 сарын хязгааргүй хандалт' },
 };
 
+let _previewSeconds = 3 * 60; // default 3 минут
+let _previewTimer   = null;
+let _previewElapsed = 0;
+
 async function loadRemoteSettings() {
   try {
     const res = await fetch('/api/settings');
     if (!res.ok) return;
     const settings = await res.json();
     if (settings.bunny) {
-      _bunnyCfg = settings.bunny;
+      _bunnyCfg  = settings.bunny;
       _libraryId = _bunnyCfg.libraryId || '';
       localStorage.setItem('nd_bunny', JSON.stringify(_bunnyCfg));
     }
     if (settings.prices) {
       localStorage.setItem('nd_prices', JSON.stringify(settings.prices));
-      const mv = (settings.prices.movie || 3400).toLocaleString();
-      const mo = (settings.prices.monthly || 12000).toLocaleString();
-      const qu = (settings.prices.quarterly || 20000).toLocaleString();
-      planInfo.movie.amount = `${mv}₮`;
-      planInfo.monthly.amount = `${mo}₮`;
+      const mv = (settings.prices.movie    || 3400).toLocaleString();
+      const mo = (settings.prices.monthly  || 12000).toLocaleString();
+      const qu = (settings.prices.quarterly|| 20000).toLocaleString();
+      planInfo.movie.amount     = `${mv}₮`;
+      planInfo.monthly.amount   = `${mo}₮`;
       planInfo.quarterly.amount = `${qu}₮`;
     }
+    if (typeof settings.previewMinutes === 'number') {
+      _previewSeconds = settings.previewMinutes * 60;
+    }
   } catch(e) {}
+}
+
+function _fmtTime(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function startPreviewTimer() {
+  if (subscribed || _previewTimer || _previewSeconds <= 0) return;
+  const bar  = document.getElementById('previewBar');
+  const timeEl = document.getElementById('previewTime');
+  const fill = document.getElementById('previewFill');
+  if (bar) bar.style.display = 'flex';
+  if (timeEl) timeEl.textContent = _fmtTime(_previewSeconds);
+
+  _previewTimer = setInterval(() => {
+    _previewElapsed++;
+    const remaining = Math.max(0, _previewSeconds - _previewElapsed);
+    if (timeEl) timeEl.textContent = _fmtTime(remaining);
+    if (fill)   fill.style.width   = `${(_previewElapsed / _previewSeconds) * 100}%`;
+
+    if (_previewElapsed >= _previewSeconds) {
+      clearInterval(_previewTimer);
+      _previewTimer = null;
+      lockAfterPreview();
+    }
+  }, 1000);
+}
+
+function lockAfterPreview() {
+  // iframe нуух
+  const iframe = document.getElementById('playerFrame');
+  if (iframe) iframe.style.display = 'none';
+  // preview bar нуух
+  const bar = document.getElementById('previewBar');
+  if (bar) bar.style.display = 'none';
+  // thumbnail харуулах
+  const thumb = document.getElementById('playerThumb');
+  if (thumb) { thumb.style.display = 'flex'; thumb.onclick = null; }
+  // paywall харуулах
+  const pw = document.getElementById('paywall');
+  if (pw) pw.style.display = 'flex';
+  // Буцах URL хадгалах
+  sessionStorage.setItem('nd_returnMovie', window.location.href);
+  // сонголт modal нээх
+  setTimeout(() => openChoiceModal(), 400);
 }
 
 async function loadMovieDetails() {
@@ -678,18 +740,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function tryPlay() {
-  if (!subscribed) { openChoiceModal(); return; }
+  if (!subscribed && _previewSeconds <= 0) { openChoiceModal(); return; }
   _loadVideo();
+  if (!subscribed) startPreviewTimer();
 }
 function _loadVideo() {
   document.getElementById('playerThumb').style.display = 'none';
-  document.getElementById('paywall').style.display = 'none';
-  const fr = document.getElementById('bunnyFrame');
+  document.getElementById('paywall').style.display     = 'none';
+  const fr  = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
   const url = _getBunnyUrl();
   if (url) {
     fr.src = url;
   } else {
-    // Library ID эсвэл Video ID тохируулагдаагүй
     fr.src = 'about:blank';
     toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
   }

@@ -620,6 +620,12 @@ firebase.auth().onAuthStateChanged(async user => {
                                         '🎉 Төлбөр амжилттай!';
     showToast(msg);
     history.replaceState({}, '', '/dashboard');
+    // Кино хуудас руу буцах
+    const returnMovie = sessionStorage.getItem('nd_returnMovie');
+    if (returnMovie) {
+      sessionStorage.removeItem('nd_returnMovie');
+      setTimeout(() => window.location.href = returnMovie, 2000);
+    }
   }
 });
 
