@@ -93,6 +93,13 @@ app.get('/api/users', async (req, res) => {
   res.json(users);
 });
 
+// Хэрэглэгчийн мэдээлэл (plan, planExpiry) авах
+app.get('/api/users/me/:uid', async (req, res) => {
+  const user = await col('users').findOne({ uid: req.params.uid }, { projection: { password: 0 } });
+  if (!user) return res.status(404).json({ error: 'Хэрэглэгч олдсонгүй' });
+  res.json(user);
+});
+
 // Firebase-р нэвтэрсэн хэрэглэгч sync
 app.post('/api/users/sync', async (req, res) => {
   const { uid, name, email, photo, provider } = req.body;

@@ -529,15 +529,32 @@ firebase.initializeApp({
 });
 let subscribed = false;
 let currentUser = null;
-firebase.auth().onAuthStateChanged(user => {
+firebase.auth().onAuthStateChanged(async user => {
   currentUser = user;
-  // plan шалгалт: MongoDB-с user-ийн plan авах (хялбар хувилбар)
-  if (user) {
-    fetch('/api/users/sync', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ uid: user.uid, name: user.displayName, email: user.email, photo: user.photoURL, provider: user.providerData[0]?.providerId })
-    });
+  if (!user) return;
+  // Sync хийх
+  fetch('/api/users/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid: user.uid, name: user.displayName, email: user.email, photo: user.photoURL, provider: user.providerData[0]?.providerId })
+  });
+  // MongoDB-с plan шалгах
+  try {
+    const res  = await fetch(`/api/users/me/${user.uid}`);
+    const data = await res.json();
+    const plan   = data.plan || 'free';
+    const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
+    const active = expiry ? expiry > new Date() : false;
+    // monthly, quarterly = бүх кино үзнэ
+    if ((plan === 'monthly' || plan === 'quarterly') && active) {
+      subscribed = true;
+    }
+    // movie plan нь тухайн кинонд хандах эрхтэй (спрощенный)
+    if (plan === 'movie' && active) {
+      subscribed = true;
+    }
+  } catch (e) {
+    console.warn('Plan шалгахад алдаа:', e.message);
   }
 });
 

@@ -255,11 +255,11 @@
   <!-- SIDEBAR -->
   <aside class="dash-side">
     <div class="dash-profile">
-      <div class="dash-av">Б</div>
+      <div class="dash-av" id="dashAv">Б</div>
       <div>
-        <div class="dash-name">Болд Баатар</div>
-        <div class="dash-email">bold@gmail.com</div>
-        <div class="dash-plan-badge">✦ Стандарт багц</div>
+        <div class="dash-name" id="dashUserName">...</div>
+        <div class="dash-email" id="dashUserEmail"></div>
+        <div class="dash-plan-badge" id="dashPlanBadge">✦ Үнэгүй</div>
       </div>
     </div>
 
@@ -398,19 +398,17 @@
         <div class="panel-label">✦ Багц</div>
         <h2 class="panel-title">Багц & Төлбөр</h2>
       </div>
-      <div class="sub-hero">
+      <div class="sub-hero" id="subHero">
         <div class="sub-hero-info">
-          <h4>✦ Стандарт Багц</h4>
-          <p>Идэвхтэй · 2024 оны 12 сарын 15 хүртэл</p>
+          <h4 id="subPlanName">✦ Үнэгүй</h4>
+          <p id="subPlanStatus">Идэвхгүй · Багц авна уу</p>
         </div>
         <div class="sub-stats">
-          <div class="sub-stat"><div class="sub-stat-val">18</div><div class="sub-stat-lbl">Үлдсэн хоног</div></div>
-          <div class="sub-stat"><div class="sub-stat-val">9,900₮</div><div class="sub-stat-lbl">Сарын төлбөр</div></div>
-          <div class="sub-stat"><div class="sub-stat-val">2</div><div class="sub-stat-lbl">Төхөөрөмж</div></div>
+          <div class="sub-stat"><div class="sub-stat-val" id="subDaysLeft">—</div><div class="sub-stat-lbl">Үлдсэн хоног</div></div>
+          <div class="sub-stat"><div class="sub-stat-val" id="subTotalPaid">0₮</div><div class="sub-stat-lbl">Нийт төлсөн</div></div>
         </div>
         <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
-          <a href="pricing.html" class="btn-primary">Сунгах</a>
-          <button class="btn-ghost" onclick="cancelSub()" style="color:var(--danger);border-color:rgba(239,68,68,0.2);">Цуцлах</button>
+          <a href="pricing.html" class="btn-primary">Багц авах / Сунгах</a>
         </div>
       </div>
 
@@ -565,16 +563,73 @@ if (!firebase.apps.length) {
     appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
   });
 }
-firebase.auth().onAuthStateChanged(user => {
+const PLAN_LABEL = {
+  free:      '✦ Үнэгүй',
+  monthly:   '✦ 1 Сарын Багц',
+  quarterly: '✦ 3 Сарын Багц',
+  movie:     '✦ Дан Кино',
+};
+
+firebase.auth().onAuthStateChanged(async user => {
   if (!user) { location.href = 'login.html'; return; }
-  // User мэдээлэл харуулах
+
+  // Firebase мэдээлэл
   const nameEl  = document.getElementById('dashUserName');
   const emailEl = document.getElementById('dashUserEmail');
-  const photoEl = document.getElementById('dashUserPhoto');
+  const avEl    = document.getElementById('dashAv');
   if (nameEl)  nameEl.textContent  = user.displayName || 'Хэрэглэгч';
   if (emailEl) emailEl.textContent = user.email || '';
-  if (photoEl && user.photoURL) { photoEl.src = user.photoURL; photoEl.style.display = 'block'; }
+  if (avEl && user.displayName)    avEl.textContent = user.displayName.charAt(0).toUpperCase();
+
+  // MongoDB-с plan авах
+  try {
+    const res  = await fetch(`/api/users/me/${user.uid}`);
+    const data = await res.json();
+    const plan   = data.plan || 'free';
+    const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
+    const active = expiry ? expiry > new Date() : false;
+    const daysLeft = expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
+
+    // Sidebar badge
+    const badge = document.getElementById('dashPlanBadge');
+    if (badge) badge.textContent = PLAN_LABEL[plan] || '✦ ' + plan;
+
+    // Sub panel
+    const planName   = document.getElementById('subPlanName');
+    const planStatus = document.getElementById('subPlanStatus');
+    const daysEl     = document.getElementById('subDaysLeft');
+    const paidEl     = document.getElementById('subTotalPaid');
+    if (planName)   planName.textContent   = PLAN_LABEL[plan] || plan;
+    if (planStatus) planStatus.textContent = plan === 'free'
+      ? 'Идэвхгүй · Багц авна уу'
+      : active
+        ? `Идэвхтэй · ${expiry.toLocaleDateString('mn-MN')} хүртэл`
+        : 'Дуусгавар болсон';
+    if (daysEl) daysEl.textContent = plan === 'free' ? '—' : daysLeft;
+    if (paidEl) paidEl.textContent = ((data.totalPaid || 0)).toLocaleString() + '₮';
+  } catch (e) {
+    console.warn('Plan авахад алдаа:', e.message);
+  }
+
+  // Payment success шалгах
+  const params = new URLSearchParams(location.search);
+  if (params.get('success') === '1') {
+    const plan = params.get('plan') || '';
+    const msg  = plan === 'quarterly' ? '🎉 3 сарын багц идэвхжлээ!' :
+                 plan === 'monthly'   ? '🎉 1 сарын багц идэвхжлээ!' :
+                                        '🎉 Төлбөр амжилттай!';
+    showToast(msg);
+    history.replaceState({}, '', '/dashboard');
+  }
 });
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.3);color:#fff;padding:.875rem 1.5rem;border-radius:12px;z-index:9999;font-size:.9rem;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
 </script>
 </body>
 </html>
