@@ -52,6 +52,14 @@ app.post('/api/movies', async (req, res) => {
   res.json({ ...movie, _id: result.insertedId });
 });
 
+app.get('/api/movies/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = ObjectId.isValid(id) ? { _id: oid(id) } : { id };
+  const movie = await col('movies').findOne(query);
+  if (!movie) return res.status(404).json({ error: 'Movie not found' });
+  res.json(movie);
+});
+
 app.put('/api/movies/:id', async (req, res) => {
   const update = { ...req.body };
   delete update._id;

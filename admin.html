@@ -1238,19 +1238,22 @@ async function uploadVideoToBunny() {
 
 /* ===== BUNNY ===== */
 const BUNNY_KEY = 'nd_bunny';
-function saveBunnySettings() {
+async function saveBunnySettings() {
   const cfg = {
     libraryId: document.getElementById('bunnyLibraryId').value.trim(),
     apiKey:    document.getElementById('bunnyApiKey').value.trim(),
     cdnHost:   document.getElementById('bunnyCdnHost').value.trim(),
   };
   localStorage.setItem(BUNNY_KEY, JSON.stringify(cfg));
+  await saveSettings({ bunny: cfg });
   const st = document.getElementById('bunnyStatus');
   if (st) st.textContent = cfg.libraryId ? `✓ Library ID: ${cfg.libraryId} хадгалагдлаа` : '';
   toast('✓ Bunny.net тохиргоо хадгалагдлаа');
 }
-function loadBunnySettings() {
-  const cfg = JSON.parse(localStorage.getItem(BUNNY_KEY) || '{}');
+async function loadBunnySettings() {
+  const settings = await loadSettings();
+  const cfg = settings.bunny || JSON.parse(localStorage.getItem(BUNNY_KEY) || '{}');
+  if (settings.bunny) localStorage.setItem(BUNNY_KEY, JSON.stringify(cfg));
   if (cfg.libraryId) document.getElementById('bunnyLibraryId').value = cfg.libraryId;
   if (cfg.apiKey)    document.getElementById('bunnyApiKey').value    = cfg.apiKey;
   if (cfg.cdnHost)   document.getElementById('bunnyCdnHost').value   = cfg.cdnHost;
@@ -1264,22 +1267,45 @@ function getPrices() {
   const saved = localStorage.getItem(PRICE_KEY);
   return saved ? JSON.parse(saved) : { monthly:12000, quarterly:20000, movie:3400 };
 }
-function savePrices() {
+async function savePrices() {
   const m = parseInt(document.getElementById('priceMonthly').value)  || 12000;
   const q = parseInt(document.getElementById('priceQuarterly').value) || 20000;
   const mv= parseInt(document.getElementById('priceMovie').value)     || 3400;
-  localStorage.setItem(PRICE_KEY, JSON.stringify({ monthly:m, quarterly:q, movie:mv }));
+  const prices = { monthly:m, quarterly:q, movie:mv };
+  localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
+  await saveSettings({ prices });
   // update payments data display
   plans.monthly.amount   = m;
   plans.quarterly.amount = q;
   plans.movie.amount     = mv;
   toast(`✓ Үнэ хадгалагдлаа — ${m.toLocaleString()}₮ / ${q.toLocaleString()}₮ / ${mv.toLocaleString()}₮`);
 }
-function loadPricesIntoInputs() {
-  const p = getPrices();
+async function loadPricesIntoInputs() {
+  const settings = await loadSettings();
+  const p = settings.prices || getPrices();
+  if (settings.prices) localStorage.setItem(PRICE_KEY, JSON.stringify(p));
   document.getElementById('priceMonthly').value   = p.monthly;
   document.getElementById('priceQuarterly').value = p.quarterly;
   document.getElementById('priceMovie').value     = p.movie;
+}
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return {};
+    return await res.json();
+  } catch(e) {
+    return {};
+  }
+}
+
+async function saveSettings(update) {
+  const current = await loadSettings();
+  await fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...current, ...update })
+  });
 }
 
 /* ===== TOAST ===== */
@@ -1292,8 +1318,8 @@ function toast(msg, type='ok') {
 
 /* ===== INIT ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  loadPricesIntoInputs();
-  loadBunnySettings();
+  await loadPricesIntoInputs();
+  await loadBunnySettings();
   renderChart();
   // MongoDB-аас кинонууд ачаалах
   try {

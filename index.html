@@ -617,8 +617,18 @@ function applyFeatured() {
 })();
 
 // Load prices from admin settings
-(function applyPrices() {
-  const p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
+(async function applyPrices() {
+  let p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
+  try {
+    const res = await fetch('/api/settings');
+    if (res.ok) {
+      const settings = await res.json();
+      if (settings.prices) {
+        p = settings.prices;
+        localStorage.setItem('nd_prices', JSON.stringify(p));
+      }
+    }
+  } catch(e) {}
   const movie  = (p.movie    || 3400).toLocaleString();
   const monthly= (p.monthly  || 12000).toLocaleString();
   // movie card badge
@@ -626,6 +636,7 @@ function applyFeatured() {
   // promo strip
   const ps = document.querySelector('.promo-strip-price');
   if (ps) ps.innerHTML = `<sup>₮</sup>${monthly}<span> / сар</span>`;
+  await loadMovies();
 })();
 
 // API-аас кинонуудыг ачаалах, fallback → локал өгөгдөл
@@ -661,8 +672,6 @@ function renderTop10() {
     </a>`;
   });
 }
-
-loadMovies();
 
 // Category pills
 const pillsEl = document.getElementById('catPills');

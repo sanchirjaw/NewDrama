@@ -520,10 +520,10 @@ const subscribed = false; // TODO: Firebase-с шалгах
 
 // Bunny embed — URL params-аас videoId унших, Library ID localStorage-аас
 const _urlParams  = new URLSearchParams(window.location.search);
-const _videoId    = _urlParams.get('vid') || '';
+let _videoId    = _urlParams.get('vid') || '';
 const _movieId    = _urlParams.get('id')  || '';
-const _bunnyCfg   = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
-const _libraryId  = _bunnyCfg.libraryId || '';
+let _bunnyCfg   = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+let _libraryId  = _bunnyCfg.libraryId || '';
 function _getBunnyUrl() {
   if (!_libraryId || !_videoId) return '';
   return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&responsive=true`;
@@ -539,22 +539,78 @@ const planInfo = {
   quarterly: { title:'3 Сарын багц', amount:`${_qu}₮`, desc:'3 сарын хязгааргүй хандалт' },
 };
 
+async function loadRemoteSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const settings = await res.json();
+    if (settings.bunny) {
+      _bunnyCfg = settings.bunny;
+      _libraryId = _bunnyCfg.libraryId || '';
+      localStorage.setItem('nd_bunny', JSON.stringify(_bunnyCfg));
+    }
+    if (settings.prices) {
+      localStorage.setItem('nd_prices', JSON.stringify(settings.prices));
+      const mv = (settings.prices.movie || 3400).toLocaleString();
+      const mo = (settings.prices.monthly || 12000).toLocaleString();
+      const qu = (settings.prices.quarterly || 20000).toLocaleString();
+      planInfo.movie.amount = `${mv}₮`;
+      planInfo.monthly.amount = `${mo}₮`;
+      planInfo.quarterly.amount = `${qu}₮`;
+    }
+  } catch(e) {}
+}
+
+async function loadMovieDetails() {
+  if (!_movieId) return;
+  try {
+    const res = await fetch(`/api/movies/${_movieId}`);
+    if (!res.ok) return;
+    const movie = await res.json();
+    if (movie.videoId && !_videoId) _videoId = movie.videoId;
+
+    const title = movie.title || '';
+    const desc = movie.desc || movie.description || '';
+    const year = movie.year || '';
+    const genre = movie.genre || '';
+    const rating = movie.rating || '';
+
+    if (title) {
+      document.title = `${title} - New Drama`;
+      const heroTitle = document.querySelector('.movie-hero-title');
+      if (heroTitle) heroTitle.textContent = title;
+      const relatedTitle = document.querySelector('.related-title');
+      if (relatedTitle) relatedTitle.textContent = title;
+    }
+    const descEl = document.querySelector('.movie-hero-desc');
+    if (descEl && desc) descEl.textContent = desc;
+    const detailDesc = document.querySelector('.movie-desc-text');
+    if (detailDesc && desc) detailDesc.textContent = desc;
+    const meta = document.querySelector('.movie-hero-meta');
+    if (meta) {
+      meta.innerHTML = `<span>🎬 ${year}</span><span>⏱ ${movie.duration || ''}</span><span>🎭 ${genre}</span><span>★ ${rating}</span>`;
+    }
+  } catch(e) {}
+}
+
 // Apply prices to choice modal cards and sidebar
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadRemoteSettings();
+  await loadMovieDetails();
   // choice modal prices
   document.querySelectorAll('.choice-price').forEach((el, i) => {
-    if (i === 0) el.textContent = `${_mv}₮`;
-    if (i === 1) el.textContent = `${_mo}₮`;
-    if (i === 2) el.textContent = `${_qu}₮`;
+    if (i === 0) el.textContent = planInfo.movie.amount;
+    if (i === 1) el.textContent = planInfo.monthly.amount;
+    if (i === 2) el.textContent = planInfo.quarterly.amount;
   });
   // sidebar buy options
   document.querySelectorAll('.buy-opt-price').forEach((el, i) => {
-    if (i === 0) el.textContent = `${_mo}₮`;
-    if (i === 1) el.textContent = `${_mv}₮`;
+    if (i === 0) el.textContent = planInfo.monthly.amount;
+    if (i === 1) el.textContent = planInfo.movie.amount;
   });
   // paywall QPay default
   const qa = document.getElementById('qpayAmount');
-  if (qa) qa.textContent = `${_mv}₮`;
+  if (qa) qa.textContent = planInfo.movie.amount;
 });
 
 function tryPlay() {

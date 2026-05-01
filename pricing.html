@@ -462,15 +462,30 @@
 
 <script>
 // Read prices from admin settings
-const _p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
+let _p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
 const plans = {
   monthly:   { name:'1 Сарын Багц', amount: _p.monthly   || 12000, label:'/ сар' },
   quarterly: { name:'3 Сарын Багц', amount: _p.quarterly || 20000, label:'/ 3 сар' },
   movie:     { name:'Дан Кино',      amount: _p.movie     || 3400,  label:'/ нэг кино' },
 };
 
+async function loadPricesFromApi() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const settings = await res.json();
+    if (!settings.prices) return;
+    _p = settings.prices;
+    localStorage.setItem('nd_prices', JSON.stringify(_p));
+    plans.monthly.amount = _p.monthly || plans.monthly.amount;
+    plans.quarterly.amount = _p.quarterly || plans.quarterly.amount;
+    plans.movie.amount = _p.movie || plans.movie.amount;
+  } catch(e) {}
+}
+
 // Apply to DOM
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPricesFromApi();
   const amts = document.querySelectorAll('.plan-amount');
   if (amts[0]) amts[0].textContent = plans.monthly.amount.toLocaleString();
   if (amts[1]) amts[1].textContent = plans.quarterly.amount.toLocaleString();
