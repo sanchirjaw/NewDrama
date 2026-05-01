@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEW DRAMA — Кино & Хөгжим</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00e5ff;
+  --purple: #8b5cf6;
+  --deep-purple: #4c1d95;
+  --dark: #0a0a0f;
+  --darker: #050508;
+  --card-bg: rgba(255,255,255,0.04);
+  --card-border: rgba(255,255,255,0.06);
+  --text: #e8e8ee;
+  --text-dim: #7a7a8e;
+  --gradient-main: linear-gradient(135deg, var(--cyan), var(--purple));
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--darker);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ============ NOISE OVERLAY ============ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ============ FILM STRIP DECORATION ============ */
+.film-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 100vh;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 8px,
+    rgba(255,255,255,0.03) 8px,
+    rgba(255,255,255,0.03) 20px,
+    transparent 20px,
+    transparent 28px
+  );
+  border-right: 1px solid rgba(255,255,255,0.04);
+  z-index: 100;
+}
+.film-strip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 20px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,229,255,0.06) 0px,
+    rgba(0,229,255,0.06) 3px,
+    transparent 3px,
+    transparent 18px
+  );
+}
+
+/* ============ NAVIGATION ============ */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(20px);
+  background: rgba(5,5,8,0.7);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 4px;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo span {
+  font-size: 0.7rem;
+  letter-spacing: 6px;
+  display: block;
+  background: none;
+  -webkit-text-fill-color: var(--text-dim);
+  margin-top: -4px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  position: relative;
+}
+
+.nav-links a:hover { color: var(--cyan); }
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--cyan);
+  transition: width 0.3s;
+}
+
+.nav-links a:hover::after { width: 100%; }
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 100px;
+  padding: 0.5rem 1rem;
+}
+
+.nav-search input {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  width: 160px;
+}
+
+.nav-search input::placeholder { color: var(--text-dim); }
+
+.nav-search svg { color: var(--text-dim); width: 16px; height: 16px; }
+
+/* ============ HERO ============ */
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0,229,255,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 0%, rgba(0,229,255,0.04) 0%, transparent 40%);
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+.hero-content {
+  text-align: center;
+  z-index: 10;
+  animation: fadeUp 1s ease-out;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-tag {
+  font-size: 0.75rem;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 12vw, 10rem);
+  letter-spacing: 8px;
+  line-height: 0.9;
+  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.5) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  max-width: 500px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  padding: 0.85rem 2.5rem;
+  background: var(--gradient-main);
+  border: none;
+  border-radius: 100px;
+  color: var(--dark);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,229,255,0.3);
+}
+
+.btn-secondary {
+  padding: 0.85rem 2.5rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 100px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* ============ SCROLL INDICATOR ============ */
+.scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: bounce 2s infinite;
+}
+
+.scroll-indicator span {
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--cyan), transparent);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ============ SECTIONS ============ */
+section {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  margin-bottom: 3rem;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 3px;
+  color: #fff;
+}
+
+/* ============ FEATURED MOVIE ============ */
+.featured {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 500px;
+  margin-bottom: 4rem;
+}
+
+.featured-visual {
+  position: relative;
+  background: linear-gradient(135deg, var(--deep-purple), var(--dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.featured-visual::before {
+  content: '▶';
+  font-size: 4rem;
+  color: var(--cyan);
+  opacity: 0.6;
+  z-index: 2;
+  filter: drop-shadow(0 0 30px rgba(0,229,255,0.4));
+}
+
+.featured-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 70%, rgba(0,229,255,0.12), transparent 60%),
+    radial-gradient(circle at 70% 30%, rgba(139,92,246,0.12), transparent 60%);
+}
+
+.featured-info {
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured-badge {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 100px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.5rem;
+  width: fit-content;
+}
+
+.featured-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.featured-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.featured-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.featured-desc {
+  color: var(--text-dim);
+  line-height: 1.8;
+  font-weight: 300;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.rating-score {
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+}
+
+.rating-stars {
+  color: var(--cyan);
+  font-size: 0.9rem;
+}
+
+/* ============ MOVIE GRID ============ */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.movie-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: transform 0.4s, box-shadow 0.4s;
+  cursor: pointer;
+}
+
+.movie-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+.movie-poster {
+  aspect-ratio: 2/3;
+  background: linear-gradient(135deg, var(--dark), var(--deep-purple));
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.movie-poster::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0,229,255,0.05), transparent 70%);
+}
+
+.poster-icon {
+  font-size: 2.5rem;
+  opacity: 0.2;
+}
+
+.movie-card-info {
+  padding: 1rem;
+}
+
+.movie-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+  color: #fff;
+}
+
+.movie-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.movie-card-rating {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.movie-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.movie-card:hover .movie-card-overlay { opacity: 1; }
+
+.play-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--gradient-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--dark);
+  box-shadow: 0 0 30px rgba(0,229,255,0.4);
+}
+
+/* ============ CATEGORIES ============ */
+.categories {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.cat-pill {
+  padding: 0.5rem 1.5rem;
+  border-radius: 100px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.cat-pill:hover, .cat-pill.active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0,229,255,0.05);
+}
+
+/* ============ STATS BAR ============ */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--card-border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 4rem 0;
+}
+
+.stat-item {
+  background: var(--dark);
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.stat-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+
+/* ============ FOOTER ============ */
+footer {
+  border-top: 1px solid var(--card-border);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 4px;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.footer-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.3s;
+}
+
+.footer-links a:hover { color: var(--cyan); }
+
+.footer-copy {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--card-border);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .film-strip { display: none; }
+  nav { padding: 1rem; }
+  .nav-links { display: none; }
+  .nav-search { display: none; }
+  .featured { grid-template-columns: 1fr; }
+  .featured-visual { min-height: 250px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  section { padding: 4rem 1.5rem; }
+  .footer-inner { justify-content: center; text-align: center; }
+}
+
+/* ============ GLOW EFFECTS ============ */
+.glow-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+  margin: 0 auto;
+  opacity: 0.3;
+}
+</style>
+</head>
+<body>
+
+<!-- Film Strip Decoration -->
+<div class="film-strip"></div>
+
+<!-- Navigation -->
+<nav>
+  <div class="logo">
+    NEW DRAMA
+    <span>Cinema & Music</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#movies">Кино</a></li>
+    <li><a href="#series">Цуврал</a></li>
+    <li><a href="#music">Хөгжим</a></li>
+    <li><a href="#dubbed">Монгол хадмал</a></li>
+  </ul>
+  <div class="nav-search">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" placeholder="Хайх...">
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">✦ Шинэ кино, цуврал, хөгжим ✦</div>
+    <h1 class="hero-title">NEW DRAMA</h1>
+    <p class="hero-sub">Дэлхийн шилдэг кино, цуврал, хөгжмийг Монгол хэлээр. Дуу оруулсан & хадмал орчуулгатай.</p>
+    <div class="hero-buttons">
+      <button class="btn-primary">Үзэж эхлэх</button>
+      <button class="btn-secondary">Бүртгүүлэх</button>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <span>Доош</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<div class="glow-line" style="max-width:800px;"></div>
+
+<!-- Featured Movie -->
+<section>
+  <div class="section-header">
+    <div class="section-label">✦ Онцлох</div>
+    <h2 class="section-title">Энэ долоо хоногийн кино</h2>
+  </div>
+
+  <div class="featured">
+    <div class="featured-visual"></div>
+    <div class="featured-info">
+      <div class="featured-badge">✦ Шинэ</div>
+      <h3 class="featured-name">Хар Шөнийн Нууц</h3>
+      <div class="featured-meta">
+        <span>🎬 2024</span>
+        <span>⏱ 2 цаг 15 мин</span>
+        <span>🌍 Солонгос</span>
+      </div>
+      <div class="rating">
+        <span class="rating-score">8.7</span>
+        <span class="rating-stars">★★★★☆</span>
+      </div>
+      <p class="featured-desc">
+        Нууцлаг хэрэг хянан шийдвэрлэх ажиллагааны өрнөл. Залуу мөрдөгч нь хотын хамгийн аюултай гэмт хэргийг илрүүлэхэд хүч чармайлт гаргана.
+      </p>
+      <button class="btn-primary">▶ Үзэх</button>
+    </div>
+  </div>
+</section>
+
+<!-- Movie Categories -->
+<section id="movies">
+  <div class="section-header">
+    <div class="section-label">✦ Каталог</div>
+    <h2 class="section-title">Кино & Цуврал</h2>
+  </div>
+
+  <div class="categories">
+    <div class="cat-pill active">Бүгд</div>
+    <div class="cat-pill">Экшн</div>
+    <div class="cat-pill">Драм</div>
+    <div class="cat-pill">Комеди</div>
+    <div class="cat-pill">Аймшиг</div>
+    <div class="cat-pill">Романтик</div>
+    <div class="cat-pill">Баримтат</div>
+    <div class="cat-pill">Анимэ</div>
+  </div>
+
+  <div class="movie-grid">
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">🎬</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Сүүлчийн Мөрдөгч</div>
+        <div class="movie-card-meta"><span>2024 · Экшн</span><span class="movie-card-rating">★ 8.2</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">🎭</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Цэцгийн Зам</div>
+        <div class="movie-card-meta"><span>2024 · Драм</span><span class="movie-card-rating">★ 9.1</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">😂</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Хөршийн Нууц</div>
+        <div class="movie-card-meta"><span>2023 · Комеди</span><span class="movie-card-rating">★ 7.8</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">👻</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Харанхуйн Дуудлага</div>
+        <div class="movie-card-meta"><span>2024 · Аймшиг</span><span class="movie-card-rating">★ 8.5</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">💕</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Зүрхний Аялал</div>
+        <div class="movie-card-meta"><span>2024 · Романтик</span><span class="movie-card-rating">★ 8.0</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">⚔️</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Эзэн Хааны Сүлд</div>
+        <div class="movie-card-meta"><span>2023 · Түүхэн</span><span class="movie-card-rating">★ 9.0</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">🔥</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Галт Тэрэг</div>
+        <div class="movie-card-meta"><span>2024 · Триллер</span><span class="movie-card-rating">★ 8.8</span></div>
+      </div>
+    </div>
+    <div class="movie-card">
+      <div class="movie-poster"><span class="poster-icon">🌸</span></div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">Аниме: Тэнгэрийн Цэцэг</div>
+        <div class="movie-card-meta"><span>2024 · Анимэ</span><span class="movie-card-rating">★ 8.9</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section>
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">2,400+</div>
+      <div class="stat-label">Кино & Цуврал</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">500+</div>
+      <div class="stat-label">Монгол хадмал</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">150+</div>
+      <div class="stat-label">Дуу оруулсан</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">50K+</div>
+      <div class="stat-label">Үзэгчид</div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-line" style="max-width:600px;"></div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">NEW DRAMA</div>
+    <ul class="footer-links">
+      <li><a href="#">Бидний тухай</a></li>
+      <li><a href="#">Холбоо барих</a></li>
+      <li><a href="#">Нууцлалын бодлого</a></li>
+      <li><a href="#">Facebook</a></li>
+      <li><a href="#">Telegram</a></li>
+    </ul>
+    <div class="footer-copy">© 2024 NEW DRAMA. Бүх эрх хуулиар хамгаалагдсан.</div>
+  </div>
+</footer>
+
+<script>
+// Smooth category pill selection
+document.querySelectorAll('.cat-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+
+// Fade-in on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.movie-card, .featured, .stats-bar').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>

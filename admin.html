@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — NEW DRAMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#07070e;--dark:#0d0d1a;--card:#12121f;--card2:#16162a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.11);
+  --cyan:#00e5ff;--purple:#a855f7;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;
+  --grad:linear-gradient(135deg,#00e5ff,#a855f7);
+  --text:#e8e8f0;--text-dim:#8888a8;--text-muted:#44445a;
+  --sidebar:220px;
+  --radius:10px;--radius-lg:16px;--radius-xl:20px;
+}
+html{font-size:15px;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:var(--sidebar);min-height:100vh;
+  background:var(--dark);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;
+}
+.sidebar-logo{
+  padding:1.5rem 1.25rem 1rem;
+  font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;
+  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo span{display:block;font-family:'Outfit',sans-serif;font-size:.58rem;letter-spacing:4px;color:var(--text-muted);-webkit-text-fill-color:var(--text-muted);margin-top:2px;text-transform:uppercase;}
+.sidebar-nav{flex:1;padding:1rem 0.75rem;display:flex;flex-direction:column;gap:2px;}
+.nav-section{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);padding:.9rem .5rem .4rem;font-weight:700;}
+.nav-item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem .75rem;border-radius:var(--radius);
+  cursor:pointer;transition:all .2s;font-size:.85rem;font-weight:500;color:var(--text-dim);
+  border:1px solid transparent;
+}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+.nav-item.active{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.15);color:var(--cyan);}
+.nav-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.58rem;font-weight:700;padding:.1rem .4rem;border-radius:99px;}
+.sidebar-footer{padding:1rem .75rem;border-top:1px solid var(--border);}
+.admin-profile{display:flex;align-items:center;gap:.75rem;padding:.5rem;}
+.admin-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#07070e;flex-shrink:0;}
+.admin-name{font-size:.82rem;font-weight:600;}
+.admin-role{font-size:.65rem;color:var(--text-dim);}
+
+/* ===== MAIN ===== */
+.main{margin-left:var(--sidebar);flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{
+  position:sticky;top:0;z-index:90;
+  background:rgba(13,13,26,0.9);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:.875rem 2rem;display:flex;align-items:center;gap:1rem;
+}
+.topbar-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;flex:1;}
+.topbar-search{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:.4rem .875rem;font-size:.82rem;color:var(--text-dim);min-width:200px;
+}
+.topbar-search input{background:none;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:.82rem;width:100%;}
+.topbar-search input::placeholder{color:var(--text-muted);}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:var(--radius);border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;font-size:.8rem;transition:all .2s;}
+.btn-primary{background:var(--grad);color:#07070e;}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(0,229,255,0.25);transform:translateY(-1px);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text);}
+.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--red);}
+.btn-danger:hover{background:rgba(239,68,68,0.18);}
+.btn-success{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--green);}
+.btn-sm{padding:.3rem .7rem;font-size:.72rem;}
+
+.content{padding:1.75rem 2rem;flex:1;}
+
+/* ===== PANELS ===== */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:1.25rem 1.5rem;position:relative;overflow:hidden;transition:border-color .25s;
+}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.stat-card.c-cyan::before{background:radial-gradient(ellipse at 80% 0%,rgba(0,229,255,0.07),transparent 60%);}
+.stat-card.c-purple::before{background:radial-gradient(ellipse at 80% 0%,rgba(168,85,247,0.07),transparent 60%);}
+.stat-card.c-green::before{background:radial-gradient(ellipse at 80% 0%,rgba(34,197,94,0.07),transparent 60%);}
+.stat-card.c-amber::before{background:radial-gradient(ellipse at 80% 0%,rgba(245,158,11,0.07),transparent 60%);}
+.stat-card:hover::before{opacity:1;}
+.stat-icon{font-size:1.4rem;margin-bottom:.75rem;}
+.stat-label{font-size:.68rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin-bottom:.35rem;}
+.stat-value{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:1px;line-height:1;}
+.stat-value.c-cyan{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-value.c-purple{color:var(--purple);}
+.stat-value.c-green{color:var(--green);}
+.stat-value.c-amber{color:var(--amber);}
+.stat-change{font-size:.72rem;margin-top:.4rem;display:flex;align-items:center;gap:.25rem;}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+
+/* ===== TABLES ===== */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.table-header{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.table-title{font-weight:700;font-size:.92rem;}
+.table-actions{display:flex;gap:.5rem;align-items:center;}
+table{width:100%;border-collapse:collapse;}
+th{padding:.75rem 1.25rem;text-align:left;font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-dim);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:.875rem 1.25rem;font-size:.84rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.td-thumb{width:38px;height:52px;border-radius:6px;object-fit:cover;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.td-movie{display:flex;align-items:center;gap:.75rem;}
+.td-movie-info .title{font-weight:600;font-size:.85rem;margin-bottom:.15rem;}
+.td-movie-info .meta{font-size:.72rem;color:var(--text-dim);}
+.badge-pill{display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:99px;font-size:.65rem;font-weight:700;letter-spacing:.5px;white-space:nowrap;}
+.pill-free{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--green);}
+.pill-paid{background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);color:var(--cyan);}
+.pill-active{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--green);}
+.pill-expired{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);}
+.pill-pending{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:var(--amber);}
+.pill-monthly{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);}
+.pill-quarterly{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:var(--purple);}
+.pill-movie{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:var(--amber);}
+.action-btns{display:flex;gap:.4rem;}
+.icon-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--text-dim);transition:all .2s;}
+.icon-btn:hover{border-color:var(--border2);color:var(--text);background:rgba(255,255,255,0.04);}
+.icon-btn.del:hover{border-color:rgba(239,68,68,0.3);color:var(--red);background:rgba(239,68,68,0.06);}
+.icon-btn.edit:hover{border-color:rgba(0,229,255,0.3);color:var(--cyan);background:rgba(0,229,255,0.06);}
+
+/* ===== CHARTS (CSS-based) ===== */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.75rem;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;}
+.chart-label{font-size:.68rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin-bottom:.3rem;}
+.chart-title{font-weight:700;font-size:.92rem;margin-bottom:1.25rem;}
+.bar-chart{display:flex;align-items:flex-end;gap:.5rem;height:100px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:.3rem;}
+.bar{width:100%;border-radius:4px 4px 0 0;transition:height .6s ease;min-height:4px;position:relative;}
+.bar:hover::after{content:attr(data-val);position:absolute;top:-1.4rem;left:50%;transform:translateX(-50%);font-size:.65rem;color:var(--text);white-space:nowrap;}
+.bar-x{font-size:.62rem;color:var(--text-muted);}
+.donut-wrap{display:flex;align-items:center;gap:1.5rem;}
+.donut{width:90px;height:90px;border-radius:50%;flex-shrink:0;position:relative;}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:.5rem;}
+.legend-item{display:flex;align-items:center;gap:.5rem;font-size:.78rem;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.legend-val{margin-left:auto;font-weight:600;font-size:.78rem;}
+
+/* ===== MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--dark);border:1px solid var(--border2);border-radius:var(--radius-xl);padding:2rem;width:100%;max-width:520px;position:relative;animation:fadeUp .3s ease;max-height:90vh;overflow-y:auto;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-head-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;}
+.modal-close-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text-dim);font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.modal-close-btn:hover{border-color:var(--border2);color:var(--text);}
+.form-grid{display:grid;gap:1rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.form-group{display:flex;flex-direction:column;gap:.4rem;}
+.form-label{font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);font-weight:700;}
+.form-input{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .875rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:.84rem;outline:none;transition:border-color .2s;width:100%;}
+.form-input:focus{border-color:rgba(0,229,255,0.35);}
+.form-input::placeholder{color:var(--text-muted);}
+select.form-input option{background:var(--dark);}
+.form-check{display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.84rem;}
+.form-check input{accent-color:var(--cyan);}
+.modal-footer{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+
+/* ===== SETTINGS ===== */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;}
+.settings-title{font-weight:700;margin-bottom:1.1rem;font-size:.92rem;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border);font-size:.84rem;}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{color:var(--text-dim);font-size:.8rem;}
+.toggle-sw{width:40px;height:22px;background:var(--card2);border:1px solid var(--border);border-radius:99px;position:relative;cursor:pointer;transition:background .25s;}
+.toggle-sw.on{background:rgba(0,229,255,0.2);border-color:rgba(0,229,255,0.4);}
+.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text-muted);transition:all .25s;}
+.toggle-sw.on::after{left:20px;background:var(--cyan);}
+
+/* ===== TOAST ===== */
+.toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+.toast{padding:.75rem 1.25rem;border-radius:var(--radius);font-size:.82rem;font-weight:500;animation:fadeUp .3s ease;max-width:300px;}
+.toast.ok{background:#0f2a1a;border:1px solid rgba(34,197,94,0.3);color:var(--green);}
+.toast.err{background:#2a0f0f;border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.settings-grid{grid-template-columns:1fr;}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .content{padding:1rem;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">NEW DRAMA<span>Admin Panel</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Үндсэн</div>
+    <div class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Хяналтын самбар</div>
+    <div class="nav-item" onclick="showPanel('movies',this)"><span class="nav-icon">🎬</span> Кино удирдлага</div>
+    <div class="nav-item" onclick="showPanel('users',this)"><span class="nav-icon">👥</span> Хэрэглэгчид<span class="nav-badge" id="newUsersBadge">3</span></div>
+    <div class="nav-item" onclick="showPanel('payments',this)"><span class="nav-icon">💳</span> Төлбөрүүд<span class="nav-badge" id="pendingBadge">2</span></div>
+    <div class="nav-section">Тохиргоо</div>
+    <div class="nav-item" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span> Тохиргоо</div>
+    <div class="nav-item" onclick="window.open('index.html','_blank')"><span class="nav-icon">🌐</span> Сайт харах ↗</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-profile">
+      <div class="admin-avatar">А</div>
+      <div><div class="admin-name">Админ</div><div class="admin-role">Супер Admin</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Хяналтын Самбар</div>
+    <div class="topbar-search"><span>🔍</span><input type="text" placeholder="Хайх..." id="globalSearch" oninput="handleSearch(this.value)"></div>
+    <button class="btn btn-primary" id="topbarActionBtn" onclick="topbarAction()">+ Кино нэмэх</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card c-cyan">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Нийт хэрэглэгч</div>
+          <div class="stat-value c-cyan">2,841</div>
+          <div class="stat-change up">↑ 12% өнгөрсөн сараас</div>
+        </div>
+        <div class="stat-card c-green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Идэвхтэй багц</div>
+          <div class="stat-value c-green">1,204</div>
+          <div class="stat-change up">↑ 8% өнгөрсөн сараас</div>
+        </div>
+        <div class="stat-card c-amber">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Энэ сарын орлого</div>
+          <div class="stat-value c-amber">18.4M₮</div>
+          <div class="stat-change up">↑ 23% өнгөрсөн сараас</div>
+        </div>
+        <div class="stat-card c-purple">
+          <div class="stat-icon">🎬</div>
+          <div class="stat-label">Нийт кино</div>
+          <div class="stat-value c-purple">348</div>
+          <div class="stat-change up">↑ 14 шинэ нэмэгдсэн</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-label">Орлого</div>
+          <div class="chart-title">Сарын орлого (₮M)</div>
+          <div class="bar-chart" id="revenueChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-label">Хэрэглэгч</div>
+          <div class="chart-title">Багцын төрөл</div>
+          <div class="donut-wrap">
+            <div class="donut" style="background:conic-gradient(var(--cyan) 0% 52%,var(--purple) 52% 85%,var(--amber) 85% 100%);"></div>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>1 сарын багц<span class="legend-val">623</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>3 сарын багц<span class="legend-val">397</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Дан кино<span class="legend-val">184</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.75rem;">
+
+        <!-- Most viewed -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">👁 Хамгийн их үзсэн</div>
+            <span style="font-size:.7rem;color:var(--text-dim);">Нийт үзэлтээр</span>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Кино</th><th>Жанр</th><th>Үзсэн</th></tr></thead>
+            <tbody id="topViewsBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Most purchased single movie -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">💰 Дан кино — хамгийн их авсан</div>
+            <span style="font-size:.7rem;color:var(--text-dim);">Худалдан авалтаар</span>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Кино</th><th>Авсан</th><th>Орлого</th></tr></thead>
+            <tbody id="topPurchasedBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Finance + Top buyers row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.75rem;">
+
+        <!-- Profit meter -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">📊 Орлого & Зарлага</div>
+            <button class="btn btn-ghost btn-sm" onclick="openExpenseModal()">+ Зарлага нэмэх</button>
+          </div>
+          <div style="padding:1.25rem 1.5rem;">
+            <!-- Revenue vs Expense meter -->
+            <div style="margin-bottom:1.25rem;">
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:.4rem;">
+                <span>Орлого</span><span id="meterRevLabel" style="color:var(--green);font-weight:700;">18,420,000₮</span>
+              </div>
+              <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
+                <div id="meterRevBar" style="height:100%;width:100%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:99px;transition:width .6s;"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:1.5rem;">
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:.4rem;">
+                <span>Зарлага</span><span id="meterExpLabel" style="color:var(--red);font-weight:700;">0₮</span>
+              </div>
+              <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
+                <div id="meterExpBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ef4444,#f87171);border-radius:99px;transition:width .6s;"></div>
+              </div>
+            </div>
+            <!-- Net profit -->
+            <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:1rem;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:.2rem;">Цэвэр ашиг</div>
+                <div id="netProfit" style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);">18,420,000₮</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:.2rem;">Ашгийн хувь</div>
+                <div id="profitPct" style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);">100%</div>
+              </div>
+            </div>
+            <!-- Expense list -->
+            <div id="expenseList" style="margin-top:1rem;display:flex;flex-direction:column;gap:.4rem;max-height:140px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- Top buyers -->
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">🏆 Топ худалдан авагчид</div>
+            <span style="font-size:.7rem;color:var(--text-dim);">Урамшуулал өгөх боломжтой</span>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Хэрэглэгч</th><th>Нийт төлбөр</th><th>Урамшуулал</th></tr></thead>
+            <tbody id="topBuyersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent payments -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Сүүлийн төлбөрүүд</div>
+          <button class="btn btn-ghost btn-sm" onclick="showPanel('payments',document.querySelector('[onclick*=payments]'))">Бүгдийг харах →</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Хэрэглэгч</th><th>Багц</th><th>Дүн</th><th>Төлбөрийн хэлбэр</th><th>Огноо</th><th>Төлөв</th>
+          </tr></thead>
+          <tbody id="recentPaymentsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== MOVIES ===== -->
+    <div class="panel" id="panel-movies">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Кино жагсаалт <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;">(348 кино)</span></div>
+          <div class="table-actions">
+            <select class="form-input btn-sm" style="width:auto;" onchange="filterMovies(this.value)">
+              <option value="">Бүх жанр</option>
+              <option>Экшн</option><option>Драм</option><option>Комеди</option>
+              <option>Аймшиг</option><option>Романтик</option><option>Триллер</option>
+              <option>Анимэ</option><option>Түүхэн</option><option>Баримтат</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openMovieModal()">+ Нэмэх</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Кино</th><th>Жанр</th><th>Үнэ</th><th>Үзсэн</th><th>Нэмэгдсэн</th><th>Үйлдэл</th>
+          </tr></thead>
+          <tbody id="moviesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== USERS ===== -->
+    <div class="panel" id="panel-users">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Хэрэглэгчид <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;">(2,841 нийт)</span></div>
+          <div class="table-actions">
+            <select class="form-input btn-sm" style="width:auto;" onchange="filterUsers(this.value)">
+              <option value="">Бүх төлөв</option>
+              <option value="active">Идэвхтэй</option>
+              <option value="expired">Дууссан</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Хэрэглэгч</th><th>Бүртгэл</th><th>Багц</th><th>Сүүлийн нэвтрэлт</th><th>Нийт төлбөр</th><th>Төлөв</th><th>Үйлдэл</th>
+          </tr></thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAYMENTS ===== -->
+    <div class="panel" id="panel-payments">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+        <div class="stat-card c-green" style="padding:1rem 1.25rem;">
+          <div class="stat-label">Энэ сар</div>
+          <div class="stat-value c-green" style="font-size:1.6rem;">18,420,000₮</div>
+        </div>
+        <div class="stat-card c-amber" style="padding:1rem 1.25rem;">
+          <div class="stat-label">Хүлээгдэж буй</div>
+          <div class="stat-value c-amber" style="font-size:1.6rem;">2</div>
+        </div>
+        <div class="stat-card c-cyan" style="padding:1rem 1.25rem;">
+          <div class="stat-label">Нийт гүйлгээ</div>
+          <div class="stat-value c-cyan" style="font-size:1.6rem;">1,847</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Төлбөрийн түүх</div>
+          <div class="table-actions">
+            <select class="form-input btn-sm" style="width:auto;" onchange="filterPayments(this.value)">
+              <option value="">Бүх төлөв</option>
+              <option value="success">Амжилттай</option>
+              <option value="pending">Хүлээгдэж буй</option>
+            </select>
+            <button class="btn btn-ghost btn-sm">📥 Экспорт</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Хэрэглэгч</th><th>Багц</th><th>Дүн</th><th>Хэлбэр</th><th>Огноо</th><th>Төлөв</th><th>Үйлдэл</th>
+          </tr></thead>
+          <tbody id="paymentsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="panel" id="panel-settings">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-title">💰 Үнийн тохиргоо</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">1 сарын багц (₮)</label>
+              <input class="form-input" type="number" id="priceMonthly" value="12000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">3 сарын багц (₮)</label>
+              <input class="form-input" type="number" id="priceQuarterly" value="20000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Дан кино (₮)</label>
+              <input class="form-input" type="number" id="priceMovie" value="3400">
+            </div>
+          </div>
+          <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:10px;padding:.875rem;margin-top:.75rem;font-size:.78rem;color:var(--text-dim);">
+            ℹ️ Хадгалсны дараа бүх хуудаст автоматаар тусгагдана
+          </div>
+          <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="savePrices()">💾 Үнэ хадгалах</button>
+        </div>
+        <div class="settings-card">
+          <div class="settings-title">⚙️ Системийн тохиргоо</div>
+          <div class="settings-row"><span>Бүртгэл нэхэмжлэх</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><span>Шинэ хэрэглэгч бүртгэх</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><span>Maintenance горим</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><span>Email мэдэгдэл</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><span>QPay интеграц</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:.75rem;">* QPay backend тохиргоо хийгдэх хүртэл идэвхгүй</div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-title">🎬 Bunny.net тохиргоо</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Library ID</label><input class="form-input" type="text" id="bunnyLibraryId" placeholder="123456"></div>
+            <div class="form-group"><label class="form-label">API Key</label><input class="form-input" type="password" id="bunnyApiKey" placeholder="••••••••••••"></div>
+            <div class="form-group"><label class="form-label">CDN Hostname</label><input class="form-input" type="text" id="bunnyCdnHost" placeholder="vz-xxxxxx.b-cdn.net"></div>
+          </div>
+          <div id="bunnyStatus" style="font-size:.72rem;color:var(--text-muted);margin-top:.6rem;"></div>
+          <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="saveBunnySettings()">💾 Хадгалах</button>
+        </div>
+        <div class="settings-card" style="grid-column:1/-1;">
+          <div class="settings-title">⭐ Энэ 7 Хоногийн Онцлох Кино</div>
+          <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:200px;">
+              <label class="form-label">Кино сонгох</label>
+              <select class="form-input" id="featuredSelect" onchange="onFeaturedSelect(this)">
+                <option value="">— Хамгийн их үзэлттэй (авто) —</option>
+              </select>
+            </div>
+            <div id="featuredPreview" style="display:none;padding:.6rem .9rem;background:var(--card2);border-radius:10px;border:1px solid var(--border);font-size:.8rem;">
+              <span id="featuredPreviewIcon" style="font-size:1.2rem;"></span>
+              <strong id="featuredPreviewTitle" style="margin-left:.4rem;"></strong>
+              <span id="featuredPreviewMeta" style="color:var(--text-dim);margin-left:.4rem;"></span>
+            </div>
+            <button class="btn btn-primary" onclick="saveFeatured()">💾 Хадгалах</button>
+          </div>
+        </div>
+        <div class="settings-card" style="grid-column:1/-1;">
+          <div class="settings-title">🎬 Нүүр хуудасны Hero карт</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:var(--cyan);margin-bottom:.75rem;">Том карт (баруун)</div>
+              <div class="form-group">
+                <label class="form-label">Кино сонгох</label>
+                <select class="form-input" id="heroMainSelect" onchange="onHeroSelect('main',this)">
+                  <option value="">— Сонгох —</option>
+                </select>
+              </div>
+              <div id="heroMainPreview" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--card2);border-radius:10px;border:1px solid var(--border);">
+                <div style="font-size:1.5rem;" id="heroMainPreviewIcon">🎬</div>
+                <div style="font-weight:700;font-size:.85rem;margin-top:.3rem;" id="heroMainPreviewTitle"></div>
+                <div style="font-size:.72rem;color:var(--text-dim);" id="heroMainPreviewMeta"></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:var(--purple);margin-bottom:.75rem;">Жижиг карт (зүүн)</div>
+              <div class="form-group">
+                <label class="form-label">Кино сонгох</label>
+                <select class="form-input" id="heroSideSelect" onchange="onHeroSelect('side',this)">
+                  <option value="">— Сонгох —</option>
+                </select>
+              </div>
+              <div id="heroSidePreview" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--card2);border-radius:10px;border:1px solid var(--border);">
+                <div style="font-size:1.5rem;" id="heroSidePreviewIcon">🌺</div>
+                <div style="font-weight:700;font-size:.85rem;margin-top:.3rem;" id="heroSidePreviewTitle"></div>
+                <div style="font-size:.72rem;color:var(--text-dim);" id="heroSidePreviewMeta"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:1.25rem;" onclick="saveHeroCards()">💾 Hero хадгалах</button>
+        </div>
+        <div class="settings-card">
+          <div class="settings-title">🔒 Аюулгүй байдал</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Одоогийн нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
+            <div class="form-group"><label class="form-label">Шинэ нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          </div>
+          <div class="settings-row" style="margin-top:.5rem;"><span>2FA нэвтрэлт</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
+          <button class="btn btn-ghost" style="margin-top:1rem;width:100%;" onclick="toast('Нууц үг шинэчлэгдлээ')">Нууц үг шинэчлэх</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- Expense Modal -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-head">
+      <div class="modal-head-title">💸 Зарлага Нэмэх</div>
+      <button class="modal-close-btn" onclick="closeExpenseModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Зарлагын нэр</label>
+        <input class="form-input" id="expName" placeholder="Сервер, Domain, Bunny.net...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Дүн (₮)</label>
+          <input class="form-input" id="expAmount" type="number" min="0" placeholder="50000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Огноо</label>
+          <input class="form-input" id="expDate" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Төрөл</label>
+        <select class="form-input" id="expCat">
+          <option>🖥️ Сервер / Hosting</option>
+          <option>🎬 Bunny.net (видео)</option>
+          <option>🌐 Domain</option>
+          <option>📢 Сурталчилгаа</option>
+          <option>💼 Бусад</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeExpenseModal()">Болих</button>
+      <button class="btn btn-primary" onclick="saveExpense()">+ Нэмэх</button>
+    </div>
+  </div>
+</div>
+
+<!-- Movie Modal -->
+<div class="modal-overlay" id="movieModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-head-title" id="movieModalTitle">Кино Нэмэх</div>
+      <button class="modal-close-btn" onclick="closeMovieModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Гарчиг (МН)</label><input class="form-input" id="mTitle" placeholder="Кино нэр"></div>
+        <div class="form-group"><label class="form-label">Гарчиг (EN)</label><input class="form-input" id="mTitleEn" placeholder="Title in English"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Жанр</label>
+          <select class="form-input" id="mGenre">
+            <option>Экшн</option><option>Драм</option><option>Комеди</option>
+            <option>Аймшиг</option><option>Романтик</option><option>Триллер</option>
+            <option>Анимэ</option><option>Түүхэн</option><option>Баримтат</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Жил</label><input class="form-input" id="mYear" type="number" placeholder="2024" value="2024"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Үнэлгээ (1-10)</label><input class="form-input" id="mRating" type="number" step="0.1" min="1" max="10" placeholder="8.5"></div>
+        <div class="form-group"><label class="form-label">Үргэлжлэх хугацаа</label><input class="form-input" id="mDur" placeholder="2ц 15мин"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Bunny.net Video ID</label>
+          <input class="form-input" id="mVideoId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+          <div style="margin-top:.5rem;">
+            <label class="form-label" style="margin-bottom:.3rem;">Видео файл upload хийх</label>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+              <input type="file" id="mVideoFile" accept="video/*" style="display:none;" onchange="handleVideoFileSelect(this)">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mVideoFile').click()">📁 Файл сонгох</button>
+              <span id="mVideoFileName" style="font-size:.75rem;color:var(--text-dim);">Файл сонгоогүй</span>
+            </div>
+            <div id="uploadProgressWrap" style="display:none;margin-top:.5rem;">
+              <div style="background:var(--card2);border-radius:99px;height:6px;overflow:hidden;">
+                <div id="uploadProgressBar" style="height:100%;background:var(--grad);width:0%;transition:width .3s;"></div>
+              </div>
+              <div id="uploadProgressText" style="font-size:.72rem;color:var(--text-dim);margin-top:.25rem;">0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Үнэ (₮) <span style="color:var(--text-muted);font-weight:400;letter-spacing:0;">— 0 = Үнэгүй</span></label>
+          <input class="form-input" id="mPrice" type="number" min="0" step="100" placeholder="3400">
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Тайлбар</label><textarea class="form-input" id="mDesc" rows="3" placeholder="Кино тухай товч тайлбар..."></textarea></div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <label class="form-check"><input type="checkbox" id="mFree"> Үнэгүй</label>
+        <label class="form-check"><input type="checkbox" id="mHot"> 🔥 Hot</label>
+        <label class="form-check"><input type="checkbox" id="mFeatured"> ⭐ Онцлох</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeMovieModal()">Болих</button>
+      <button class="btn btn-ghost" id="uploadBtn" onclick="uploadAndSave()" style="color:var(--cyan);border-color:rgba(0,229,255,0.3);">⬆️ Upload & Хадгалах</button>
+      <button class="btn btn-primary" onclick="saveMovie()">✓ Хадгалах</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ===== DATA ===== */
+const _defPrice = () => JSON.parse(localStorage.getItem('nd_prices')||'{}').movie || 3400;
+const moviesData = [
+  {id:1,title:'Сүүлчийн Мөрдөгч',genre:'Экшн',year:'2024',rating:'8.2',free:false,hot:true,views:48200,added:'2024-11-15',videoId:'abc-001',price:3400},
+  {id:2,title:'Цэцгийн Зам',genre:'Драм',year:'2024',rating:'9.1',free:false,hot:false,views:31500,added:'2024-10-22',videoId:'abc-002',price:3400},
+  {id:3,title:'Хөршийн Нууц',genre:'Комеди',year:'2023',rating:'7.8',free:true,hot:false,views:92100,added:'2024-09-10',videoId:'abc-003',price:0},
+  {id:4,title:'Харанхуйн Дуудлага',genre:'Аймшиг',year:'2024',rating:'8.5',free:false,hot:true,views:67400,added:'2024-11-28',videoId:'abc-004',price:3400},
+  {id:5,title:'Зүрхний Аялал',genre:'Романтик',year:'2024',rating:'8.0',free:false,hot:false,views:24800,added:'2024-10-05',videoId:'abc-005',price:3400},
+  {id:6,title:'Эзэн Хааны Сүлд',genre:'Түүхэн',year:'2023',rating:'9.0',free:false,hot:false,views:115000,added:'2024-08-18',videoId:'abc-006',price:4900},
+  {id:7,title:'Галт Тэрэг',genre:'Триллер',year:'2024',rating:'8.8',free:false,hot:false,views:53700,added:'2024-11-01',videoId:'abc-007',price:3400},
+  {id:8,title:'Тэнгэрийн Цэцэг',genre:'Анимэ',year:'2024',rating:'8.9',free:true,hot:false,views:88600,added:'2024-09-30',videoId:'abc-008',price:0},
+];
+
+const usersData = [
+  {id:1,name:'Батбаяр О.',email:'bat@gmail.com',login:'Gmail',plan:'1 сарын',planKey:'monthly',joined:'2024-10-12',lastLogin:'2024-12-01',totalPaid:36000,status:'active'},
+  {id:2,name:'Номин Э.',email:'nomin@gmail.com',login:'Facebook',plan:'3 сарын',planKey:'quarterly',joined:'2024-09-05',lastLogin:'2024-12-02',totalPaid:60000,status:'active'},
+  {id:3,name:'Болд Г.',email:'bold@gmail.com',login:'Gmail',plan:'—',planKey:'',joined:'2024-11-20',lastLogin:'2024-11-30',totalPaid:9800,status:'expired'},
+  {id:4,name:'Сарнай Б.',email:'sarnai@gmail.com',login:'Gmail',plan:'1 сарын',planKey:'monthly',joined:'2024-08-14',lastLogin:'2024-12-01',totalPaid:84000,status:'active'},
+  {id:5,name:'Ганзориг Т.',email:'ganzo@gmail.com',login:'Facebook',plan:'3 сарын',planKey:'quarterly',joined:'2024-07-22',lastLogin:'2024-11-28',totalPaid:120000,status:'active'},
+  {id:6,name:'Мөнхзул Д.',email:'munkh@gmail.com',login:'Gmail',plan:'—',planKey:'',joined:'2024-12-01',lastLogin:'2024-12-01',totalPaid:0,status:'expired'},
+];
+
+const paymentsData = [
+  {id:'ND-1042',user:'Батбаяр О.',plan:'1 сарын',amount:12000,method:'QPay',date:'2024-12-01',status:'success'},
+  {id:'ND-1041',user:'Номин Э.',plan:'3 сарын',amount:20000,method:'QPay',date:'2024-12-01',status:'success'},
+  {id:'ND-1040',user:'Ганзориг Т.',plan:'3 сарын',amount:20000,method:'SocialPay',date:'2024-11-30',status:'success'},
+  {id:'ND-1039',user:'Сарнай Б.',plan:'Дан кино',amount:4900,method:'Карт',date:'2024-11-30',status:'success'},
+  {id:'ND-1038',user:'Болд Г.',plan:'Дан кино',amount:4900,method:'QPay',date:'2024-11-29',status:'pending'},
+  {id:'ND-1037',user:'Мөнхзул Д.',plan:'1 сарын',amount:12000,method:'Интернет банк',date:'2024-11-29',status:'pending'},
+  {id:'ND-1036',user:'Батбаяр О.',plan:'1 сарын',amount:12000,method:'QPay',date:'2024-11-01',status:'success'},
+  {id:'ND-1035',user:'Номин Э.',plan:'3 сарын',amount:20000,method:'QPay',date:'2024-09-05',status:'success'},
+];
+
+const revenueMonths = [
+  {m:'7-р',v:9.2},{m:'8-р',v:11.4},{m:'9-р',v:13.1},{m:'10-р',v:14.8},{m:'11-р',v:16.5},{m:'12-р',v:18.4}
+];
+
+/* ===== PANEL NAV ===== */
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles = {dashboard:'Хяналтын Самбар',movies:'Кино Удирдлага',users:'Хэрэглэгчид',payments:'Төлбөрүүд',settings:'Тохиргоо'};
+  document.getElementById('topbarTitle').textContent = titles[id]||'';
+  const showAdd = id==='movies';
+  document.getElementById('topbarActionBtn').style.display = showAdd?'':'none';
+  if(id==='payments') document.getElementById('pendingBadge').style.display='none';
+}
+
+/* ===== RENDER REVENUE CHART ===== */
+function renderChart() {
+  const max = Math.max(...revenueMonths.map(r=>r.v));
+  document.getElementById('revenueChart').innerHTML = revenueMonths.map((r,i)=>`
+    <div class="bar-wrap">
+      <div class="bar" data-val="${r.v}M₮" style="height:${(r.v/max)*90}px;background:${i===revenueMonths.length-1?'var(--grad)':'rgba(0,229,255,0.25)'};"></div>
+      <div class="bar-x">${r.m}</div>
+    </div>`).join('');
+}
+
+/* ===== RENDER TABLES ===== */
+function fmtViews(n){
+  if(n>=10000) return (n/10000).toFixed(1).replace(/\.0$/,'')+'w';
+  if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'к';
+  return n;
+}
+
+function renderMovies(data) {
+  document.getElementById('moviesTableBody').innerHTML = data.map(m=>{
+    const isFree = m.free || m.price === 0;
+    const priceCell = isFree
+      ? `<span class="badge-pill pill-free">Үнэгүй</span>`
+      : `<div style="display:flex;align-items:center;gap:.5rem;">
+           <span class="badge-pill pill-paid">${(m.price||3400).toLocaleString()}₮</span>
+           <button class="icon-btn edit" style="width:24px;height:24px;font-size:.7rem;" title="Үнэ солих" onclick="quickPriceEdit(${m.id})">✏️</button>
+         </div>`;
+    return `
+    <tr>
+      <td><div class="td-movie">
+        <div class="td-thumb">${m.free?'🎞️':'🔒'}</div>
+        <div class="td-movie-info"><div class="title">${m.title}</div><div class="meta">${m.year} · ★ ${m.rating}</div></div>
+      </div></td>
+      <td>${m.genre}</td>
+      <td>${priceCell}</td>
+      <td>👁 ${fmtViews(m.views)}</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${m.added}</td>
+      <td><div class="action-btns">
+        <button class="icon-btn edit" title="Засах" onclick="editMovie(${m.id})">✏️</button>
+        <button class="icon-btn del" title="Устгах" onclick="deleteMovie(${m.id})">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUsers(data) {
+  document.getElementById('usersTableBody').innerHTML = data.map(u=>`
+    <tr>
+      <td><div style="font-weight:600;font-size:.85rem;">${u.name}<div style="font-size:.72rem;color:var(--text-dim);">${u.email}</div></div></td>
+      <td><span style="font-size:.75rem;color:var(--text-dim);">${u.login}</span></td>
+      <td>${u.planKey?`<span class="badge-pill pill-${u.planKey}">${u.plan}</span>`:'<span style="color:var(--text-muted);font-size:.78rem;">—</span>'}</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${u.lastLogin}</td>
+      <td style="font-weight:600;">${u.totalPaid.toLocaleString()}₮</td>
+      <td><span class="badge-pill ${u.status==='active'?'pill-active':'pill-expired'}">${u.status==='active'?'Идэвхтэй':'Дууссан'}</span></td>
+      <td><div class="action-btns">
+        <button class="icon-btn edit" title="Дэлгэрэнгүй" onclick="toast('${u.name} — дэлгэрэнгүй')">👁</button>
+        <button class="icon-btn del" title="Устгах" onclick="deleteUser(${u.id})">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderPayments(data) {
+  document.getElementById('paymentsTableBody').innerHTML = data.map(p=>`
+    <tr>
+      <td style="color:var(--text-dim);font-size:.75rem;font-family:monospace;">${p.id}</td>
+      <td style="font-weight:600;">${p.user}</td>
+      <td><span class="badge-pill ${p.plan==='1 сарын'?'pill-monthly':p.plan==='3 сарын'?'pill-quarterly':'pill-movie'}">${p.plan}</span></td>
+      <td style="font-weight:700;">${p.amount.toLocaleString()}₮</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.method}</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.date}</td>
+      <td><span class="badge-pill ${p.status==='success'?'pill-active':'pill-pending'}">${p.status==='success'?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
+      <td><div class="action-btns">
+        ${p.status==='pending'?`<button class="icon-btn edit" onclick="approvePayment('${p.id}')">✓</button>`:''}
+        <button class="icon-btn" onclick="toast('${p.id} дэлгэрэнгүй')">👁</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderTopViews() {
+  const sorted = [...moviesData].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5);
+  document.getElementById('topViewsBody').innerHTML = sorted.map((m,i)=>`
+    <tr>
+      <td><span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${i===0?'var(--cyan)':i===1?'var(--purple)':i===2?'var(--amber)':'var(--text-muted)'};">${i+1}</span></td>
+      <td><div style="font-weight:600;font-size:.84rem;">${m.title}<div style="font-size:.7rem;color:var(--text-dim);">${m.year} · ${m.genre}</div></div></td>
+      <td><span style="font-size:.75rem;color:var(--text-dim);">${m.genre}</span></td>
+      <td><span style="font-weight:700;color:var(--cyan);">👁 ${fmtViews(m.views)}</span></td>
+    </tr>`).join('');
+}
+
+function renderTopPurchased() {
+  // Count single-movie purchases from paymentsData
+  const counts = {};
+  paymentsData.filter(p=>p.plan==='Дан кино'&&p.status==='success').forEach(p=>{
+    counts[p.user] = (counts[p.user]||0) + 1;
+  });
+  // Map movie purchases by title (simulate with moviesData)
+  const moviePurchases = moviesData.filter(m=>!m.free).map(m=>({
+    title: m.title,
+    genre: m.genre,
+    price: m.price||3400,
+    count: Math.floor((m.views||0) * 0.03 + Math.random()*5) // simulated purchase count
+  })).sort((a,b)=>b.count-a.count).slice(0,5);
+
+  document.getElementById('topPurchasedBody').innerHTML = moviePurchases.map((m,i)=>`
+    <tr>
+      <td><span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${i===0?'var(--amber)':i===1?'var(--text-dim)':i===2?'#cd7f32':'var(--text-muted)'};">${i+1}</span></td>
+      <td><div style="font-weight:600;font-size:.84rem;">${m.title}<div style="font-size:.7rem;color:var(--text-dim);">${m.price.toLocaleString()}₮ / кино</div></div></td>
+      <td><span style="font-weight:700;color:var(--green);">${m.count} удаа</span></td>
+      <td><span style="font-weight:700;color:var(--amber);">${(m.count*m.price).toLocaleString()}₮</span></td>
+    </tr>`).join('');
+}
+
+function renderRecentPayments() {
+  document.getElementById('recentPaymentsBody').innerHTML = paymentsData.slice(0,5).map(p=>`
+    <tr>
+      <td style="font-weight:600;">${p.user}</td>
+      <td><span class="badge-pill ${p.plan==='1 сарын'?'pill-monthly':p.plan==='3 сарын'?'pill-quarterly':'pill-movie'}">${p.plan}</span></td>
+      <td style="font-weight:700;">${p.amount.toLocaleString()}₮</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.method}</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.date}</td>
+      <td><span class="badge-pill ${p.status==='success'?'pill-active':'pill-pending'}">${p.status==='success'?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
+    </tr>`).join('');
+}
+
+/* ===== MOVIE MODAL ===== */
+let editingMovieId = null;
+function openMovieModal(id) {
+  editingMovieId = id||null;
+  const m = id ? moviesData.find(x=>x.id===id) : null;
+  document.getElementById('movieModalTitle').textContent = id ? 'Кино Засах' : 'Кино Нэмэх';
+  document.getElementById('mTitle').value    = m ? m.title : '';
+  document.getElementById('mTitleEn').value  = '';
+  document.getElementById('mYear').value     = m ? m.year : '2024';
+  document.getElementById('mRating').value   = m ? m.rating : '';
+  document.getElementById('mDur').value      = '';
+  document.getElementById('mVideoId').value  = m ? (m.videoId||'') : '';
+  document.getElementById('mPrice').value    = m ? (m.price ?? _defPrice()) : _defPrice();
+  document.getElementById('mDesc').value     = '';
+  document.getElementById('mFree').checked   = m ? m.free : false;
+  document.getElementById('mHot').checked    = m ? m.hot : false;
+  document.getElementById('mFeatured').checked = false;
+  if(m) document.getElementById('mGenre').value = m.genre;
+  document.getElementById('movieModal').classList.add('show');
+}
+function closeMovieModal() { document.getElementById('movieModal').classList.remove('show'); }
+function editMovie(id) { openMovieModal(id); }
+async function uploadAndSave() {
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Upload хийж байна...';
+  const videoId = await uploadVideoToBunny();
+  btn.disabled = false;
+  btn.textContent = '⬆️ Upload & Хадгалах';
+  if (videoId) saveMovie();
+}
+
+async function saveMovie() {
+  const title = document.getElementById('mTitle').value.trim();
+  if(!title){toast('Гарчиг оруулна уу','err');return;}
+  const price   = parseInt(document.getElementById('mPrice').value)||0;
+  const isFree  = document.getElementById('mFree').checked || price===0;
+  const movieObj = {
+    title, price, free:isFree,
+    genre:    document.getElementById('mGenre').value,
+    year:     document.getElementById('mYear').value,
+    rating:   document.getElementById('mRating').value||'—',
+    hot:      document.getElementById('mHot').checked,
+    videoId:  document.getElementById('mVideoId').value,
+  };
+  if(editingMovieId) {
+    await fetch(`/api/movies/${editingMovieId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
+    const m = moviesData.find(x=>x._id===editingMovieId||x.id===editingMovieId);
+    if(m) Object.assign(m, movieObj);
+    toast('✓ Кино шинэчлэгдлээ');
+  } else {
+    movieObj.views = 0;
+    const res = await fetch('/api/movies', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
+    const saved = await res.json();
+    moviesData.unshift(saved);
+    toast('✓ Кино нэмэгдлээ');
+  }
+  renderMovies(moviesData);
+  closeMovieModal();
+}
+function quickPriceEdit(id) {
+  const m = moviesData.find(x=>x.id===id);
+  if(!m) return;
+  const cur = m.price ?? _defPrice();
+  const val = prompt(`"${m.title}"\nШинэ үнэ оруулна уу (₮):\n0 = Үнэгүй`, cur);
+  if(val === null) return;
+  const newPrice = parseInt(val);
+  if(isNaN(newPrice) || newPrice < 0) { toast('Буруу утга', 'err'); return; }
+  m.price = newPrice;
+  m.free  = newPrice === 0;
+  renderMovies(moviesData);
+  toast(`✓ "${m.title}" — ${newPrice===0?'Үнэгүй':newPrice.toLocaleString()+'₮'} болгогдлоо`);
+}
+
+async function deleteMovie(id) {
+  if(!confirm('Кино устгах уу?')) return;
+  await fetch(`/api/movies/${id}`, { method:'DELETE' });
+  const i = moviesData.findIndex(x=>x._id===id||x.id===id);
+  if(i>-1){moviesData.splice(i,1);renderMovies(moviesData);}
+  toast('Кино устгагдлаа','err');
+}
+function deleteUser(id) {
+  if(!confirm('Хэрэглэгч устгах уу?')) return;
+  const i = usersData.findIndex(x=>x.id===id);
+  if(i>-1){usersData.splice(i,1);renderUsers(usersData);toast('Хэрэглэгч устгагдлаа','err');}
+}
+function approvePayment(id) {
+  const p = paymentsData.find(x=>x.id===id);
+  if(p){p.status='success';renderPayments(paymentsData);toast('Төлбөр баталгаажлаа');}
+}
+
+/* ===== FILTER ===== */
+function filterMovies(genre) { renderMovies(genre ? moviesData.filter(m=>m.genre===genre) : moviesData); }
+function filterUsers(status) { renderUsers(status ? usersData.filter(u=>u.status===status) : usersData); }
+function filterPayments(status) { renderPayments(status ? paymentsData.filter(p=>p.status===status) : paymentsData); }
+function handleSearch(q) {
+  q = q.toLowerCase();
+  const activePanel = document.querySelector('.panel.active').id;
+  if(activePanel==='panel-movies') renderMovies(q ? moviesData.filter(m=>m.title.toLowerCase().includes(q)||m.genre.toLowerCase().includes(q)) : moviesData);
+  else if(activePanel==='panel-users') renderUsers(q ? usersData.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)) : usersData);
+  else if(activePanel==='panel-payments') renderPayments(q ? paymentsData.filter(p=>p.user.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)) : paymentsData);
+}
+function topbarAction() { openMovieModal(); }
+
+/* ===== FINANCE ===== */
+const EXPENSE_KEY = 'nd_expenses';
+const REVENUE = 18420000;
+
+function getExpenses() {
+  return JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]');
+}
+
+function renderFinanceMeter() {
+  const expenses = getExpenses();
+  const totalExp = expenses.reduce((s,e) => s + (e.amount||0), 0);
+  const net      = REVENUE - totalExp;
+  const pct      = REVENUE > 0 ? Math.min((totalExp / REVENUE) * 100, 100) : 0;
+  const profPct  = REVENUE > 0 ? Math.round((net / REVENUE) * 100) : 100;
+
+  document.getElementById('meterRevLabel').textContent = REVENUE.toLocaleString() + '₮';
+  document.getElementById('meterExpLabel').textContent = totalExp.toLocaleString() + '₮';
+  document.getElementById('meterExpBar').style.width   = pct + '%';
+  document.getElementById('netProfit').textContent     = net.toLocaleString() + '₮';
+  document.getElementById('netProfit').style.color     = net >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('profitPct').textContent     = profPct + '%';
+  document.getElementById('profitPct').style.color     = profPct >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Expense list
+  const listEl = document.getElementById('expenseList');
+  if (!expenses.length) {
+    listEl.innerHTML = `<div style="font-size:.75rem;color:var(--text-muted);text-align:center;padding:.5rem;">Зарлага байхгүй</div>`;
+    return;
+  }
+  listEl.innerHTML = expenses.slice().reverse().map((e,i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;font-size:.78rem;">
+      <div><span style="margin-right:.4rem;">${e.cat?.split(' ')[0]||'💼'}</span><span style="color:var(--text);">${e.name}</span><span style="color:var(--text-muted);margin-left:.5rem;font-size:.68rem;">${e.date||''}</span></div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <span style="color:var(--red);font-weight:700;">-${(e.amount||0).toLocaleString()}₮</span>
+        <button onclick="deleteExpense(${expenses.length-1-i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.75rem;padding:0;" title="Устгах">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function openExpenseModal() {
+  document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('expName').value = '';
+  document.getElementById('expAmount').value = '';
+  document.getElementById('expenseModal').classList.add('show');
+}
+function closeExpenseModal() { document.getElementById('expenseModal').classList.remove('show'); }
+
+function saveExpense() {
+  const name   = document.getElementById('expName').value.trim();
+  const amount = parseInt(document.getElementById('expAmount').value);
+  if (!name)        { toast('Нэр оруулна уу', 'err'); return; }
+  if (!amount || amount <= 0) { toast('Дүн оруулна уу', 'err'); return; }
+  const expenses = getExpenses();
+  expenses.push({
+    name,
+    amount,
+    date: document.getElementById('expDate').value,
+    cat:  document.getElementById('expCat').value,
+  });
+  localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+  renderFinanceMeter();
+  closeExpenseModal();
+  toast(`✓ ${name} — ${amount.toLocaleString()}₮ нэмэгдлээ`);
+}
+
+function deleteExpense(idx) {
+  const expenses = getExpenses();
+  const real = expenses.length - 1 - idx;
+  expenses.splice(real, 1);
+  localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+  renderFinanceMeter();
+  toast('Зарлага устгагдлаа', 'err');
+}
+
+/* ===== TOP BUYERS ===== */
+function renderTopBuyers() {
+  const ranked = [...usersData].sort((a,b) => b.totalPaid - a.totalPaid).slice(0, 5);
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('topBuyersBody').innerHTML = ranked.map((u, i) => `
+    <tr>
+      <td style="font-size:1.1rem;">${medals[i]}</td>
+      <td>
+        <div style="font-weight:600;font-size:.84rem;">${u.name}</div>
+        <div style="font-size:.7rem;color:var(--text-dim);">${u.login} · ${u.plan||'—'}</div>
+      </td>
+      <td><span style="font-weight:700;color:var(--amber);">${u.totalPaid.toLocaleString()}₮</span></td>
+      <td>
+        <button class="btn btn-success btn-sm" onclick="rewardUser('${u.name}')" style="font-size:.65rem;padding:.25rem .6rem;">🎁 Урамшуул</button>
+      </td>
+    </tr>`).join('');
+}
+
+function rewardUser(name) {
+  toast(`🎁 ${name} — урамшуулал илгээгдлээ!`);
+}
+
+/* ===== FEATURED ===== */
+let _featuredId = null;
+function populateFeaturedSelect() {
+  const sel = document.getElementById('featuredSelect');
+  sel.innerHTML = '<option value="">— Хамгийн их үзэлттэй (авто) —</option>';
+  moviesData.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m._id || m.id;
+    opt.textContent = `${m.icon||'🎬'} ${m.title} (${m.year||''}) · 👁 ${(m.views||0).toLocaleString()}`;
+    sel.appendChild(opt);
+  });
+  const saved = JSON.parse(localStorage.getItem('nd_featured')||'{}');
+  if (saved.id) { sel.value = saved.id; onFeaturedSelect(sel); }
+}
+function onFeaturedSelect(sel) {
+  _featuredId = sel.value;
+  const m = moviesData.find(x => String(x._id||x.id) === String(_featuredId));
+  const prev = document.getElementById('featuredPreview');
+  if (m) {
+    prev.style.display = 'flex'; prev.style.alignItems = 'center'; prev.style.gap = '.5rem';
+    document.getElementById('featuredPreviewIcon').textContent  = m.icon||'🎬';
+    document.getElementById('featuredPreviewTitle').textContent = m.title;
+    document.getElementById('featuredPreviewMeta').textContent  = `★${m.rating} · ${m.views?.toLocaleString()||0} үзэлт`;
+  } else { prev.style.display = 'none'; }
+}
+function saveFeatured() {
+  const data = _featuredId ? { id: _featuredId } : {};
+  localStorage.setItem('nd_featured', JSON.stringify(data));
+  toast(_featuredId ? '✓ Онцлох кино хадгалагдлаа' : '✓ Авто горим (хамгийн их үзэлттэй)');
+}
+
+/* ===== HERO CARDS ===== */
+let _heroMain = null, _heroSide = null;
+
+function populateHeroSelects() {
+  ['heroMainSelect','heroSideSelect'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Сонгох —</option>';
+    moviesData.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m._id || m.id;
+      opt.textContent = `${m.icon||'🎬'} ${m.title} (${m.year||''})`;
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  });
+}
+
+function onHeroSelect(slot, sel) {
+  const id = sel.value;
+  const m = moviesData.find(x => String(x._id||x.id) === String(id));
+  if (!m) return;
+  const icon  = m.icon || '🎬';
+  const title = m.title;
+  const meta  = `★ ${m.rating} · ${m.year} · ${m.genre}`;
+  if (slot === 'main') {
+    _heroMain = { id, icon, title, meta };
+    document.getElementById('heroMainPreview').style.display = 'block';
+    document.getElementById('heroMainPreviewIcon').textContent  = icon;
+    document.getElementById('heroMainPreviewTitle').textContent = title;
+    document.getElementById('heroMainPreviewMeta').textContent  = meta;
+  } else {
+    _heroSide = { id, icon, title, meta };
+    document.getElementById('heroSidePreview').style.display = 'block';
+    document.getElementById('heroSidePreviewIcon').textContent  = icon;
+    document.getElementById('heroSidePreviewTitle').textContent = title;
+    document.getElementById('heroSidePreviewMeta').textContent  = meta;
+  }
+}
+
+function saveHeroCards() {
+  if (!_heroMain && !_heroSide) { toast('Кино сонгоно уу', 'err'); return; }
+  const h = JSON.parse(localStorage.getItem('nd_hero') || '{}');
+  if (_heroMain) { h.mainTitle=_heroMain.title; h.mainMeta=_heroMain.meta; h.mainIcon=_heroMain.icon; h.mainId=_heroMain.id; }
+  if (_heroSide) { h.sideTitle=_heroSide.title; h.sideMeta=_heroSide.meta; h.sideIcon=_heroSide.icon; h.sideId=_heroSide.id; }
+  localStorage.setItem('nd_hero', JSON.stringify(h));
+  toast('✓ Hero карт хадгалагдлаа');
+}
+
+function loadHeroCards() {
+  const h = JSON.parse(localStorage.getItem('nd_hero') || '{}');
+  // Preview харуулах
+  if (h.mainId) {
+    document.getElementById('heroMainSelect').value = h.mainId;
+    document.getElementById('heroMainPreview').style.display = 'block';
+    document.getElementById('heroMainPreviewIcon').textContent  = h.mainIcon||'🎬';
+    document.getElementById('heroMainPreviewTitle').textContent = h.mainTitle||'';
+    document.getElementById('heroMainPreviewMeta').textContent  = h.mainMeta||'';
+    _heroMain = { id:h.mainId, icon:h.mainIcon, title:h.mainTitle, meta:h.mainMeta };
+  }
+  if (h.sideId) {
+    document.getElementById('heroSideSelect').value = h.sideId;
+    document.getElementById('heroSidePreview').style.display = 'block';
+    document.getElementById('heroSidePreviewIcon').textContent  = h.sideIcon||'🌺';
+    document.getElementById('heroSidePreviewTitle').textContent = h.sideTitle||'';
+    document.getElementById('heroSidePreviewMeta').textContent  = h.sideMeta||'';
+    _heroSide = { id:h.sideId, icon:h.sideIcon, title:h.sideTitle, meta:h.sideMeta };
+  }
+}
+
+/* ===== BUNNY UPLOAD ===== */
+let _selectedVideoFile = null;
+
+function handleVideoFileSelect(input) {
+  _selectedVideoFile = input.files[0];
+  const nameEl = document.getElementById('mVideoFileName');
+  if (_selectedVideoFile) {
+    const mb = (_selectedVideoFile.size / 1024 / 1024).toFixed(1);
+    nameEl.textContent = `${_selectedVideoFile.name} (${mb}MB)`;
+    nameEl.style.color = 'var(--cyan)';
+  } else {
+    nameEl.textContent = 'Файл сонгоогүй';
+    nameEl.style.color = '';
+  }
+}
+
+async function uploadVideoToBunny() {
+  if (!_selectedVideoFile) return null;
+  const cfg = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+  if (!cfg.libraryId || !cfg.apiKey) {
+    toast('⚙️ Тохиргоо → Bunny Library ID болон API Key оруулна уу', 'err');
+    return null;
+  }
+  const title = document.getElementById('mTitle').value || _selectedVideoFile.name;
+
+  // 1. Видео entry үүсгэх
+  toast('⏳ Bunny-д бүртгэж байна...');
+  let createRes;
+  try {
+    createRes = await fetch(`/api/bunny/create-video`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, libraryId: cfg.libraryId, apiKey: cfg.apiKey })
+    });
+    createRes = await createRes.json();
+  } catch(e) {
+    toast('Bunny холболт алдаа: ' + e.message, 'err');
+    return null;
+  }
+  if (!createRes.guid) { toast('Video entry үүсгэхэд алдаа', 'err'); return null; }
+  const videoId = createRes.guid;
+
+  // 2. Файл upload хийх
+  const wrap = document.getElementById('uploadProgressWrap');
+  const bar  = document.getElementById('uploadProgressBar');
+  const txt  = document.getElementById('uploadProgressText');
+  wrap.style.display = 'block';
+
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        bar.style.width = pct + '%';
+        txt.textContent = `${pct}% — ${(_selectedVideoFile.size/1024/1024).toFixed(1)}MB`;
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        document.getElementById('mVideoId').value = videoId;
+        bar.style.width = '100%';
+        txt.textContent = '✓ Upload амжилттай!';
+        txt.style.color = 'var(--success, #22c55e)';
+        toast(`✓ Видео upload дууслаа — ID: ${videoId}`);
+        resolve(videoId);
+      } else {
+        toast('Upload алдаа: ' + xhr.status, 'err');
+        resolve(null);
+      }
+    };
+    xhr.onerror = () => { toast('Upload алдаа', 'err'); resolve(null); };
+    xhr.open('PUT', `https://video.bunnycdn.com/library/${cfg.libraryId}/videos/${videoId}`);
+    xhr.setRequestHeader('AccessKey', cfg.apiKey);
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    xhr.send(_selectedVideoFile);
+  });
+}
+
+/* ===== BUNNY ===== */
+const BUNNY_KEY = 'nd_bunny';
+function saveBunnySettings() {
+  const cfg = {
+    libraryId: document.getElementById('bunnyLibraryId').value.trim(),
+    apiKey:    document.getElementById('bunnyApiKey').value.trim(),
+    cdnHost:   document.getElementById('bunnyCdnHost').value.trim(),
+  };
+  localStorage.setItem(BUNNY_KEY, JSON.stringify(cfg));
+  const st = document.getElementById('bunnyStatus');
+  if (st) st.textContent = cfg.libraryId ? `✓ Library ID: ${cfg.libraryId} хадгалагдлаа` : '';
+  toast('✓ Bunny.net тохиргоо хадгалагдлаа');
+}
+function loadBunnySettings() {
+  const cfg = JSON.parse(localStorage.getItem(BUNNY_KEY) || '{}');
+  if (cfg.libraryId) document.getElementById('bunnyLibraryId').value = cfg.libraryId;
+  if (cfg.apiKey)    document.getElementById('bunnyApiKey').value    = cfg.apiKey;
+  if (cfg.cdnHost)   document.getElementById('bunnyCdnHost').value   = cfg.cdnHost;
+  const st = document.getElementById('bunnyStatus');
+  if (st && cfg.libraryId) st.textContent = `✓ Library ID: ${cfg.libraryId}`;
+}
+
+/* ===== PRICES ===== */
+const PRICE_KEY = 'nd_prices';
+function getPrices() {
+  const saved = localStorage.getItem(PRICE_KEY);
+  return saved ? JSON.parse(saved) : { monthly:12000, quarterly:20000, movie:3400 };
+}
+function savePrices() {
+  const m = parseInt(document.getElementById('priceMonthly').value)  || 12000;
+  const q = parseInt(document.getElementById('priceQuarterly').value) || 20000;
+  const mv= parseInt(document.getElementById('priceMovie').value)     || 3400;
+  localStorage.setItem(PRICE_KEY, JSON.stringify({ monthly:m, quarterly:q, movie:mv }));
+  // update payments data display
+  plans.monthly.amount   = m;
+  plans.quarterly.amount = q;
+  plans.movie.amount     = mv;
+  toast(`✓ Үнэ хадгалагдлаа — ${m.toLocaleString()}₮ / ${q.toLocaleString()}₮ / ${mv.toLocaleString()}₮`);
+}
+function loadPricesIntoInputs() {
+  const p = getPrices();
+  document.getElementById('priceMonthly').value   = p.monthly;
+  document.getElementById('priceQuarterly').value = p.quarterly;
+  document.getElementById('priceMovie').value     = p.movie;
+}
+
+/* ===== TOAST ===== */
+function toast(msg, type='ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  document.getElementById('toastWrap').appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  loadPricesIntoInputs();
+  loadBunnySettings();
+  renderChart();
+  // MongoDB-аас кинонууд ачаалах
+  try {
+    const res = await fetch('/api/movies');
+    const dbMovies = await res.json();
+    if(Array.isArray(dbMovies) && dbMovies.length > 0) {
+      moviesData.length = 0;
+      dbMovies.forEach(m => moviesData.push(m));
+    }
+  } catch(e) { console.warn('API холбогдсонгүй, локал өгөгдөл ашиглана'); }
+  renderMovies(moviesData);
+  populateFeaturedSelect();
+  populateHeroSelects();
+  loadHeroCards();
+  renderTopViews();
+  renderTopPurchased();
+  renderFinanceMeter();
+  renderTopBuyers();
+  renderUsers(usersData);
+  renderPayments(paymentsData);
+  renderRecentPayments();
+  document.getElementById('topbarActionBtn').style.display='none';
+  document.getElementById('movieModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMovieModal();});
+});
+</script>
+</body>
+</html>

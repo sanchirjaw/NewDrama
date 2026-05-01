@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEW DRAMA — Кино & Цуврал</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ===== HERO ===== */
+.hero {
+  position:relative; min-height:100vh;
+  display:flex; align-items:center; overflow:hidden;
+  padding-top:68px;
+}
+.hero-backdrop {
+  position:absolute; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 60% 40%, rgba(168,85,247,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 20% 60%, rgba(0,229,255,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(236,72,153,0.06) 0%, transparent 50%);
+}
+.hero-grid {
+  position:absolute; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+}
+/* Floating orbs */
+.orb {
+  position:absolute; border-radius:50%; pointer-events:none;
+  animation:float 8s ease-in-out infinite;
+}
+.orb-1 { width:320px; height:320px; top:-80px; right:8%; background:radial-gradient(circle, rgba(168,85,247,0.1), transparent 70%); animation-delay:-2s; }
+.orb-2 { width:240px; height:240px; bottom:10%; left:5%; background:radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%); animation-delay:-5s; }
+.orb-3 { width:180px; height:180px; top:30%; right:25%; background:radial-gradient(circle, rgba(236,72,153,0.07), transparent 70%); animation-delay:-3s; }
+
+.hero-inner {
+  position:relative; z-index:1;
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:4rem; align-items:center;
+  max-width:1280px; margin:0 auto; padding:6rem 2rem 4rem;
+  width:100%;
+}
+
+/* Left text */
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:0.6rem;
+  padding:0.4rem 1rem; border-radius:99px;
+  background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.18);
+  font-size:0.72rem; font-weight:600; letter-spacing:3px;
+  text-transform:uppercase; color:var(--cyan);
+  margin-bottom:1.75rem;
+}
+.hero-eyebrow::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan); animation:pulse-glow 2s ease-in-out infinite; flex-shrink:0; }
+
+.hero-title {
+  font-family:'Bebas Neue', sans-serif;
+  font-size:clamp(5rem, 9vw, 9rem);
+  letter-spacing:6px; line-height:0.88;
+  margin-bottom:1.5rem;
+}
+.hero-title .line-1 { display:block; color:#fff; }
+.hero-title .line-2 {
+  display:block;
+  background:var(--grad);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  background-size:200% 200%;
+  animation:gradientShift 4s ease infinite;
+}
+
+.hero-desc {
+  color:var(--text-dim); font-size:1rem; line-height:1.75;
+  font-weight:300; max-width:440px; margin-bottom:2.5rem;
+}
+
+.hero-actions { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
+
+.hero-stats {
+  display:flex; gap:2rem; margin-top:2.5rem;
+  padding-top:2rem; border-top:1px solid var(--border);
+}
+.hero-stat-num {
+  font-family:'Bebas Neue', sans-serif; font-size:1.6rem;
+  background:var(--grad);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.hero-stat-lbl { font-size:0.7rem; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-top:0.1rem; }
+
+/* Right visual — featured card stack */
+.hero-visual { position:relative; height:500px; }
+.hero-card-main {
+  position:absolute; right:0; top:20px;
+  width:260px; border-radius:20px; overflow:hidden;
+  background:linear-gradient(160deg, #1e0b3d, #0c0c14);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(168,85,247,0.12);
+  animation:float 7s ease-in-out infinite;
+}
+.hero-card-poster {
+  aspect-ratio:2/3;
+  background:linear-gradient(160deg, #2d0f5e, #1a0a2e, #0c0c14);
+  display:flex; align-items:center; justify-content:center; font-size:5rem;
+  position:relative;
+}
+.hero-card-poster::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(12,12,20,0.9) 0%, transparent 50%);
+}
+.hero-card-info { padding:1.25rem; }
+.hero-card-title { font-weight:700; font-size:0.95rem; color:#fff; margin-bottom:0.3rem; }
+.hero-card-meta { font-size:0.75rem; color:var(--text-dim); }
+
+.hero-card-side {
+  position:absolute; left:0; top:60px;
+  width:200px; border-radius:16px; overflow:hidden;
+  background:rgba(12,12,20,0.9);
+  border:1px solid rgba(255,255,255,0.07);
+  box-shadow:0 16px 48px rgba(0,0,0,0.4);
+  animation:float 9s ease-in-out infinite; animation-delay:-4s;
+}
+.hero-card-side-poster {
+  aspect-ratio:16/9;
+  background:linear-gradient(160deg, #0f2d3d, #0c0c14);
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  position:relative;
+}
+.hero-card-side-poster::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(12,12,20,0.8) 0%, transparent 60%);
+}
+.hero-card-side-info { padding:0.875rem; }
+.hero-card-side-title { font-size:0.8rem; font-weight:600; color:#fff; margin-bottom:0.2rem; }
+.hero-card-side-meta { font-size:0.68rem; color:var(--text-dim); }
+
+/* ===== TICKER ===== */
+.ticker {
+  background:rgba(0,229,255,0.04); border-top:1px solid rgba(0,229,255,0.1);
+  border-bottom:1px solid rgba(0,229,255,0.1);
+  padding:0.7rem 0; overflow:hidden;
+}
+.ticker-inner { display:flex; gap:0; width:max-content; animation:marquee 28s linear infinite; }
+.ticker-inner:hover { animation-play-state:paused; }
+.ticker-item {
+  display:flex; align-items:center; gap:0.5rem;
+  padding:0 2.5rem; font-size:0.75rem; color:var(--text-dim); white-space:nowrap;
+}
+.ticker-item .dot { width:4px; height:4px; border-radius:50%; background:var(--cyan); opacity:0.5; }
+.ticker-item strong { color:var(--text); font-weight:600; }
+
+/* ===== FEATURED BANNER ===== */
+.featured-banner {
+  position:relative; border-radius:var(--radius-xl); overflow:hidden;
+  min-height:420px; display:flex; align-items:flex-end;
+  background:linear-gradient(160deg, #1e0b3d, #0c1a2e, #0c0c14);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  margin-bottom:4rem;
+}
+.featured-banner-bg {
+  position:absolute; inset:0; font-size:12rem;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0.06; pointer-events:none;
+}
+.featured-banner-grad {
+  position:absolute; inset:0;
+  background:linear-gradient(to right, rgba(7,7,14,0.98) 0%, rgba(7,7,14,0.7) 50%, rgba(7,7,14,0.2) 100%);
+}
+.featured-banner-info {
+  position:relative; z-index:1; padding:3rem;
+  max-width:600px;
+}
+.featured-banner-badge {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  padding:0.3rem 0.9rem; border-radius:99px;
+  background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.2);
+  font-size:0.65rem; font-weight:700; letter-spacing:3px;
+  text-transform:uppercase; color:var(--cyan); margin-bottom:1.25rem;
+}
+.featured-banner-title {
+  font-family:'Bebas Neue', sans-serif;
+  font-size:clamp(2.5rem, 5vw, 4rem); letter-spacing:4px;
+  color:#fff; margin-bottom:0.75rem; line-height:1;
+}
+.featured-banner-meta {
+  display:flex; gap:1.25rem; flex-wrap:wrap;
+  color:var(--text-dim); font-size:0.82rem; margin-bottom:1.25rem;
+}
+.featured-banner-meta span { display:flex; align-items:center; gap:0.4rem; }
+.featured-banner-desc {
+  color:var(--text-dim); font-size:0.9rem; line-height:1.7;
+  margin-bottom:2rem; max-width:480px; font-weight:300;
+}
+.featured-banner-actions { display:flex; gap:0.875rem; flex-wrap:wrap; }
+.featured-banner-rating {
+  position:absolute; right:3rem; bottom:3rem; z-index:1;
+  text-align:center;
+}
+.featured-banner-rating .r-num {
+  font-family:'Bebas Neue', sans-serif; font-size:3.5rem; line-height:1;
+  background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.featured-banner-rating .r-stars { color:var(--cyan); font-size:0.85rem; }
+.featured-banner-rating .r-count { font-size:0.7rem; color:var(--text-dim); margin-top:0.2rem; }
+
+/* ===== ROW SECTION ===== */
+.row-section { padding:0 0 3.5rem; }
+.row-section .container {}
+
+/* ===== TOP 10 CARDS ===== */
+.top10-card {
+  position:relative; flex-shrink:0; cursor:pointer;
+  transition:transform 0.35s; text-decoration:none;
+}
+.top10-card:hover { transform:translateY(-6px); z-index:2; }
+.top10-num {
+  font-family:'Bebas Neue', sans-serif;
+  font-size:6rem; line-height:1; color:transparent;
+  -webkit-text-stroke:2px rgba(255,255,255,0.12);
+  position:absolute; bottom:-8px; left:-8px; z-index:1;
+  transition:color 0.3s;
+  user-select:none;
+}
+.top10-card:hover .top10-num { -webkit-text-stroke-color:rgba(0,229,255,0.3); }
+.top10-poster {
+  width:140px; margin-left:40px;
+  aspect-ratio:2/3; border-radius:var(--radius);
+  background:linear-gradient(160deg, #1a0a2e, #0c0c14);
+  border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  overflow:hidden; position:relative; z-index:2;
+  transition:box-shadow 0.35s;
+}
+.top10-card:hover .top10-poster { box-shadow:0 20px 48px rgba(0,0,0,0.5), 0 0 24px rgba(0,229,255,0.15); }
+
+/* ===== CONTINUE WATCHING ===== */
+.cw-card {
+  flex-shrink:0; width:240px; border-radius:var(--radius);
+  background:var(--card); border:1px solid var(--border);
+  overflow:hidden; cursor:pointer; text-decoration:none; display:block;
+  transition:transform 0.3s, box-shadow 0.3s;
+}
+.cw-card:hover { transform:translateY(-5px); box-shadow:var(--shadow-card); border-color:rgba(0,229,255,0.12); }
+.cw-thumb {
+  aspect-ratio:16/9; position:relative; overflow:hidden;
+  background:linear-gradient(160deg, #1e0b3d, #0c1a2e);
+  display:flex; align-items:center; justify-content:center; font-size:1.8rem;
+}
+.cw-progress { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.1); }
+.cw-bar { height:100%; background:var(--grad); }
+.cw-play {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(7,7,14,0.4); opacity:0; transition:opacity 0.3s;
+}
+.cw-card:hover .cw-play { opacity:1; }
+.cw-info { padding:0.875rem; }
+.cw-title { font-weight:600; font-size:0.88rem; color:#fff; margin-bottom:0.25rem; }
+.cw-meta { font-size:0.72rem; color:var(--text-dim); }
+
+/* ===== PROMO STRIP ===== */
+.promo-strip {
+  border-radius:var(--radius-xl);
+  background:linear-gradient(135deg, rgba(0,229,255,0.07), rgba(168,85,247,0.07));
+  border:1px solid rgba(0,229,255,0.12);
+  padding:2.5rem 3rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:2rem; flex-wrap:wrap; margin:4rem 0;
+  position:relative; overflow:hidden;
+}
+.promo-strip::before {
+  content:''; position:absolute; right:-60px; top:-60px;
+  width:280px; height:280px; border-radius:50%;
+  background:radial-gradient(circle, rgba(168,85,247,0.12), transparent 70%);
+  pointer-events:none;
+}
+.promo-strip-left h3 {
+  font-family:'Bebas Neue', sans-serif; font-size:1.8rem; letter-spacing:3px;
+  color:#fff; margin-bottom:0.4rem;
+}
+.promo-strip-left p { color:var(--text-dim); font-size:0.88rem; }
+.promo-strip-price {
+  font-family:'Bebas Neue', sans-serif; font-size:2.8rem; line-height:1;
+  background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.promo-strip-price sup { font-size:1.2rem; vertical-align:super; }
+.promo-strip-price span { font-family:'Outfit', sans-serif; font-size:0.88rem; color:var(--text-dim); -webkit-text-fill-color:var(--text-dim); }
+
+@media (max-width:900px) {
+  .hero-inner { grid-template-columns:1fr; text-align:center; padding:5rem 1.5rem 3rem; }
+  .hero-desc { max-width:none; }
+  .hero-actions { justify-content:center; }
+  .hero-stats { justify-content:center; }
+  .hero-visual { display:none; }
+  .featured-banner { min-height:auto; }
+  .featured-banner-rating { display:none; }
+  .featured-banner-info { padding:2rem 1.5rem; }
+  .promo-strip { padding:2rem; }
+  .promo-strip { flex-direction:column; text-align:center; }
+}
+</style>
+</head>
+<body>
+<div class="film-strip"></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="index.html" class="logo">NEW DRAMA<span>Cinema & Series</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Нүүр</a></li>
+    <li><a href="#movies">Кино</a></li>
+    <li><a href="#series">Цуврал</a></li>
+    <li><a href="pricing.html">Үнэ</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-search">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Хайх..." id="searchInput">
+    </div>
+    <a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-backdrop"></div>
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Шинэ цуврал нэмэгдлээ</div>
+      <h1 class="hero-title">
+        <span class="line-1">NEW</span>
+        <span class="line-2">DRAMA</span>
+      </h1>
+      <p class="hero-desc">Дэлхийн шилдэг кино, хятад цуврал, хөгжмийг Монгол хэлээр. Монгол дуу оруулгатай.</p>
+      <div class="hero-actions">
+        <a href="#movies" class="btn-primary">▶&nbsp; Кино үзэх</a>
+        <a href="pricing.html" class="btn-secondary">Багц & Үнэ</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">2,400+</div>
+          <div class="hero-stat-lbl">Кино</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">500+</div>
+          <div class="hero-stat-lbl">Дуу оруулга</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">50K+</div>
+          <div class="hero-stat-lbl">Үзэгч</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card-side" id="heroCardSide">
+        <div class="hero-card-side-poster" id="heroSideIcon">🌺</div>
+        <div class="hero-card-side-info">
+          <div class="hero-card-side-title" id="heroSideTitle">Хайрын Мэдрэмж</div>
+          <div class="hero-card-side-meta" id="heroSideMeta">★ 9.3 · 40 анги</div>
+        </div>
+      </div>
+      <div class="hero-card-main" id="heroCardMain">
+        <div class="hero-card-poster" id="heroMainIcon">🎬</div>
+        <div class="hero-card-info">
+          <div class="hero-card-title" id="heroMainTitle">Хар Шөнийн Нууц</div>
+          <div class="hero-card-meta" id="heroMainMeta">★ 8.7 · 2024 · Триллер</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="tickerInner"></div>
+</div>
+
+<!-- FEATURED -->
+<section class="section container" id="movies">
+  <div class="section-head">
+    <div>
+      <div class="section-label">✦ Шинэ</div>
+      <h2 class="section-title">Энэ 7 Хоногийн Шинэ Кино</h2>
+    </div>
+  </div>
+
+  <div class="featured-banner" id="featuredBanner">
+    <div class="featured-banner-bg" id="featuredBg">🎬</div>
+    <div class="featured-banner-grad"></div>
+    <div class="featured-banner-info">
+      <div class="featured-banner-badge">✦ Шинэ &nbsp;·&nbsp; HD</div>
+      <h2 class="featured-banner-title" id="featuredTitle">Хар Шөнийн Нууц</h2>
+      <div class="featured-banner-meta" id="featuredMeta">
+        <span>🎬 2024</span><span>🌍 Хятад</span><span>🔞 16+</span>
+      </div>
+      <p class="featured-banner-desc" id="featuredDesc">Нүүр хуудсын онцлох кино. Admin-аас солих боломжтой.</p>
+      <div class="featured-banner-actions">
+        <a href="movie.html" class="btn-primary" id="featuredLink">▶&nbsp; Үзэх</a>
+        <button class="btn-secondary" onclick="wishToast()">♡&nbsp; Хадгалах</button>
+      </div>
+    </div>
+    <div class="featured-banner-rating">
+      <div class="r-num" id="featuredRating">—</div>
+      <div class="r-stars" id="featuredStars">★★★★☆</div>
+      <div class="r-count">үнэлгээ</div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="pills" id="catPills" style="margin-bottom:2rem;"></div>
+
+  <!-- Movie grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:1.25rem;" id="movieGrid"></div>
+</section>
+
+<!-- TOP 10 -->
+<section class="row-section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-label">✦ Хамгийн их үзсэн</div>
+        <h2 class="section-title">Топ 10</h2>
+      </div>
+      <div class="row-nav">
+        <button class="row-btn" onclick="scrollRow('top10Row',-1)">‹</button>
+        <button class="row-btn" onclick="scrollRow('top10Row',1)">›</button>
+      </div>
+    </div>
+    <div class="row-scroll" id="top10Row"></div>
+  </div>
+</section>
+
+<!-- SERIES -->
+<section class="row-section" id="series">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-label">✦ Хятад цуврал</div>
+        <h2 class="section-title">Шинэ Цувралууд</h2>
+      </div>
+      <div class="row-nav">
+        <button class="row-btn" onclick="scrollRow('seriesRow',-1)">‹</button>
+        <button class="row-btn" onclick="scrollRow('seriesRow',1)">›</button>
+      </div>
+    </div>
+    <div class="row-scroll" id="seriesRow"></div>
+  </div>
+</section>
+
+
+<!-- CONTINUE WATCHING -->
+<section class="row-section" id="cwSection">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-label">✦ Таны судалгаа</div>
+        <h2 class="section-title">Үргэлжлүүлж Үзэх</h2>
+      </div>
+      <a href="login.html" style="font-size:0.8rem;color:var(--cyan);text-decoration:none;">Бүгдийг харах →</a>
+    </div>
+    <div class="row-scroll" id="cwRow"></div>
+  </div>
+</section>
+
+<!-- PROMO -->
+<div class="container">
+  <div class="promo-strip">
+    <div class="promo-strip-left">
+      <h3>Сарын Багц Авч Бүгдийг Үзэх!</h3>
+      <p>2,400+ кино, цуврал · Зар байхгүй · 2 төхөөрөмж</p>
+    </div>
+    <div class="promo-strip-price">
+      <sup>₮</sup>12,000<span> / сар</span>
+    </div>
+    <a href="pricing.html" class="btn-primary" style="font-size:.95rem;padding:.875rem 2.25rem;">Багц авах</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<section class="section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-cell"><div class="stat-num">2,400+</div><div class="stat-lbl">Кино & Цуврал</div></div>
+      <div class="stat-cell"><div class="stat-num">500+</div><div class="stat-lbl">Монгол дуу оруулга</div></div>
+      <div class="stat-cell"><div class="stat-num">150+</div><div class="stat-lbl">Дуу оруулсан</div></div>
+      <div class="stat-cell"><div class="stat-num">50K+</div><div class="stat-lbl">Үзэгчид</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-line" style="margin:0 auto 3rem;"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">NEW DRAMA</div>
+    <ul class="footer-links">
+      <li><a href="#">Бидний тухай</a></li>
+      <li><a href="#">Холбоо барих</a></li>
+      <li><a href="#">Нууцлалын бодлого</a></li>
+      <li><a href="https://facebook.com" target="_blank">Facebook</a></li>
+      <li><a href="https://t.me" target="_blank">Telegram</a></li>
+    </ul>
+    <div class="footer-copy">© 2024 NEW DRAMA · Бүх эрх хуулиар хамгаалагдсан.</div>
+  </div>
+</footer>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ---- GENRE COLORS ---- */
+const genreStyle = {
+  'Экшн':    { bg:'linear-gradient(160deg,#7f1d1d,#1a0500)',   accent:'#ff6b35', glow:'rgba(255,107,53,0.25)' },
+  'Драм':    { bg:'linear-gradient(160deg,#1e1b4b,#0c0c14)',   accent:'#818cf8', glow:'rgba(129,140,248,0.2)' },
+  'Комеди':  { bg:'linear-gradient(160deg,#78350f,#1a1000)',   accent:'#fbbf24', glow:'rgba(251,191,36,0.2)'  },
+  'Аймшиг':  { bg:'linear-gradient(160deg,#450a0a,#0a0a0a)',   accent:'#ef4444', glow:'rgba(239,68,68,0.25)'  },
+  'Романтик':{ bg:'linear-gradient(160deg,#831843,#1a0515)',   accent:'#f472b6', glow:'rgba(244,114,182,0.25)'},
+  'Түүхэн':  { bg:'linear-gradient(160deg,#78350f,#1c1000)',   accent:'#f59e0b', glow:'rgba(245,158,11,0.22)' },
+  'Триллер': { bg:'linear-gradient(160deg,#0c2340,#070e1a)',   accent:'#38bdf8', glow:'rgba(56,189,248,0.2)'  },
+  'Анимэ':   { bg:'linear-gradient(160deg,#701a75,#0c1a2e)',   accent:'#e879f9', glow:'rgba(232,121,249,0.25)'},
+  'Баримтат':{ bg:'linear-gradient(160deg,#14532d,#0a1a0f)',   accent:'#4ade80', glow:'rgba(74,222,128,0.2)'  },
+  'default': { bg:'linear-gradient(160deg,#1e0b3d,#0c0c14)',   accent:'#00e5ff', glow:'rgba(0,229,255,0.2)'   },
+};
+
+/* ---- DATA ---- */
+const cats = ['Бүгд','Экшн','Драм','Комеди','Аймшиг','Романтик','Баримтат','Анимэ','Триллер','Түүхэн'];
+const movies = [
+  {id:1,title:'Сүүлчийн Мөрдөгч',year:'2024',genre:'Экшн',rating:'8.2',icon:'💥',free:false,hot:true,views:48200,videoId:'abc-001'},
+  {id:2,title:'Цэцгийн Зам',year:'2024',genre:'Драм',rating:'9.1',icon:'🎭',free:false,views:31500,videoId:'abc-002'},
+  {id:3,title:'Хөршийн Нууц',year:'2023',genre:'Комеди',rating:'7.8',icon:'😂',free:true,views:92100,videoId:'abc-003'},
+  {id:4,title:'Харанхуйн Дуудлага',year:'2024',genre:'Аймшиг',rating:'8.5',icon:'👻',free:false,hot:true,views:67400,videoId:'abc-004'},
+  {id:5,title:'Зүрхний Аялал',year:'2024',genre:'Романтик',rating:'8.0',icon:'💕',free:false,views:24800,videoId:'abc-005'},
+  {id:6,title:'Эзэн Хааны Сүлд',year:'2023',genre:'Түүхэн',rating:'9.0',icon:'⚔️',free:false,views:115000,videoId:'abc-006'},
+  {id:7,title:'Галт Тэрэг',year:'2024',genre:'Триллер',rating:'8.8',icon:'🔍',free:false,views:53700,videoId:'abc-007'},
+  {id:8,title:'Тэнгэрийн Цэцэг',year:'2024',genre:'Анимэ',rating:'8.9',icon:'🌸',free:true,views:88600,videoId:'abc-008'},
+  {id:9,title:'Хотын Буян',year:'2024',genre:'Драм',rating:'8.3',icon:'🌆',free:false,views:19300,videoId:'abc-009'},
+  {id:10,title:'Нуурын Нулимс',year:'2023',genre:'Романтик',rating:'8.6',icon:'🌊',free:false,views:41200,videoId:'abc-010'},
+];
+const series = [
+  {title:'Хайрын Мэдрэмж',year:'2024',genre:'Драм',rating:'9.3',icon:'🌺',eps:'40 анги'},
+  {title:'Гэрлийн Замаар',year:'2024',genre:'Романтик',rating:'8.7',icon:'✨',eps:'36 анги'},
+  {title:'Хаадын Ордон',year:'2023',genre:'Түүхэн',rating:'9.1',icon:'👑',eps:'60 анги'},
+  {title:'Хотын Нууц',year:'2024',genre:'Триллер',rating:'8.4',icon:'🏙️',eps:'24 анги'},
+  {title:'Цэнхэр Тэнгэр',year:'2024',genre:'Романтик',rating:'8.8',icon:'☁️',eps:'32 анги'},
+  {title:'Буяны Замд',year:'2024',genre:'Драм',rating:'9.0',icon:'🌿',eps:'45 анги'},
+];
+const cwData = [
+  {title:'Хар Шөнийн Нууц',meta:'47 мин үлдсэн',icon:'🎬',pct:65,genre:'Триллер'},
+  {title:'Хайрын Мэдрэмж',meta:'Анги 8 · 30% үлдсэн',icon:'🌺',pct:30,genre:'Романтик'},
+  {title:'Эзэн Хааны Сүлд',meta:'14 мин үлдсэн',icon:'⚔️',pct:90,genre:'Түүхэн'},
+  {title:'Галт Тэрэг',meta:'✓ Дуусгасан',icon:'🔥',pct:100,genre:'Триллер'},
+  {title:'Тэнгэрийн Цэцэг',meta:'Анги 3 · 55% үлдсэн',icon:'🌸',pct:45,genre:'Анимэ'},
+];
+
+/* ---- RENDER ---- */
+function fmtViews(n) {
+  if (n >= 10000) return (n/10000).toFixed(1).replace(/\.0$/,'') + 'w';
+  if (n >= 1000)  return (n/1000).toFixed(1).replace(/\.0$/,'') + 'к';
+  return n;
+}
+function movieCardHTML(m, cls='') {
+  const s = genreStyle[m.genre] || genreStyle['default'];
+  const priceBadge = m.free
+    ? `<span class="badge badge-right badge-free">Үнэгүй</span>`
+    : `<span class="badge badge-right" style="background:rgba(0,0,0,0.65);border:1px solid ${s.accent}55;color:${s.accent};font-size:.62rem;font-weight:700;letter-spacing:.5px;">${window._moviePrice||'3,400₮'}</span>`;
+  const hotBadge = m.hot ? `<span class="badge badge-right" style="top:2.2rem;background:rgba(255,80,0,0.18);border:1px solid rgba(255,80,0,0.4);color:#ff6b35;font-size:.58rem;">🔥 Hot</span>` : '';
+  const genreTag = `<span class="badge badge-left" style="background:rgba(0,0,0,0.5);border:1px solid ${s.accent}33;color:${s.accent};font-size:.58rem;">${m.genre}</span>`;
+  const views = m.views ? `<span style="color:var(--text-dim);display:flex;align-items:center;gap:0.2rem;font-size:.72rem;">👁 ${fmtViews(m.views)}</span>` : '';
+  return `
+  <a href="movie.html?vid=${m.videoId||''}&id=${m.id||''}" class="movie-card ${cls}" style="--card-glow:${s.glow};">
+    <div class="movie-poster" style="background:${s.bg};">
+      <span class="poster-icon" style="opacity:0.22;font-size:3rem;">${m.icon}</span>
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}18,transparent 65%);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
+    </div>
+    <div class="movie-card-overlay"><div class="play-btn" style="background:linear-gradient(135deg,${s.accent},${s.accent}99);">▶</div></div>
+    ${priceBadge}${hotBadge}
+    ${genreTag}
+    <div class="movie-card-info">
+      <div class="movie-card-title">${m.title}</div>
+      <div class="movie-card-meta"><span>${m.year}</span>${views}<span class="movie-card-rating" style="color:${s.accent};">★ ${m.rating}</span></div>
+    </div>
+  </a>`;
+}
+
+// Featured banner — localStorage-аас уншина, эсвэл хамгийн их үзэлттэйг харуулна
+function applyFeatured() {
+  const f = JSON.parse(localStorage.getItem('nd_featured') || '{}');
+  let m = null;
+  if (f.id) m = movies.find(x => String(x._id||x.id) === String(f.id));
+  if (!m && movies.length) m = [...movies].sort((a,b)=>(b.views||0)-(a.views||0))[0];
+  if (!m) return;
+  const s = genreStyle[m.genre] || genreStyle['default'];
+  document.getElementById('featuredBg').textContent        = m.icon || '🎬';
+  document.getElementById('featuredTitle').textContent     = m.title;
+  document.getElementById('featuredRating').textContent    = m.rating || '—';
+  document.getElementById('featuredDesc').textContent      = m.desc || `${m.genre} · ${m.year} · Монгол дуу оруулгатай`;
+  document.getElementById('featuredMeta').innerHTML        = `<span>🎬 ${m.year||''}</span><span>🌍 Хятад</span><span style="color:${s.accent}">★ ${m.rating}</span>`;
+  document.getElementById('featuredLink').href             = `movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}`;
+  document.getElementById('featuredBanner').style.background = `linear-gradient(160deg, ${s.bg.includes('gradient')?'#1e0b3d':s.bg}, #0c0c14)`;
+}
+
+// Hero карт тохируулга
+(function applyHeroCards() {
+  const h = JSON.parse(localStorage.getItem('nd_hero') || '{}');
+  if (h.mainTitle) document.getElementById('heroMainTitle').textContent = h.mainTitle;
+  if (h.mainMeta)  document.getElementById('heroMainMeta').textContent  = h.mainMeta;
+  if (h.mainIcon)  document.getElementById('heroMainIcon').textContent  = h.mainIcon;
+  if (h.sideTitle) document.getElementById('heroSideTitle').textContent = h.sideTitle;
+  if (h.sideMeta)  document.getElementById('heroSideMeta').textContent  = h.sideMeta;
+  if (h.sideIcon)  document.getElementById('heroSideIcon').textContent  = h.sideIcon;
+})();
+
+// Load prices from admin settings
+(function applyPrices() {
+  const p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
+  const movie  = (p.movie    || 3400).toLocaleString();
+  const monthly= (p.monthly  || 12000).toLocaleString();
+  // movie card badge
+  window._moviePrice = movie + '₮';
+  // promo strip
+  const ps = document.querySelector('.promo-strip-price');
+  if (ps) ps.innerHTML = `<sup>₮</sup>${monthly}<span> / сар</span>`;
+})();
+
+// API-аас кинонуудыг ачаалах, fallback → локал өгөгдөл
+async function loadMovies() {
+  try {
+    const res = await fetch('/api/movies');
+    const dbMovies = await res.json();
+    if(Array.isArray(dbMovies) && dbMovies.length > 0) {
+      movies.length = 0;
+      dbMovies.forEach(m => movies.push(m));
+    }
+  } catch(e) { /* API байхгүй бол локал movies массив ашиглана */ }
+  renderGrid(movies);
+  renderTop10();
+  renderSeriesRow();
+  applyFeatured();
+}
+
+// Grid
+function renderTop10() {
+  const top10El = document.getElementById('top10Row');
+  if (!top10El) return;
+  top10El.innerHTML = '';
+  const top10Movies = [...movies].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,10);
+  top10Movies.forEach((m,i)=>{
+    const s = genreStyle[m.genre]||genreStyle['default'];
+    top10El.innerHTML += `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="top10-card">
+      <div class="top10-num">${i+1}</div>
+      <div class="top10-poster" style="background:${s.bg};display:flex;align-items:center;justify-content:center;font-size:2.5rem;">
+        ${m.icon||'🎬'}
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}22,transparent 65%);"></div>
+      </div>
+    </a>`;
+  });
+}
+
+loadMovies();
+
+// Category pills
+const pillsEl = document.getElementById('catPills');
+cats.forEach((c,i) => {
+  const b = document.createElement('button');
+  b.className = 'pill' + (i===0?' active':'');
+  b.textContent = c;
+  b.onclick = () => {
+    pillsEl.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    b.classList.add('active');
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = c==='Бүгд' ? movies : movies.filter(m=>m.genre===c);
+    renderGrid(filtered, q);
+  };
+  pillsEl.appendChild(b);
+});
+
+function renderGrid(list, q='') {
+  const out = q ? list.filter(m=>m.title.toLowerCase().includes(q)||m.genre.toLowerCase().includes(q)) : list;
+  document.getElementById('movieGrid').innerHTML = out.length
+    ? out.map(m=>movieCardHTML(m)).join('')
+    : `<p style="color:var(--text-dim);grid-column:1/-1;padding:2rem 0;">Хайлт олдсонгүй.</p>`;
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function(){
+  const active = pillsEl.querySelector('.pill.active')?.textContent;
+  const base = (!active||active==='Бүгд') ? movies : movies.filter(m=>m.genre===active);
+  renderGrid(base, this.value.toLowerCase());
+});
+
+// Top 10 — renderTop10() функцаар зурна (loadMovies дотор дуудагдана)
+
+// Series row
+// Шинэ Цувралууд — movies-аас нэмэгдсэн огноогоор буурахаар (шинэ нь урд)
+function renderSeriesRow() {
+  const seriesEl = document.getElementById('seriesRow');
+  if (!seriesEl) return;
+  const sorted = [...movies].sort((a,b) => new Date(b.added||0) - new Date(a.added||0)).slice(0,12);
+  seriesEl.innerHTML = sorted.map(m => {
+    const s = genreStyle[m.genre] || genreStyle['default'];
+    return `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="movie-card row-card-md">
+      <div class="movie-poster" style="background:${s.bg};">
+        <span class="poster-icon" style="opacity:.25;font-size:2.5rem;">${m.icon||'🎬'}</span>
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}18,transparent 65%);"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
+      </div>
+      <div class="movie-card-overlay"><div class="play-btn" style="background:linear-gradient(135deg,${s.accent},${s.accent}99);">▶</div></div>
+      <span class="badge badge-left badge-new" style="background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.25);color:var(--cyan);">Шинэ</span>
+      <div class="movie-card-info">
+        <div class="movie-card-title">${m.title}</div>
+        <div class="movie-card-meta"><span>${m.year} · ${m.genre}</span><span class="movie-card-rating" style="color:${s.accent};">★ ${m.rating}</span></div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+// Continue watching
+const cwEl = document.getElementById('cwRow');
+cwData.forEach(c => {
+  const s = genreStyle[c.genre] || genreStyle['default'];
+  const barColor = c.pct === 100 ? 'var(--success,#22c55e)' : s.accent;
+  cwEl.innerHTML += `
+  <a href="movie.html" class="cw-card">
+    <div class="cw-thumb" style="background:${s.bg};">
+      <span style="font-size:2rem;position:relative;z-index:1;">${c.icon}</span>
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}22,transparent 65%);"></div>
+      <div class="cw-progress"><div class="cw-bar" style="width:${c.pct}%;background:${barColor};box-shadow:0 0 8px ${s.glow};"></div></div>
+      <div class="cw-play"><div class="play-btn" style="background:linear-gradient(135deg,${s.accent},${s.accent}99);">▶</div></div>
+      ${c.pct===100?`<div style="position:absolute;top:.5rem;right:.5rem;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:.6rem;font-weight:700;padding:.15rem .45rem;border-radius:99px;letter-spacing:1px;">✓ ДУУССАН</div>`:''}
+    </div>
+    <div class="cw-info">
+      <div class="cw-title">${c.title}</div>
+      <div class="cw-meta" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>${c.meta}</span>
+        <span style="color:${s.accent};font-size:.68rem;font-weight:700;">${c.pct}%</span>
+      </div>
+    </div>
+  </a>`;
+});
+
+// Ticker
+const tItems = [
+  'Хайрын Мэдрэмж — 41-р анги гарлаа',
+  'Шинэ: Галт Тэрэг 2 · 2024',
+  'Хятад цуврал 15 шинэ нэмэгдлээ',
+  'Хар Шөнийн Нууц — ★ 8.7 онооны шагнал',
+  '🔥 Топ 10 шинэчлэгдлээ',
+  'Монгол дуу оруулга: Тэнгэрийн Цэцэг',
+];
+const tHTML = tItems.map(t=>`<div class="ticker-item"><span class="dot"></span> <strong>${t}</strong></div>`).join('');
+document.getElementById('tickerInner').innerHTML = tHTML + tHTML;
+
+/* ---- SCROLL ROW ---- */
+function scrollRow(id, dir) {
+  const el = document.getElementById(id);
+  el.scrollBy({ left: dir * 600, behavior:'smooth' });
+}
+
+/* ---- NAV SCROLL ---- */
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+/* ---- FADE IN ---- */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; }
+  });
+}, { threshold:0.04 });
+document.querySelectorAll('.movie-card, .featured-banner, .stats-grid, .promo-strip, .cw-card').forEach(el => {
+  el.style.opacity='0'; el.style.transform='translateY(22px)';
+  el.style.transition='opacity 0.6s ease, transform 0.6s ease';
+  io.observe(el);
+});
+
+/* ---- TOAST ---- */
+function toast(msg, type='ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='ok'?'✓':'✕'}</span> ${msg}`;
+  document.getElementById('toastWrap').appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+function wishToast() { toast('Жагсаалтад нэмэгдлээ'); }
+</script>
+</body>
+</html>

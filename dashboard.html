@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Миний Профайл — NEW DRAMA</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ===== LAYOUT ===== */
+.dash-wrap {
+  display:grid; grid-template-columns:260px 1fr;
+  min-height:100vh; padding-top:68px;
+}
+
+/* ===== SIDEBAR ===== */
+.dash-side {
+  background:rgba(7,7,14,0.7);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  position:sticky; top:68px;
+  height:calc(100vh - 68px);
+  overflow-y:auto;
+}
+.dash-profile {
+  padding:2rem 1.5rem 1.75rem;
+  border-bottom:1px solid var(--border);
+  text-align:center;
+}
+.dash-av {
+  width:76px; height:76px; border-radius:50%;
+  background:var(--grad); margin:0 auto 1rem;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.7rem; font-weight:800; color:#07070e;
+  box-shadow:0 0 32px rgba(0,229,255,0.25);
+  animation:pulse-glow 3s ease-in-out infinite;
+}
+.dash-name { font-weight:700; font-size:1rem; color:#fff; margin-bottom:0.2rem; }
+.dash-email { font-size:0.75rem; color:var(--text-dim); margin-bottom:1rem; }
+.dash-plan-badge {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  padding:0.3rem 1rem; border-radius:99px;
+  background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.2);
+  font-size:0.65rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:var(--cyan);
+}
+
+.dash-nav { padding:1rem 0; flex:1; }
+.dash-nav-section {
+  padding:0.6rem 1.5rem 0.3rem;
+  font-size:0.6rem; letter-spacing:3.5px; text-transform:uppercase;
+  color:var(--text-muted); font-weight:700;
+}
+.dash-nav-item {
+  display:flex; align-items:center; gap:0.875rem;
+  padding:0.8rem 1.5rem; color:var(--text-dim); font-size:0.86rem;
+  font-weight:500; cursor:pointer; text-decoration:none;
+  transition:all 0.25s; border-left:2px solid transparent;
+  position:relative;
+}
+.dash-nav-item:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+.dash-nav-item.active { color:#fff; border-left-color:var(--cyan); background:rgba(0,229,255,0.05); }
+.dash-nav-icon { font-size:1rem; width:22px; text-align:center; flex-shrink:0; }
+.dash-nav-badge {
+  margin-left:auto; background:var(--grad); color:#07070e;
+  font-size:0.6rem; font-weight:800; padding:0.15rem 0.5rem;
+  border-radius:99px; min-width:18px; text-align:center;
+}
+
+.dash-side-footer {
+  padding:1.25rem 1.5rem; border-top:1px solid var(--border);
+}
+
+/* ===== MAIN ===== */
+.dash-main { background:var(--darker); overflow-y:auto; }
+.dash-panel { display:none; padding:2.5rem; animation:fadeIn 0.3s ease; }
+.dash-panel.active { display:block; }
+
+/* ===== HOME PANEL ===== */
+.welcome-card {
+  border-radius:var(--radius-xl); overflow:hidden;
+  background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(168,85,247,0.07));
+  border:1px solid rgba(0,229,255,0.14);
+  padding:2.25rem 2.5rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1.5rem; flex-wrap:wrap; margin-bottom:2.5rem;
+  position:relative; overflow:hidden;
+}
+.welcome-card::before {
+  content:''; position:absolute; right:-40px; top:-40px;
+  width:220px; height:220px; border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,0.1),transparent 70%);
+  pointer-events:none;
+}
+.welcome-card h2 { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; color:#fff; margin-bottom:0.35rem; }
+.welcome-card p { color:var(--text-dim); font-size:0.88rem; }
+
+.qs-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2.5rem; }
+.qs-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.25rem;
+  display:flex; align-items:center; gap:1rem;
+  transition:border-color 0.3s, transform 0.3s;
+}
+.qs-card:hover { border-color:rgba(0,229,255,0.2); transform:translateY(-2px); }
+.qs-icon { font-size:1.4rem; flex-shrink:0; }
+.qs-num { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; line-height:1; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.qs-lbl { font-size:0.68rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.1rem; }
+
+/* Continue watching row */
+.cw-row { display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.5rem; margin-bottom:3rem; }
+.cw-row::-webkit-scrollbar { height:3px; }
+.cw-mini {
+  flex-shrink:0; width:200px; border-radius:var(--radius);
+  background:var(--card); border:1px solid var(--border);
+  overflow:hidden; cursor:pointer; text-decoration:none; display:block;
+  transition:transform 0.3s, border-color 0.3s;
+}
+.cw-mini:hover { transform:translateY(-4px); border-color:rgba(0,229,255,0.15); }
+.cw-mini-thumb {
+  aspect-ratio:16/9;
+  background:linear-gradient(160deg,#1e0b3d,#0c1a2e);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.6rem; position:relative; overflow:hidden;
+}
+.cw-mini-prog { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.1); }
+.cw-mini-bar { height:100%; background:var(--grad); }
+.cw-mini-info { padding:0.75rem; }
+.cw-mini-title { font-size:0.84rem; font-weight:600; color:#fff; margin-bottom:0.2rem; }
+.cw-mini-meta { font-size:0.7rem; color:var(--text-dim); }
+
+/* ===== SUBSCRIPTION PANEL ===== */
+.sub-hero {
+  border-radius:var(--radius-xl);
+  background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(168,85,247,0.07));
+  border:1px solid rgba(0,229,255,0.18);
+  padding:2rem 2.5rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1.5rem; flex-wrap:wrap; margin-bottom:2rem;
+}
+.sub-hero-info h4 { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; color:#fff; margin-bottom:0.3rem; }
+.sub-hero-info p { color:var(--text-dim); font-size:0.84rem; }
+.sub-stats { display:flex; gap:2rem; flex-wrap:wrap; }
+.sub-stat { text-align:center; }
+.sub-stat-val { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.sub-stat-lbl { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; }
+
+.pay-table {
+  width:100%; border-collapse:collapse;
+  background:var(--card); border-radius:var(--radius-lg); overflow:hidden;
+  border:1px solid var(--border);
+}
+.pay-table th {
+  padding:1rem 1.5rem; text-align:left;
+  font-size:0.68rem; color:var(--text-dim); font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02);
+}
+.pay-table td { padding:1rem 1.5rem; font-size:0.86rem; border-bottom:1px solid rgba(255,255,255,0.04); }
+.pay-table tr:last-child td { border-bottom:none; }
+.pay-table tr:hover td { background:rgba(255,255,255,0.02); }
+.pay-amount { font-weight:700; color:var(--cyan); }
+.pay-method-tag {
+  display:inline-flex; align-items:center; gap:0.3rem;
+  padding:0.2rem 0.6rem; border-radius:6px;
+  background:var(--card); border:1px solid var(--border);
+  font-size:0.72rem; color:var(--text-dim);
+}
+
+/* ===== SETTINGS PANEL ===== */
+.settings-wrap { max-width:560px; }
+.settings-block { margin-bottom:2.5rem; }
+.settings-block-title {
+  font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:3px;
+  color:#fff; margin-bottom:1.5rem; padding-bottom:0.75rem;
+  border-bottom:1px solid var(--border);
+}
+.form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+.toggle-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.toggle-row:last-child { border-bottom:none; }
+.toggle-row-label { font-size:0.88rem; color:var(--text); }
+.toggle-row-sub { font-size:0.73rem; color:var(--text-dim); margin-top:0.15rem; }
+.mini-sw {
+  width:44px; height:24px; border-radius:99px;
+  background:var(--card); border:1px solid var(--border);
+  position:relative; cursor:pointer; flex-shrink:0; transition:all 0.3s;
+}
+.mini-sw.on { background:rgba(0,229,255,0.15); border-color:var(--cyan); }
+.mini-knob { position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--text-dim); transition:all 0.3s; }
+.mini-sw.on .mini-knob { left:22px; background:var(--cyan); }
+
+/* ===== WISHLIST ===== */
+.wish-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:1.1rem; }
+
+/* ===== HISTORY ===== */
+.hist-list { display:flex; flex-direction:column; gap:0.75rem; }
+.hist-item {
+  display:flex; align-items:center; gap:1rem;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1rem; text-decoration:none;
+  transition:border-color 0.25s;
+}
+.hist-item:hover { border-color:rgba(255,255,255,0.1); }
+.hist-thumb {
+  width:60px; height:86px; border-radius:var(--radius-sm); flex-shrink:0;
+  background:linear-gradient(160deg,#1e0b3d,#07070e);
+  display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+}
+.hist-title { font-weight:600; font-size:0.9rem; color:var(--text); margin-bottom:0.25rem; }
+.hist-meta { font-size:0.76rem; color:var(--text-dim); margin-bottom:0.5rem; }
+.hist-prog { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; flex:1; }
+.hist-prog div { height:100%; background:var(--grad); }
+.hist-date { font-size:0.7rem; color:var(--text-muted); flex-shrink:0; text-align:right; }
+
+/* ===== PAGE HEADER ===== */
+.panel-header { margin-bottom:2rem; }
+.panel-label { font-size:0.65rem; letter-spacing:4px; text-transform:uppercase; color:var(--purple); margin-bottom:0.4rem; font-weight:700; }
+.panel-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:3px; color:#fff; }
+
+@media (max-width:900px) {
+  .dash-wrap { grid-template-columns:1fr; }
+  .dash-side { position:static; height:auto; border-right:none; border-bottom:1px solid var(--border); }
+  .dash-profile { display:flex; align-items:center; gap:1rem; text-align:left; padding:1rem 1.25rem; }
+  .dash-av { width:50px; height:50px; font-size:1.1rem; margin:0; animation:none; }
+  .dash-nav { display:flex; overflow-x:auto; gap:0; padding:0.25rem 0; }
+  .dash-nav-section { display:none; }
+  .dash-nav-item { border-left:none; border-bottom:2px solid transparent; white-space:nowrap; padding:0.75rem 1rem; }
+  .dash-nav-item.active { border-left:none; border-bottom-color:var(--cyan); }
+  .dash-panel { padding:1.5rem 1rem; }
+  .qs-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="film-strip"></div>
+
+<nav>
+  <a href="index.html" class="logo">NEW DRAMA<span>Cinema & Series</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Нүүр</a></li>
+    <li><a href="index.html#movies">Кино</a></li>
+    <li><a href="pricing.html">Үнэ</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-avatar" title="Профайл">Б</div>
+    <button class="btn-ghost" onclick="logout()" style="font-size:.8rem;padding:.42rem .9rem;">Гарах</button>
+  </div>
+</nav>
+
+<div class="dash-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-side">
+    <div class="dash-profile">
+      <div class="dash-av">Б</div>
+      <div>
+        <div class="dash-name">Болд Баатар</div>
+        <div class="dash-email">bold@gmail.com</div>
+        <div class="dash-plan-badge">✦ Стандарт багц</div>
+      </div>
+    </div>
+
+    <nav class="dash-nav">
+      <div class="dash-nav-section">Үндсэн</div>
+      <a class="dash-nav-item active" onclick="go('home',this)">
+        <span class="dash-nav-icon">🏠</span> Нүүр
+      </a>
+      <a class="dash-nav-item" onclick="go('wish',this)">
+        <span class="dash-nav-icon">♥</span> Хадгалсан
+        <span class="dash-nav-badge">4</span>
+      </a>
+      <a class="dash-nav-item" onclick="go('history',this)">
+        <span class="dash-nav-icon">🕐</span> Үзсэн түүх
+      </a>
+      <div class="dash-nav-section">Аккаунт</div>
+      <a class="dash-nav-item" onclick="go('sub',this)">
+        <span class="dash-nav-icon">💎</span> Багц & Төлбөр
+      </a>
+      <a class="dash-nav-item" onclick="go('settings',this)">
+        <span class="dash-nav-icon">⚙️</span> Тохиргоо
+      </a>
+    </nav>
+
+    <div class="dash-side-footer">
+      <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:var(--radius);padding:1rem;text-align:center;">
+        <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;">Багц дуусах хүртэл</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">18 хоног</div>
+        <a href="pricing.html" class="btn-primary" style="width:100%;justify-content:center;font-size:.78rem;padding:.55rem 1rem;margin-top:.875rem;border-radius:99px;">Сунгах</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+
+    <!-- HOME -->
+    <div class="dash-panel active" id="p-home">
+      <div class="welcome-card">
+        <div>
+          <h2>Сайн байна уу, Болд! 👋</h2>
+          <p>Өнөөдөр ямар кино үзэх вэ? 2,400+ контент хүлээж байна.</p>
+        </div>
+        <a href="index.html#movies" class="btn-primary">▶&nbsp; Кино үзэх</a>
+      </div>
+
+      <div class="qs-grid">
+        <div class="qs-card"><div class="qs-icon">🎬</div><div><div class="qs-num">24</div><div class="qs-lbl">Үзсэн кино</div></div></div>
+        <div class="qs-card"><div class="qs-icon">♥</div><div><div class="qs-num">12</div><div class="qs-lbl">Хадгалсан</div></div></div>
+        <div class="qs-card"><div class="qs-icon">⏱</div><div><div class="qs-num">48ц</div><div class="qs-lbl">Нийт цаг</div></div></div>
+        <div class="qs-card"><div class="qs-icon">🏆</div><div><div class="qs-num">18</div><div class="qs-lbl">Багц хоног</div></div></div>
+      </div>
+
+      <div class="panel-header">
+        <div class="panel-label">✦ Үргэлжлүүлэх</div>
+        <h2 class="panel-title">Зогссон Кинонууд</h2>
+      </div>
+      <div class="cw-row">
+        <a href="movie.html" class="cw-mini">
+          <div class="cw-mini-thumb">🎬<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:65%"></div></div></div>
+          <div class="cw-mini-info"><div class="cw-mini-title">Хар Шөнийн Нууц</div><div class="cw-mini-meta">65% · 47 мин үлдсэн</div></div>
+        </a>
+        <a href="movie.html" class="cw-mini">
+          <div class="cw-mini-thumb">🌺<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:30%"></div></div></div>
+          <div class="cw-mini-info"><div class="cw-mini-title">Хайрын Мэдрэмж</div><div class="cw-mini-meta">Анги 8 · 30%</div></div>
+        </a>
+        <a href="movie.html" class="cw-mini">
+          <div class="cw-mini-thumb">⚔️<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:90%"></div></div></div>
+          <div class="cw-mini-info"><div class="cw-mini-title">Эзэн Хааны Сүлд</div><div class="cw-mini-meta">90% · 14 мин үлдсэн</div></div>
+        </a>
+        <a href="movie.html" class="cw-mini">
+          <div class="cw-mini-thumb">🔥<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:100%"></div></div></div>
+          <div class="cw-mini-info"><div class="cw-mini-title">Галт Тэрэг</div><div class="cw-mini-meta">Дуусгасан ✓</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- WISHLIST -->
+    <div class="dash-panel" id="p-wish">
+      <div class="panel-header">
+        <div class="panel-label">✦ Хадгалсан</div>
+        <h2 class="panel-title">Миний Жагсаалт</h2>
+      </div>
+      <div class="wish-grid" id="wishGrid"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="dash-panel" id="p-history">
+      <div class="panel-header">
+        <div class="panel-label">✦ Түүх</div>
+        <h2 class="panel-title">Үзсэн Түүх</h2>
+      </div>
+      <div class="hist-list">
+        <a href="movie.html" class="hist-item">
+          <div class="hist-thumb">🎬</div>
+          <div style="flex:1;min-width:0;">
+            <div class="hist-title">Хар Шөнийн Нууц</div>
+            <div class="hist-meta">2024 · Триллер · 2ц 15мин</div>
+            <div class="hist-prog"><div style="width:65%;"></div></div>
+          </div>
+          <div class="hist-date">Өнөөдөр</div>
+        </a>
+        <a href="movie.html" class="hist-item">
+          <div class="hist-thumb">⚔️</div>
+          <div style="flex:1;min-width:0;">
+            <div class="hist-title">Эзэн Хааны Сүлд</div>
+            <div class="hist-meta">2023 · Түүхэн · 2ц 40мин</div>
+            <div class="hist-prog"><div style="width:90%;"></div></div>
+          </div>
+          <div class="hist-date">Өчигдөр</div>
+        </a>
+        <a href="movie.html" class="hist-item">
+          <div class="hist-thumb">🔥</div>
+          <div style="flex:1;min-width:0;">
+            <div class="hist-title">Галт Тэрэг</div>
+            <div class="hist-meta">2024 · Триллер · 2ц 5мин</div>
+            <div class="hist-prog"><div style="width:100%;"></div></div>
+          </div>
+          <div class="hist-date">3 өдрийн өмнө</div>
+        </a>
+        <a href="movie.html" class="hist-item">
+          <div class="hist-thumb">🌺</div>
+          <div style="flex:1;min-width:0;">
+            <div class="hist-title">Хайрын Мэдрэмж — Анги 8</div>
+            <div class="hist-meta">2024 · Драм цуврал</div>
+            <div class="hist-prog"><div style="width:30%;"></div></div>
+          </div>
+          <div class="hist-date">4 өдрийн өмнө</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SUBSCRIPTION -->
+    <div class="dash-panel" id="p-sub">
+      <div class="panel-header">
+        <div class="panel-label">✦ Багц</div>
+        <h2 class="panel-title">Багц & Төлбөр</h2>
+      </div>
+      <div class="sub-hero">
+        <div class="sub-hero-info">
+          <h4>✦ Стандарт Багц</h4>
+          <p>Идэвхтэй · 2024 оны 12 сарын 15 хүртэл</p>
+        </div>
+        <div class="sub-stats">
+          <div class="sub-stat"><div class="sub-stat-val">18</div><div class="sub-stat-lbl">Үлдсэн хоног</div></div>
+          <div class="sub-stat"><div class="sub-stat-val">9,900₮</div><div class="sub-stat-lbl">Сарын төлбөр</div></div>
+          <div class="sub-stat"><div class="sub-stat-val">2</div><div class="sub-stat-lbl">Төхөөрөмж</div></div>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+          <a href="pricing.html" class="btn-primary">Сунгах</a>
+          <button class="btn-ghost" onclick="cancelSub()" style="color:var(--danger);border-color:rgba(239,68,68,0.2);">Цуцлах</button>
+        </div>
+      </div>
+
+      <div class="panel-header" style="margin-top:1.5rem;">
+        <div class="panel-label">✦ Гүйлгээ</div>
+        <h2 class="panel-title" style="font-size:1.5rem;">Төлбөрийн Түүх</h2>
+      </div>
+      <table class="pay-table">
+        <thead>
+          <tr>
+            <th>Огноо</th><th>Тайлбар</th><th>Арга</th><th style="text-align:right;">Дүн</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text-dim);">2024.11.15</td>
+            <td>Стандарт Багц — 11-р сар</td>
+            <td><span class="pay-method-tag">📱 QPay</span></td>
+            <td style="text-align:right;" class="pay-amount">9,900₮</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-dim);">2024.10.15</td>
+            <td>Стандарт Багц — 10-р сар</td>
+            <td><span class="pay-method-tag">📱 QPay</span></td>
+            <td style="text-align:right;" class="pay-amount">9,900₮</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-dim);">2024.09.20</td>
+            <td>Галт Тэрэг — Нэг кино</td>
+            <td><span class="pay-method-tag">🏦 SocialPay</span></td>
+            <td style="text-align:right;" class="pay-amount">2,500₮</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="dash-panel" id="p-settings">
+      <div class="panel-header">
+        <div class="panel-label">✦ Тохиргоо</div>
+        <h2 class="panel-title">Аккаунт Тохиргоо</h2>
+      </div>
+      <div class="settings-wrap">
+        <div class="settings-block">
+          <div class="settings-block-title">Хувийн мэдээлэл</div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">Нэр</label><input class="form-input" value="Болд"></div>
+            <div class="form-group"><label class="form-label">Овог</label><input class="form-input" value="Баатар"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Имэйл</label><input class="form-input" type="email" value="bold@gmail.com"></div>
+          <div class="form-group"><label class="form-label">Утас</label><input class="form-input" type="tel" placeholder="+976 9999 9999"></div>
+          <button class="btn-primary" onclick="toast('✓ Тохиргоо хадгалагдлаа')">Хадгалах</button>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-title">Мэдэгдэл</div>
+          <div class="toggle-row">
+            <div><div class="toggle-row-label">Имэйл мэдэгдэл</div><div class="toggle-row-sub">Шинэ кино, цуврал гарахад</div></div>
+            <div class="mini-sw on" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-row-label">Төлбөрийн мэдэгдэл</div><div class="toggle-row-sub">Багц дуусахаас 3 хоногийн өмнө</div></div>
+            <div class="mini-sw on" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-row-label">Telegram мэдэгдэл</div><div class="toggle-row-sub">Bot холбох</div></div>
+            <div class="mini-sw" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-title">Нууц үг солих</div>
+          <div class="form-group"><label class="form-label">Одоогийн нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Шинэ нууц үг</label><input class="form-input" type="password" placeholder="8+ тэмдэгт"></div>
+          <button class="btn-secondary" onclick="toast('✓ Нууц үг солигдлоо')">Нууц үг солих</button>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-title" style="color:var(--danger);">Аюул бүхий үйлдэл</div>
+          <button class="btn-ghost" style="color:var(--danger);border-color:rgba(239,68,68,0.2);" onclick="deleteAcc()">🗑&nbsp; Аккаунт устгах</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// Wishlist data
+const wishMovies = [
+  {title:'Хар Шөнийн Нууц',year:'2024',genre:'Триллер',rating:'8.7',icon:'🎬'},
+  {title:'Тэнгэрийн Цэцэг',year:'2024',genre:'Анимэ',rating:'8.9',icon:'🌸'},
+  {title:'Хаадын Ордон',year:'2023',genre:'Түүхэн',rating:'9.1',icon:'👑'},
+  {title:'Зүрхний Аялал',year:'2024',genre:'Романтик',rating:'8.0',icon:'💕'},
+];
+document.getElementById('wishGrid').innerHTML = wishMovies.map(m=>`
+  <a href="movie.html" class="movie-card">
+    <div class="movie-poster"><span class="poster-icon">${m.icon}</span></div>
+    <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+    <div class="movie-card-info">
+      <div class="movie-card-title">${m.title}</div>
+      <div class="movie-card-meta"><span>${m.year} · ${m.genre}</span><span class="movie-card-rating">★ ${m.rating}</span></div>
+    </div>
+  </a>`).join('');
+
+function go(id, el) {
+  document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.dash-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function logout() { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
+function cancelSub() { if(confirm('Багцаа цуцлахдаа итгэлтэй байна уу?')) toast('Багц цуцлагдлаа. Сарын эцэс хүртэл үзэх боломжтой.'); }
+function deleteAcc() { if(confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?')) { toast('Аккаунт устгагдлаа.','err'); setTimeout(()=>location.href='index.html',1300); } }
+
+function toast(msg, type='ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  document.getElementById('toastWrap').appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+// Fade-in
+const io = new IntersectionObserver(e=>e.forEach(en=>{
+  if(en.isIntersecting){en.target.style.opacity='1';en.target.style.transform='translateY(0)';}
+}),{threshold:0.04});
+document.querySelectorAll('.qs-card,.cw-mini,.hist-item,.movie-card').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(16px)';
+  el.style.transition='opacity 0.5s ease,transform 0.5s ease';
+  io.observe(el);
+});
+</script>
+</body>
+</html>
