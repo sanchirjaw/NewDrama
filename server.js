@@ -14,12 +14,12 @@ const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME   = process.env.DB_NAME || 'newdrama';
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 
 let db;
 
