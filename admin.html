@@ -887,28 +887,35 @@ function renderRecentPayments() {
 
 /* ===== MOVIE MODAL ===== */
 let editingMovieId = null;
-function openMovieModal(id) {
-  editingMovieId = id||null;
-  const m = id ? moviesData.find(x=>x.id===id) : null;
+async function openMovieModal(id) {
+  editingMovieId = id || null;
+  // Локал массиваас хайх, олдохгүй бол MongoDB-с татах
+  let m = id ? moviesData.find(x => String(x._id||x.id) === String(id)) : null;
+  if (id && !m) {
+    try {
+      const r = await fetch(`/api/movies/${id}`);
+      if (r.ok) { m = await r.json(); }
+    } catch(_) {}
+  }
   document.getElementById('movieModalTitle').textContent = id ? 'Кино Засах' : 'Кино Нэмэх';
-  document.getElementById('mTitle').value    = m ? m.title : '';
-  document.getElementById('mTitleEn').value  = '';
-  document.getElementById('mYear').value     = m ? m.year : '2024';
-  document.getElementById('mRating').value   = m ? m.rating : '';
-  document.getElementById('mDur').value      = '';
-  document.getElementById('mVideoId').value  = m ? (m.videoId||'') : '';
-  document.getElementById('mPrice').value    = m ? (m.price ?? 0) : 0;
-  document.getElementById('mDesc').value     = m ? (m.desc||m.description||'') : '';
-  document.getElementById('mPreview').value  = m && m.previewMinutes != null ? m.previewMinutes : '';
-  document.getElementById('mThumb').value    = m ? (m.thumbnail||'') : '';
+  document.getElementById('mTitle').value   = m?.title        || '';
+  document.getElementById('mTitleEn').value = m?.titleEn      || '';
+  document.getElementById('mYear').value    = m?.year         || '2024';
+  document.getElementById('mRating').value  = m?.rating       || '';
+  document.getElementById('mDur').value     = m?.duration     || '';
+  document.getElementById('mVideoId').value = m?.videoId      || '';
+  document.getElementById('mPrice').value   = m?.price        ?? 0;
+  document.getElementById('mDesc').value    = m?.desc || m?.description || '';
+  document.getElementById('mPreview').value = m?.previewMinutes != null ? m.previewMinutes : '';
+  document.getElementById('mThumb').value   = m?.thumbnail    || '';
   document.getElementById('mThumbFileName').textContent = 'Файл сонгоогүй';
   const prevImg = document.getElementById('mThumbPreview');
   if (m?.thumbnail) { prevImg.src = m.thumbnail; prevImg.style.display = 'block'; }
   else { prevImg.style.display = 'none'; }
-  document.getElementById('mFree').checked      = m ? m.free : false;
-  document.getElementById('mHot').checked       = m ? m.hot : false;
-  document.getElementById('mFeatured').checked  = false;
-  if(m) document.getElementById('mGenre').value = m.genre;
+  document.getElementById('mFree').checked     = m?.free  || false;
+  document.getElementById('mHot').checked      = m?.hot   || false;
+  document.getElementById('mFeatured').checked = m?.featured || false;
+  if (m?.genre) document.getElementById('mGenre').value = m.genre;
   document.getElementById('movieModal').classList.add('show');
 }
 function closeMovieModal() { document.getElementById('movieModal').classList.remove('show'); }
@@ -943,8 +950,8 @@ async function saveMovie() {
   };
   if(editingMovieId) {
     await fetch(`/api/movies/${editingMovieId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
-    const m = moviesData.find(x=>x._id===editingMovieId||x.id===editingMovieId);
-    if(m) Object.assign(m, movieObj);
+    const idx = moviesData.findIndex(x => String(x._id||x.id) === String(editingMovieId));
+    if(idx > -1) Object.assign(moviesData[idx], movieObj);
     toast('✓ Кино шинэчлэгдлээ');
   } else {
     movieObj.views = 0;
