@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NewDrama</title>
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar" aria-label="Main navigation">
+      <a class="logo" href="/" aria-label="NewDrama home">NewDrama</a>
+      <div class="search-wrap">
+        <label class="sr-only" for="searchInput">Search movies</label>
+        <input id="searchInput" type="search" placeholder="Search movies..." autocomplete="off">
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-content">
+        <p class="eyebrow">Now streaming</p>
+        <h1 id="heroTitle">Dark stories, bright screens.</h1>
+        <p class="hero-copy">Browse a cinematic collection of dramas, thrillers, romances, and late-night favorites.</p>
+      </div>
+    </section>
+
+    <section class="movies-section" aria-labelledby="moviesTitle">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Featured library</p>
+          <h2 id="moviesTitle">Movies</h2>
+        </div>
+        <p id="movieCount" class="movie-count"></p>
+      </div>
+
+      <div id="movieGrid" class="movie-grid" aria-live="polite"></div>
+      <p id="emptyState" class="empty-state" hidden>No movies found.</p>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
