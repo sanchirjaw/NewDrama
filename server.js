@@ -9,6 +9,7 @@ const path       = require('path');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME   = process.env.DB_NAME || 'newdrama';
 
@@ -26,7 +27,7 @@ async function connect() {
   const client = await MongoClient.connect(MONGO_URI);
   db = client.db(DB_NAME);
   console.log(`✅  MongoDB: ${DB_NAME} холбогдлоо`);
-  app.listen(PORT, () => console.log(`🚀  Server: http://localhost:${PORT}`));
+  app.listen(PORT, HOST, () => console.log(`🚀  Server listening on ${HOST}:${PORT}`));
 }
 
 /* ── helpers ── */
