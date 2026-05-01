@@ -678,25 +678,46 @@ function openChoiceModal() {
 }
 function closeChoiceModal() { document.getElementById('choiceModal').classList.remove('show'); }
 
-function openQpay(plan) {
-  const p = planInfo[plan];
-  document.getElementById('qpayTitle').textContent  = p.title;
-  document.getElementById('qpayAmount').textContent = p.amount;
-  document.getElementById('qpayDesc').textContent   = p.desc;
+async function openQpay(plan) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    closeChoiceModal();
+    toast('⚠ Эхлээд нэвтэрнэ үү', 'err');
+    setTimeout(() => window.location.href = '/login', 1400);
+    return;
+  }
+
+  // Loading харуулах
   document.getElementById('choiceModal').classList.remove('show');
   document.getElementById('qpayModal').classList.add('show');
+  document.getElementById('qpayTitle').textContent  = 'Уншиж байна...';
+  document.getElementById('qpayAmount').textContent = '';
+  document.getElementById('qpayDesc').textContent   = 'был.mn холбогдож байна';
+
+  try {
+    const res  = await fetch('/api/byl/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, uid: user.uid }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Алдаа гарлаа');
+    }
+  } catch (e) {
+    document.getElementById('qpayModal').classList.remove('show');
+    document.getElementById('choiceModal').classList.add('show');
+    toast('❌ ' + e.message, 'err');
+  }
 }
 function closeQpay() { document.getElementById('qpayModal').classList.remove('show'); }
 function backToChoice() {
   document.getElementById('qpayModal').classList.remove('show');
   document.getElementById('choiceModal').classList.add('show');
 }
-
-function confirmPay() {
-  closeQpay();
-  toast('✓ Төлбөр хүлээн авлаа! Кино нээгдлээ.');
-  setTimeout(() => _loadVideo(), 800);
-}
+function confirmPay() { closeQpay(); }
 
 function switchDTab(id, el) {
   document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
