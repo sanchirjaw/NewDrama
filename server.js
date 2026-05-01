@@ -13,17 +13,20 @@ const HOST = '0.0.0.0';
 const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME   = process.env.DB_NAME || 'newdrama';
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
+// Middleware — must come before routes
 app.use(cors());
 app.use(express.json());
+
+// Static assets (css, js, images)
 app.use(express.static(path.join(__dirname)));
+
+// Page routes — explicit so /login works without .html
+const pages = ['index','admin','login','movie','dashboard','pricing'];
+pages.forEach(p => {
+  app.get(`/${p === 'index' ? '' : p}`, (req, res) => {
+    res.sendFile(path.join(__dirname, `${p}.html`));
+  });
+});
 
 let db;
 
