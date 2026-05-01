@@ -279,7 +279,7 @@
         <li><span class="chk">✓</span> 2 төхөөрөмж зэрэг</li>
         <li class="dim"><span class="nope">✗</span> 4K чанар</li>
       </ul>
-      <button class="plan-btn plan-btn-outline" onclick="openModal('monthly')">Багц авах · QPay</button>
+      <button class="plan-btn plan-btn-outline" onclick="startPayment('monthly', this)">Багц авах · QPay</button>
     </div>
 
     <!-- 3 сарын багц (featured) -->
@@ -304,7 +304,7 @@
         <li><span class="chk">✓</span> 3 төхөөрөмж зэрэг</li>
         <li><span class="chk">✓</span> Офлайн татаж авах</li>
       </ul>
-      <button class="plan-btn plan-btn-primary" onclick="openModal('quarterly')">Багц авах · QPay</button>
+      <button class="plan-btn plan-btn-primary" onclick="startPayment('quarterly', this)">Багц авах · QPay</button>
     </div>
 
     <!-- Дан кино -->
@@ -340,7 +340,7 @@
       <a href="index.html#movies" class="btn-secondary" style="padding:.65rem 1.4rem;font-size:.82rem;">Кино харах →</a>
     </div>
     <div class="per-movie-tiers">
-      <div class="tier-card" onclick="openModal('movie')">
+      <div class="tier-card" onclick="startPayment('movie', this)">
         <div class="tier-icon">🎬</div>
         <div class="tier-name">Дан кино</div>
         <div class="tier-price">3,400₮</div>
@@ -460,6 +460,21 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+if (!firebase.apps.length) {
+  firebase.initializeApp({
+    apiKey:            "AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM",
+    authDomain:        "newdrama-bec46.firebaseapp.com",
+    projectId:         "newdrama-bec46",
+    storageBucket:     "newdrama-bec46.firebasestorage.app",
+    messagingSenderId: "911248078297",
+    appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
+  });
+}
+</script>
+
 <script>
 // Read prices from admin settings
 let _p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
@@ -501,18 +516,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (modalAmt) modalAmt.textContent = `${plans.monthly.amount.toLocaleString()}₮ ${plans.monthly.label}`;
 });
 
-function openModal(planKey) {
-  const p = plans[planKey];
-  document.getElementById('modalTitle').textContent  = p.name;
-  document.getElementById('modalAmount').textContent = `${p.amount.toLocaleString()}₮ ${p.label}`;
-  document.getElementById('modal').classList.add('show');
+async function startPayment(planKey, btn) {
+  // Нэвтэрсэн эсэх шалгах
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    toast('⚠ Эхлээд нэвтэрнэ үү', 'err');
+    setTimeout(() => window.location.href = '/login', 1400);
+    return;
+  }
+  const origText = btn.textContent;
+  btn.disabled   = true;
+  btn.textContent = 'Уншиж байна...';
+  try {
+    const res  = await fetch('/api/byl/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planKey, uid: user.uid }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      btn.textContent = 'Шилжиж байна...';
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Алдаа гарлаа');
+    }
+  } catch (e) {
+    toast('❌ ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = origText;
+  }
 }
+function openModal(planKey) { startPayment(planKey, document.activeElement); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); }
-function confirmPay() {
-  closeModal();
-  toast('✓ Төлбөр хүлээн авлаа! Аккаунт идэвхжлээ.');
-  setTimeout(() => window.location.href = 'dashboard.html', 1400);
-}
 
 function selectPay(el) {
   document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));

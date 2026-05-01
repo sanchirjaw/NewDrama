@@ -159,6 +159,90 @@ app.delete('/api/expenses/:id', async (req, res) => {
 });
 
 /* ════════════════════════════════
+   BYL.MN PAYMENT
+════════════════════════════════ */
+const BYL_TOKEN      = process.env.BYL_TOKEN;
+const BYL_PROJECT_ID = process.env.BYL_PROJECT_ID || '568';
+
+// Invoice үүсгэж payment URL буцаана
+app.post('/api/byl/checkout', async (req, res) => {
+  const { plan, uid } = req.body;
+  if (!plan || !uid) return res.status(400).json({ error: 'plan болон uid шаардлагатай' });
+  if (!BYL_TOKEN)    return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
+
+  const planCfg = {
+    monthly:   { amount: 12000, name: '1 Сарын Багц',  days: 30 },
+    quarterly: { amount: 20000, name: '3 Сарын Багц',  days: 90 },
+    movie:     { amount: 3400,  name: 'Дан Кино',      days: 2  },
+  };
+  try {
+    const s = await col('settings').findOne({ _id: 'config' });
+    const pr = s?.prices || {};
+    if (pr.monthly)   planCfg.monthly.amount   = pr.monthly;
+    if (pr.quarterly) planCfg.quarterly.amount = pr.quarterly;
+    if (pr.movie)     planCfg.movie.amount     = pr.movie;
+  } catch (_) {}
+
+  const p = planCfg[plan];
+  if (!p) return res.status(400).json({ error: 'Буруу план' });
+
+  try {
+    const r = await fetch(`https://byl.mn/api/v1/projects/${BYL_PROJECT_ID}/invoices`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${BYL_TOKEN}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount: p.amount, description: `NEW DRAMA · ${p.name}`, auto_advance: true }),
+    });
+    const data = await r.json();
+    const inv = data.data || data;
+    if (!inv?.url) return res.status(500).json({ error: 'Invoice үүсгэхэд алдаа', raw: data });
+
+    await col('payments').insertOne({
+      uid, plan, amount: p.amount, days: p.days,
+      status: 'pending',
+      date: new Date().toISOString().slice(0, 10),
+      bylInvoiceId: inv.id,
+    });
+
+    res.json({ url: inv.url });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Webhook — byl.mn invoice.paid дуудна
+app.post('/api/byl/webhook', async (req, res) => {
+  try {
+    const event = req.body;
+    if (event.type === 'invoice.paid') {
+      const invoiceId = event.data?.id;
+      const payment   = invoiceId ? await col('payments').findOne({ bylInvoiceId: invoiceId }) : null;
+      if (payment && payment.status !== 'paid') {
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + (payment.days || 30));
+        const user = await col('users').findOne({ uid: payment.uid });
+        await col('users').updateOne(
+          { uid: payment.uid },
+          { $set: { plan: payment.plan, planExpiry: expiry,
+                    totalPaid: (user?.totalPaid || 0) + payment.amount } }
+        );
+        await col('payments').updateOne(
+          { _id: payment._id },
+          { $set: { status: 'paid', paidAt: new Date() } }
+        );
+      }
+    }
+    res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error('Webhook алдаа:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ════════════════════════════════
    BUNNY — Video entry үүсгэх
 ════════════════════════════════ */
 app.post('/api/bunny/create-video', async (req, res) => {
