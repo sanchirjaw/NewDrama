@@ -525,7 +525,11 @@ function go(id, el) {
   el.classList.add('active');
 }
 
-function logout() { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
+function logout() {
+  if (typeof firebase !== 'undefined') {
+    firebase.auth().signOut().then(() => { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); });
+  } else { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
+}
 function cancelSub() { if(confirm('Багцаа цуцлахдаа итгэлтэй байна уу?')) toast('Багц цуцлагдлаа. Сарын эцэс хүртэл үзэх боломжтой.'); }
 function deleteAcc() { if(confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?')) { toast('Аккаунт устгагдлаа.','err'); setTimeout(()=>location.href='index.html',1300); } }
 
@@ -544,6 +548,32 @@ document.querySelectorAll('.qs-card,.cw-mini,.hist-item,.movie-card').forEach(el
   el.style.opacity='0';el.style.transform='translateY(16px)';
   el.style.transition='opacity 0.5s ease,transform 0.5s ease';
   io.observe(el);
+});
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+if (!firebase.apps.length) {
+  firebase.initializeApp({
+    apiKey:            "AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM",
+    authDomain:        "newdrama-bec46.firebaseapp.com",
+    projectId:         "newdrama-bec46",
+    storageBucket:     "newdrama-bec46.firebasestorage.app",
+    messagingSenderId: "911248078297",
+    appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
+  });
+}
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { location.href = 'login.html'; return; }
+  // User мэдээлэл харуулах
+  const nameEl  = document.getElementById('dashUserName');
+  const emailEl = document.getElementById('dashUserEmail');
+  const photoEl = document.getElementById('dashUserPhoto');
+  if (nameEl)  nameEl.textContent  = user.displayName || 'Хэрэглэгч';
+  if (emailEl) emailEl.textContent = user.email || '';
+  if (photoEl && user.photoURL) { photoEl.src = user.photoURL; photoEl.style.display = 'block'; }
 });
 </script>
 </body>

@@ -317,7 +317,9 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" placeholder="Хайх..." id="searchInput">
     </div>
-    <a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>
+    <div id="navAuthBtn">
+      <a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>
+    </div>
   </div>
 </nav>
 
@@ -797,6 +799,32 @@ function toast(msg, type='ok') {
   setTimeout(()=>t.remove(), 3200);
 }
 function wishToast() { toast('Жагсаалтад нэмэгдлээ'); }
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+if (!firebase.apps.length) {
+  firebase.initializeApp({
+    apiKey:            "AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM",
+    authDomain:        "newdrama-bec46.firebaseapp.com",
+    projectId:         "newdrama-bec46",
+    storageBucket:     "newdrama-bec46.firebasestorage.app",
+    messagingSenderId: "911248078297",
+    appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
+  });
+}
+firebase.auth().onAuthStateChanged(user => {
+  const btn = document.getElementById('navAuthBtn');
+  if (!btn) return;
+  if (user) {
+    const photo = user.photoURL ? `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:6px;">` : '👤';
+    btn.innerHTML = `<a href="dashboard.html" style="display:flex;align-items:center;padding:.4rem .9rem;background:rgba(255,255,255,0.08);border-radius:20px;font-size:.8rem;color:#fff;text-decoration:none;">${photo}${user.displayName?.split(' ')[0] || 'Профайл'}</a>`;
+  } else {
+    btn.innerHTML = `<a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>`;
+  }
+});
 </script>
 </body>
 </html>
