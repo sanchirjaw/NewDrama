@@ -606,31 +606,55 @@ async function loadMovieDetails() {
   try {
     const res = await fetch(`/api/movies/${_movieId}`);
     if (!res.ok) return;
-    const movie = await res.json();
-    if (movie.videoId && !_videoId) _videoId = movie.videoId;
+    const m = await res.json();
 
-    const title = movie.title || '';
-    const desc = movie.desc || movie.description || '';
-    const year = movie.year || '';
-    const genre = movie.genre || '';
-    const rating = movie.rating || '';
+    // videoId авах
+    if (m.videoId && !_videoId) _videoId = m.videoId;
 
-    if (title) {
-      document.title = `${title} - New Drama`;
-      const heroTitle = document.querySelector('.movie-hero-title');
-      if (heroTitle) heroTitle.textContent = title;
-      const relatedTitle = document.querySelector('.related-title');
-      if (relatedTitle) relatedTitle.textContent = title;
-    }
-    const descEl = document.querySelector('.movie-hero-desc');
-    if (descEl && desc) descEl.textContent = desc;
+    const title  = m.title    || '';
+    const desc   = m.desc     || m.description || '';
+    const year   = m.year     || '';
+    const genre  = m.genre    || '';
+    const rating = m.rating   || '';
+    const dur    = m.duration || '';
+    const lang   = m.lang     || 'Монгол дуу оруулга';
+
+    // Хуудасны гарчиг
+    if (title) document.title = `${title} — NEW DRAMA`;
+
+    // Hero
+    const heroTitle = document.querySelector('.movie-hero-title');
+    if (heroTitle && title) heroTitle.innerHTML = title;
+
+    const heroMeta = document.querySelector('.movie-hero-meta');
+    if (heroMeta) heroMeta.innerHTML =
+      `<span>🎬 ${year}</span><span>⏱ ${dur}</span><span>🎭 ${genre}</span><span>🔤 ${lang}</span>`;
+
+    const heroDesc = document.querySelector('.movie-hero-desc');
+    if (heroDesc && desc) heroDesc.textContent = desc;
+
+    // Player thumbnail нэр
+    const thumbName = document.querySelector('.player-thumb-name');
+    if (thumbName && title) thumbName.textContent = title.toUpperCase();
+
+    // Дэлгэрэнгүй хэсэг
     const detailDesc = document.querySelector('.movie-desc-text');
     if (detailDesc && desc) detailDesc.textContent = desc;
-    const meta = document.querySelector('.movie-hero-meta');
-    if (meta) {
-      meta.innerHTML = `<span>🎬 ${year}</span><span>⏱ ${movie.duration || ''}</span><span>🎭 ${genre}</span><span>★ ${rating}</span>`;
+
+    // Оноо
+    if (rating) {
+      const scoreEl = document.querySelector('.mhc-score');
+      if (scoreEl) scoreEl.textContent = rating;
     }
-  } catch(e) {}
+
+    // Poster icon
+    if (m.icon) {
+      const iconEl = document.querySelector('.poster-icon');
+      if (iconEl) iconEl.textContent = m.icon;
+      const thumbIcon = document.querySelector('.player-thumb-icon');
+      if (thumbIcon) thumbIcon.textContent = m.icon;
+    }
+  } catch(e) { console.warn('Movie details алдаа:', e.message); }
 }
 
 // Apply prices to choice modal cards and sidebar

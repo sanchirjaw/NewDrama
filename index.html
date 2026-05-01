@@ -574,7 +574,7 @@ function movieCardHTML(m, cls='') {
   const genreTag = `<span class="badge badge-left" style="background:rgba(0,0,0,0.5);border:1px solid ${s.accent}33;color:${s.accent};font-size:.58rem;">${m.genre}</span>`;
   const views = m.views ? `<span style="color:var(--text-dim);display:flex;align-items:center;gap:0.2rem;font-size:.72rem;">👁 ${fmtViews(m.views)}</span>` : '';
   return `
-  <a href="movie.html?vid=${m.videoId||''}&id=${m.id||''}" class="movie-card ${cls}" style="--card-glow:${s.glow};">
+  <a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="movie-card ${cls}" style="--card-glow:${s.glow};">
     <div class="movie-poster" style="background:${s.bg};">
       <span class="poster-icon" style="opacity:0.22;font-size:3rem;">${m.icon}</span>
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}18,transparent 65%);"></div>
