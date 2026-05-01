@@ -670,7 +670,29 @@ select.form-input option{background:var(--dark);}
           <input class="form-input" id="mPrice" type="number" min="0" step="100" placeholder="3400">
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Тайлбар</label><textarea class="form-input" id="mDesc" rows="3" placeholder="Кино тухай товч тайлбар..."></textarea></div>
+      <!-- Thumbnail -->
+      <div class="form-group">
+        <label class="form-label">Thumbnail зураг (URL)</label>
+        <div style="display:flex;gap:.5rem;align-items:flex-start;">
+          <div style="flex:1;">
+            <input class="form-input" id="mThumb" placeholder="https://... эсвэл файл upload хийх">
+            <div style="margin-top:.4rem;display:flex;gap:.5rem;align-items:center;">
+              <input type="file" id="mThumbFile" accept="image/*" style="display:none;" onchange="handleThumbSelect(this)">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mThumbFile').click()">🖼 Зураг сонгох</button>
+              <span id="mThumbFileName" style="font-size:.73rem;color:var(--text-dim);">Файл сонгоогүй</span>
+            </div>
+          </div>
+          <img id="mThumbPreview" src="" style="width:72px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:none;flex-shrink:0;">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Тайлбар</label><textarea class="form-input" id="mDesc" rows="3" placeholder="Кино тухай товч тайлбар..."></textarea></div>
+        <div class="form-group">
+          <label class="form-label">Preview хугацаа (минут) <span style="color:var(--text-muted);font-weight:400;">— 0 = шууд paywall</span></label>
+          <input class="form-input" id="mPreview" type="number" min="0" max="60" placeholder="3">
+          <div style="font-size:.72rem;color:var(--text-dim);margin-top:.3rem;">Хоосон = ерөнхий тохиргоо ашиглана</div>
+        </div>
+      </div>
       <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
         <label class="form-check"><input type="checkbox" id="mFree"> Үнэгүй</label>
         <label class="form-check"><input type="checkbox" id="mHot"> 🔥 Hot</label>
@@ -874,10 +896,16 @@ function openMovieModal(id) {
   document.getElementById('mDur').value      = '';
   document.getElementById('mVideoId').value  = m ? (m.videoId||'') : '';
   document.getElementById('mPrice').value    = m ? (m.price ?? _defPrice()) : _defPrice();
-  document.getElementById('mDesc').value     = '';
-  document.getElementById('mFree').checked   = m ? m.free : false;
-  document.getElementById('mHot').checked    = m ? m.hot : false;
-  document.getElementById('mFeatured').checked = false;
+  document.getElementById('mDesc').value     = m ? (m.desc||m.description||'') : '';
+  document.getElementById('mPreview').value  = m && m.previewMinutes != null ? m.previewMinutes : '';
+  document.getElementById('mThumb').value    = m ? (m.thumbnail||'') : '';
+  document.getElementById('mThumbFileName').textContent = 'Файл сонгоогүй';
+  const prevImg = document.getElementById('mThumbPreview');
+  if (m?.thumbnail) { prevImg.src = m.thumbnail; prevImg.style.display = 'block'; }
+  else { prevImg.style.display = 'none'; }
+  document.getElementById('mFree').checked      = m ? m.free : false;
+  document.getElementById('mHot').checked       = m ? m.hot : false;
+  document.getElementById('mFeatured').checked  = false;
   if(m) document.getElementById('mGenre').value = m.genre;
   document.getElementById('movieModal').classList.add('show');
 }
@@ -898,13 +926,18 @@ async function saveMovie() {
   if(!title){toast('Гарчиг оруулна уу','err');return;}
   const price   = parseInt(document.getElementById('mPrice').value)||0;
   const isFree  = document.getElementById('mFree').checked || price===0;
+  const previewVal = document.getElementById('mPreview').value;
   const movieObj = {
     title, price, free:isFree,
-    genre:    document.getElementById('mGenre').value,
-    year:     document.getElementById('mYear').value,
-    rating:   document.getElementById('mRating').value||'—',
-    hot:      document.getElementById('mHot').checked,
-    videoId:  document.getElementById('mVideoId').value,
+    genre:          document.getElementById('mGenre').value,
+    year:           document.getElementById('mYear').value,
+    rating:         document.getElementById('mRating').value||'—',
+    duration:       document.getElementById('mDur').value,
+    hot:            document.getElementById('mHot').checked,
+    videoId:        document.getElementById('mVideoId').value,
+    desc:           document.getElementById('mDesc').value,
+    thumbnail:      document.getElementById('mThumb').value,
+    previewMinutes: previewVal !== '' ? parseInt(previewVal) : null,
   };
   if(editingMovieId) {
     await fetch(`/api/movies/${editingMovieId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
@@ -1164,6 +1197,34 @@ function loadHeroCards() {
 
 /* ===== BUNNY UPLOAD ===== */
 let _selectedVideoFile = null;
+
+// Thumbnail зураг сонгоход preview харуулах + base64 → URL болгох
+function handleThumbSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('mThumbFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    document.getElementById('mThumb').value = url;
+    const img = document.getElementById('mThumbPreview');
+    img.src = url;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Thumbnail URL бичихэд шууд preview
+document.addEventListener('DOMContentLoaded', () => {
+  const thumbInput = document.getElementById('mThumb');
+  if (thumbInput) {
+    thumbInput.addEventListener('input', () => {
+      const img = document.getElementById('mThumbPreview');
+      if (thumbInput.value) { img.src = thumbInput.value; img.style.display = 'block'; }
+      else img.style.display = 'none';
+    });
+  }
+});
 
 function handleVideoFileSelect(input) {
   _selectedVideoFile = input.files[0];

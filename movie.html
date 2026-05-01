@@ -263,7 +263,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 
 <!-- CINEMATIC HERO -->
 <section class="movie-hero">
-  <div class="movie-hero-bg">🎬</div>
+  <div class="movie-hero-bg" id="heroBg">🎬</div>
   <div class="movie-hero-glow"></div>
   <div class="movie-hero-gradient"></div>
   <div class="movie-hero-content">
@@ -716,6 +716,24 @@ async function loadMovieDetails() {
       const thumbIcon = document.querySelector('.player-thumb-icon');
       if (thumbIcon) thumbIcon.textContent = m.icon;
     }
+
+    // Thumbnail — hero background + player thumb
+    if (m.thumbnail) {
+      const heroBg = document.getElementById('heroBg');
+      if (heroBg) {
+        heroBg.innerHTML = '';
+        heroBg.style.cssText += ';background-image:url(' + m.thumbnail + ');background-size:cover;background-position:center;opacity:0.18;font-size:0;';
+      }
+      const thumbIcon = document.querySelector('.player-thumb-icon');
+      if (thumbIcon) {
+        thumbIcon.innerHTML = `<img src="${m.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+        thumbIcon.style.fontSize = '0';
+      }
+    }
+
+    // Per-movie preview override
+    if (m.previewMinutes != null) _previewSeconds = m.previewMinutes * 60;
+
   } catch(e) { console.warn('Movie details алдаа:', e.message); }
 }
 

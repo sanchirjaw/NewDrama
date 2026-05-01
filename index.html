@@ -576,7 +576,10 @@ function movieCardHTML(m, cls='') {
   return `
   <a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="movie-card ${cls}" style="--card-glow:${s.glow};">
     <div class="movie-poster" style="background:${s.bg};">
-      <span class="poster-icon" style="opacity:0.22;font-size:3rem;">${m.icon}</span>
+      ${m.thumbnail
+        ? `<img src="${m.thumbnail}" alt="${m.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+        : `<span class="poster-icon" style="opacity:0.22;font-size:3rem;">${m.icon||'🎬'}</span>`
+      }
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}18,transparent 65%);"></div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
     </div>
