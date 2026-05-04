@@ -10,7 +10,11 @@
 .player-section {
   background:#000; position:relative;
 }
-.player-wrap { max-width:1100px; margin:0 auto; position:relative; }
+.player-with-sidebar {
+  max-width:1200px; margin:0 auto;
+  display:grid; grid-template-columns:1fr 280px;
+  align-items:start;
+}
 .player-container {
   width:100%; aspect-ratio:16/9;
   background:#000; position:relative; overflow:hidden;
@@ -53,10 +57,8 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 
 /* ===== DETAILS ===== */
 .details-wrap {
-  max-width:1100px; margin:0 auto;
+  max-width:1200px; margin:0 auto;
   padding:2.5rem 2rem;
-  display:grid; grid-template-columns:1fr 300px;
-  gap:2.5rem;
 }
 
 /* Tabs */
@@ -122,13 +124,13 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 .related-meta { font-size:0.73rem; color:var(--text-dim); }
 
 /* Sidebar */
-.movie-sidebar {}
+.movie-sidebar { background:var(--darker); padding:1rem; display:flex; flex-direction:column; gap:.75rem; }
 .info-card {
   background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius-lg); overflow:hidden; margin-bottom:1.25rem;
+  border-radius:var(--radius-lg); overflow:hidden;
 }
 .info-poster {
-  aspect-ratio:2/3;
+  aspect-ratio:16/9;
   background:linear-gradient(160deg,#1e0b3d,#07070e);
   display:flex; align-items:center; justify-content:center; font-size:4rem;
 }
@@ -156,8 +158,8 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 @media (max-width:1000px) {
   .movie-hero-content { grid-template-columns:1fr; }
   .movie-hero-card { display:none; }
-  .details-wrap { grid-template-columns:1fr; }
-  .movie-sidebar { display:flex; gap:1rem; flex-wrap:wrap; }
+  .player-with-sidebar { grid-template-columns:1fr; }
+  .movie-sidebar { flex-direction:row; flex-wrap:wrap; padding:.75rem; }
   .info-card { flex:1; min-width:200px; }
   .buy-card { flex:1; min-width:200px; }
 }
@@ -183,9 +185,9 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 </nav>
 
 
-<!-- PLAYER -->
+<!-- PLAYER + SIDEBAR -->
 <div class="player-section">
-  <div class="player-wrap">
+  <div class="player-with-sidebar">
     <div class="player-container" id="playerCont">
 
       <!-- Bunny.net embed -->
@@ -235,66 +237,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- DETAILS -->
-<div style="background:var(--darker);">
-  <div class="details-wrap">
-    <div>
-      <div class="dtabs">
-        <button class="dtab active" onclick="switchDTab('desc',this)">Тайлбар</button>
-        <button class="dtab" onclick="switchDTab('cast',this)">Дүрүүд</button>
-        <button class="dtab" onclick="switchDTab('related',this)">Ижил төрлийн</button>
-      </div>
-
-      <div class="dtab-panel active" id="dp-desc">
-        <p class="movie-desc-text">
-          Нууцлаг хэрэг хянан шийдвэрлэх ажиллагааны өрнөл. Залуу мөрдөгч нь хотын хамгийн аюултай гэмт хэргийг илрүүлэхэд хүч чармайлт гаргана. Хар шөнийн гэрэлд нуугдаж буй нууц нь түүний амьдралыг өөрчилнэ.
-          <br><br>
-          Хотын захаас олдсон нэгэн хохирогч нь хэргийг нэн даруй хянан шийдвэрлэх хэлтэст шилжүүлнэ. Мөрдөгч Ким Минжун хэргийг ганцаараа авч ажиллах болох боловч тэрбээр тун удалгүй энэ хэрэг зүгийн нэг аллагын хэрэг биш гэдгийг мэдэж авна.
-        </p>
-        <div class="score-row">
-          <div class="score-box"><div class="score-val" id="detailRating">—</div><div class="score-lbl">Оноо</div></div>
-          <div class="score-box"><div class="score-val" id="detailViews">—</div><div class="score-lbl">Үзсэн</div></div>
-          <div class="score-box"><div class="score-val" id="detailYear">—</div><div class="score-lbl">Жил</div></div>
-          <div class="score-box"><div class="score-val" id="detailGenre">—</div><div class="score-lbl">Жанр</div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 2rem;font-size:0.85rem;">
-          <div><span style="color:var(--text-dim);">Хугацаа: </span><span id="detailDur">—</span></div>
-          <div><span style="color:var(--text-dim);">Жанр: </span><span id="detailGenre2">—</span></div>
-          <div><span style="color:var(--text-dim);">Хэл: </span><span id="detailLang">Монгол дуу оруулга</span></div>
-          <div><span style="color:var(--text-dim);">Нэмэгдсэн: </span><span id="detailAdded">—</span></div>
-        </div>
-      </div>
-
-      <div class="dtab-panel" id="dp-cast">
-        <div class="cast-label">Гол дүрүүд</div>
-        <div class="cast-row">
-          <div class="cast-person"><div class="cast-av">👨</div><div class="cast-name">Ли Жун-ги</div></div>
-          <div class="cast-person"><div class="cast-av">👩</div><div class="cast-name">Сон Хе-гё</div></div>
-          <div class="cast-person"><div class="cast-av">👨‍🦳</div><div class="cast-name">Чои Мин-сик</div></div>
-          <div class="cast-person"><div class="cast-av">👩‍🦱</div><div class="cast-name">Пак Бо-янг</div></div>
-          <div class="cast-person"><div class="cast-av">🧔</div><div class="cast-name">Ким У-бин</div></div>
-        </div>
-        <div class="cast-label">Ажилтнууд</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.85rem;">
-          <div><span style="color:var(--text-dim);">Найруулагч: </span>Пак Жун-хо</div>
-          <div><span style="color:var(--text-dim);">Зохиолч: </span>Ли Сан-ил</div>
-          <div><span style="color:var(--text-dim);">Дуу: </span>Чон Жэ-иль</div>
-          <div><span style="color:var(--text-dim);">Оператор: </span>Ким Хён-сок</div>
-        </div>
-      </div>
-
-      <div class="dtab-panel" id="dp-related">
-        <a href="movie.html" class="related-item"><div class="related-thumb">🎬</div><div><div class="related-title">Сүүлчийн Мөрдөгч</div><div class="related-meta">2024 · Экшн · ★ 8.2</div></div></a>
-        <a href="movie.html" class="related-item"><div class="related-thumb">🔥</div><div><div class="related-title">Галт Тэрэг</div><div class="related-meta">2024 · Триллер · ★ 8.8</div></div></a>
-        <a href="movie.html" class="related-item"><div class="related-thumb">👻</div><div><div class="related-title">Харанхуйн Дуудлага</div><div class="related-meta">2024 · Аймшиг · ★ 8.5</div></div></a>
-        <a href="movie.html" class="related-item"><div class="related-thumb">⚔️</div><div><div class="related-title">Эзэн Хааны Сүлд</div><div class="related-meta">2023 · Түүхэн · ★ 9.0</div></div></a>
-      </div>
-    </div>
-
-    <!-- Sidebar -->
+    <!-- Sidebar — player-тай зэрэгцэнэ -->
     <div class="movie-sidebar">
       <div class="info-card">
         <div class="info-poster" id="sidebarPoster" style="cursor:pointer;" onclick="tryPlay()">🎬</div>
@@ -317,6 +260,62 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         </div>
         <button class="btn-primary" style="width:100%;margin-top:1.25rem;justify-content:center;border-radius:12px;" onclick="openChoiceModal()">QPay-ээр төлөх</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAILS -->
+<div style="background:var(--darker);">
+  <div class="details-wrap">
+    <div class="dtabs">
+      <button class="dtab active" onclick="switchDTab('desc',this)">Тайлбар</button>
+      <button class="dtab" onclick="switchDTab('cast',this)">Дүрүүд</button>
+      <button class="dtab" onclick="switchDTab('related',this)">Ижил төрлийн</button>
+    </div>
+
+    <div class="dtab-panel active" id="dp-desc">
+      <p class="movie-desc-text">
+        Нууцлаг хэрэг хянан шийдвэрлэх ажиллагааны өрнөл. Залуу мөрдөгч нь хотын хамгийн аюултай гэмт хэргийг илрүүлэхэд хүч чармайлт гаргана. Хар шөнийн гэрэлд нуугдаж буй нууц нь түүний амьдралыг өөрчилнэ.
+        <br><br>
+        Хотын захаас олдсон нэгэн хохирогч нь хэргийг нэн даруй хянан шийдвэрлэх хэлтэст шилжүүлнэ. Мөрдөгч Ким Минжун хэргийг ганцаараа авч ажиллах болох боловч тэрбээр тун удалгүй энэ хэрэг зүгийн нэг аллагын хэрэг биш гэдгийг мэдэж авна.
+      </p>
+      <div class="score-row">
+        <div class="score-box"><div class="score-val" id="detailRating">—</div><div class="score-lbl">Оноо</div></div>
+        <div class="score-box"><div class="score-val" id="detailViews">—</div><div class="score-lbl">Үзсэн</div></div>
+        <div class="score-box"><div class="score-val" id="detailYear">—</div><div class="score-lbl">Жил</div></div>
+        <div class="score-box"><div class="score-val" id="detailGenre">—</div><div class="score-lbl">Жанр</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 2rem;font-size:0.85rem;">
+        <div><span style="color:var(--text-dim);">Хугацаа: </span><span id="detailDur">—</span></div>
+        <div><span style="color:var(--text-dim);">Жанр: </span><span id="detailGenre2">—</span></div>
+        <div><span style="color:var(--text-dim);">Хэл: </span><span id="detailLang">Монгол дуу оруулга</span></div>
+        <div><span style="color:var(--text-dim);">Нэмэгдсэн: </span><span id="detailAdded">—</span></div>
+      </div>
+    </div>
+
+    <div class="dtab-panel" id="dp-cast">
+      <div class="cast-label">Гол дүрүүд</div>
+      <div class="cast-row">
+        <div class="cast-person"><div class="cast-av">👨</div><div class="cast-name">Ли Жун-ги</div></div>
+        <div class="cast-person"><div class="cast-av">👩</div><div class="cast-name">Сон Хе-гё</div></div>
+        <div class="cast-person"><div class="cast-av">👨‍🦳</div><div class="cast-name">Чои Мин-сик</div></div>
+        <div class="cast-person"><div class="cast-av">👩‍🦱</div><div class="cast-name">Пак Бо-янг</div></div>
+        <div class="cast-person"><div class="cast-av">🧔</div><div class="cast-name">Ким У-бин</div></div>
+      </div>
+      <div class="cast-label">Ажилтнууд</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.85rem;">
+        <div><span style="color:var(--text-dim);">Найруулагч: </span>Пак Жун-хо</div>
+        <div><span style="color:var(--text-dim);">Зохиолч: </span>Ли Сан-ил</div>
+        <div><span style="color:var(--text-dim);">Дуу: </span>Чон Жэ-иль</div>
+        <div><span style="color:var(--text-dim);">Оператор: </span>Ким Хён-сок</div>
+      </div>
+    </div>
+
+    <div class="dtab-panel" id="dp-related">
+      <a href="movie.html" class="related-item"><div class="related-thumb">🎬</div><div><div class="related-title">Сүүлчийн Мөрдөгч</div><div class="related-meta">2024 · Экшн · ★ 8.2</div></div></a>
+      <a href="movie.html" class="related-item"><div class="related-thumb">🔥</div><div><div class="related-title">Галт Тэрэг</div><div class="related-meta">2024 · Триллер · ★ 8.8</div></div></a>
+      <a href="movie.html" class="related-item"><div class="related-thumb">👻</div><div><div class="related-title">Харанхуйн Дуудлага</div><div class="related-meta">2024 · Аймшиг · ★ 8.5</div></div></a>
+      <a href="movie.html" class="related-item"><div class="related-thumb">⚔️</div><div><div class="related-title">Эзэн Хааны Сүлд</div><div class="related-meta">2023 · Түүхэн · ★ 9.0</div></div></a>
     </div>
   </div>
 </div>
