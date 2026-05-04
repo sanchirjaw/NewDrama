@@ -713,8 +713,8 @@ select.form-input option{background:var(--dark);}
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMovieModal()">Болих</button>
-      <button class="btn btn-ghost" id="uploadBtn" onclick="uploadAndSave()" style="color:var(--cyan);border-color:rgba(0,229,255,0.3);">⬆️ Upload & Хадгалах</button>
-      <button class="btn btn-primary" onclick="saveMovie()">✓ Хадгалах</button>
+      <button class="btn btn-ghost" onclick="saveMovie()" style="font-size:.78rem;color:var(--text-dim);">Видеогүй хадгалах</button>
+      <button class="btn btn-primary" id="uploadBtn" onclick="uploadAndSave()">⬆️ Upload & Хадгалах</button>
     </div>
   </div>
 </div>
@@ -1092,13 +1092,18 @@ async function openMovieModal(id) {
 function closeMovieModal() { document.getElementById('movieModal').classList.remove('show'); }
 function editMovie(id) { openMovieModal(id); }
 async function uploadAndSave() {
+  if (!_selectedVideoFile) { toast('Видео файл сонгоно уу', 'err'); return; }
   const btn = document.getElementById('uploadBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Upload хийж байна...';
   const videoId = await uploadVideoToBunny();
-  btn.disabled = false;
-  btn.textContent = '⬆️ Upload & Хадгалах';
-  if (videoId) saveMovie();
+  if (videoId) {
+    btn.textContent = '💾 Хадгалж байна...';
+    await saveMovie();
+  } else {
+    btn.disabled = false;
+    btn.textContent = '⬆️ Upload & Хадгалах';
+  }
 }
 
 async function saveMovie() {
