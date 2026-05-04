@@ -465,6 +465,10 @@ firebase.auth().onAuthStateChanged(async user => {
     const active = expiry ? expiry > new Date() : false;
     if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
     if (plan === 'movie' && active) subscribed = true;
+    // Төлбөр хийгээд буцаж ирсэн бол автоматаар тоглуулна
+    if (subscribed && document.getElementById('playerThumb')?.style.display !== 'none') {
+      setTimeout(() => tryPlay(), 800);
+    }
   } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
 
 });
@@ -708,7 +712,7 @@ async function openQpay(plan) {
     const res  = await fetch('/api/byl/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null }),
+      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null, returnUrl: window.location.href }),
     });
     const data = await res.json();
     if (data.url) {

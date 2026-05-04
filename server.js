@@ -231,7 +231,12 @@ app.post('/api/byl/checkout', async (req, res) => {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ amount: p.amount, description: `NEW DRAMA · ${p.name}`, auto_advance: true }),
+      body: JSON.stringify({
+        amount: p.amount,
+        description: `NEW DRAMA · ${p.name}`,
+        auto_advance: true,
+        success_url: req.body.returnUrl || 'https://newdrama.mn',
+      }),
     });
     const data = await r.json();
     const inv = data.data || data;
