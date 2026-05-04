@@ -6,85 +6,6 @@
 <title>Хар Шөнийн Нууц — NEW DRAMA</title>
 <link rel="stylesheet" href="assets/style.css">
 <style>
-/* ===== CINEMATIC HERO ===== */
-.movie-hero {
-  position:relative; min-height:100vh;
-  display:flex; align-items:flex-end;
-  padding-top:68px; overflow:hidden;
-}
-.movie-hero-bg {
-  position:absolute; inset:0; z-index:0;
-  background:linear-gradient(160deg, #1e0b3d 0%, #0c1a2e 40%, #07070e 100%);
-  display:flex; align-items:center; justify-content:center; font-size:18rem;
-  opacity:0.06;
-}
-.movie-hero-gradient {
-  position:absolute; inset:0; z-index:1;
-  background:
-    linear-gradient(to top, rgba(7,7,14,1) 0%, rgba(7,7,14,0.6) 40%, rgba(7,7,14,0.15) 100%),
-    linear-gradient(to right, rgba(7,7,14,0.9) 0%, rgba(7,7,14,0.2) 50%, transparent 100%);
-}
-.movie-hero-glow {
-  position:absolute; inset:0; z-index:0;
-  background:
-    radial-gradient(ellipse 60% 50% at 70% 30%, rgba(168,85,247,0.1) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 30% 70%, rgba(0,229,255,0.06) 0%, transparent 50%);
-}
-.movie-hero-content {
-  position:relative; z-index:2;
-  max-width:1280px; margin:0 auto; width:100%;
-  padding:3rem 2rem 4rem;
-  display:grid; grid-template-columns:1fr 200px;
-  gap:2rem; align-items:end;
-}
-
-/* Left info */
-.movie-hero-eyebrow {
-  display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap;
-}
-.mh-badge {
-  display:inline-flex; align-items:center; gap:0.4rem;
-  padding:0.28rem 0.875rem; border-radius:99px;
-  font-size:0.65rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;
-  backdrop-filter:blur(8px);
-}
-.mh-badge-new { background:rgba(0,229,255,0.12); border:1px solid rgba(0,229,255,0.25); color:var(--cyan); }
-.mh-badge-hd  { background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.25); color:var(--purple); }
-.mh-badge-age { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:var(--text-dim); }
-
-.movie-hero-title {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(3rem,7vw,6rem); letter-spacing:5px; line-height:0.92;
-  color:#fff; margin-bottom:1.25rem;
-}
-.movie-hero-meta {
-  display:flex; gap:1.5rem; flex-wrap:wrap;
-  color:var(--text-dim); font-size:0.84rem; margin-bottom:1.5rem;
-}
-.movie-hero-meta span { display:flex; align-items:center; gap:0.4rem; }
-.movie-hero-desc {
-  color:rgba(238,238,245,0.65); font-size:0.92rem; line-height:1.75;
-  max-width:520px; margin-bottom:2rem; font-weight:300;
-}
-.movie-hero-actions { display:flex; gap:0.875rem; flex-wrap:wrap; align-items:center; }
-
-/* Right rating card */
-.movie-hero-card {
-  background:rgba(12,12,20,0.8); border:1px solid rgba(255,255,255,0.08);
-  border-radius:var(--radius-lg); padding:1.1rem;
-  backdrop-filter:blur(20px); text-align:center;
-}
-.mhc-score {
-  font-family:'Bebas Neue',sans-serif; font-size:2.8rem; line-height:1;
-  background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-}
-.mhc-stars { color:var(--cyan); font-size:0.65rem; letter-spacing:2px; margin-bottom:0.25rem; }
-.mhc-count { font-size:0.6rem; color:var(--text-dim); margin-bottom:0.75rem; }
-.mhc-divider { height:1px; background:var(--border); margin-bottom:0.75rem; }
-.mhc-stat { margin-bottom:0.55rem; }
-.mhc-stat-val { font-family:'Bebas Neue',sans-serif; font-size:0.95rem; color:#fff; }
-.mhc-stat-lbl { font-size:0.55rem; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-top:0.05rem; }
-
 /* ===== PLAYER SECTION ===== */
 .player-section {
   background:#000; position:relative;
@@ -261,34 +182,6 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
   </div>
 </nav>
 
-<!-- CINEMATIC HERO -->
-<section class="movie-hero">
-  <div class="movie-hero-bg" id="heroBg">🎬</div>
-  <div class="movie-hero-glow"></div>
-  <div class="movie-hero-gradient"></div>
-  <div class="movie-hero-content">
-    <div>
-      <div class="movie-hero-eyebrow">
-        <span class="mh-badge mh-badge-hd">Full HD</span>
-        <span class="mh-badge mh-badge-age">16+</span>
-      </div>
-      <h1 class="movie-hero-title"> </h1>
-      <div class="movie-hero-meta"></div>
-      <p class="movie-hero-desc"> </p>
-      <div class="movie-hero-actions">
-        <button class="btn-primary" onclick="tryPlay()">▶&nbsp; Үзэх</button>
-        <button class="btn-secondary" onclick="toggleWish(this)">♡&nbsp; Хадгалах</button>
-        <button class="btn-icon" onclick="shareIt()" title="Хуваалцах">↗</button>
-      </div>
-    </div>
-    <div class="movie-hero-card">
-      <div class="mhc-score" id="heroScore">—</div>
-      <div class="mhc-stars">★★★★☆</div>
-      <div class="mhc-divider"></div>
-      <div class="mhc-stat"><div class="mhc-stat-val" id="heroViews">—</div><div class="mhc-stat-lbl">Үзсэн</div></div>
-    </div>
-  </div>
-</section>
 
 <!-- PLAYER -->
 <div class="player-section">
@@ -691,17 +584,6 @@ async function loadMovieDetails() {
     // Хуудасны гарчиг
     if (title) document.title = `${title} — NEW DRAMA`;
 
-    // Hero
-    const heroTitle = document.querySelector('.movie-hero-title');
-    if (heroTitle && title) heroTitle.innerHTML = title;
-
-    const heroMeta = document.querySelector('.movie-hero-meta');
-    if (heroMeta) heroMeta.innerHTML =
-      `<span>🎬 ${year}</span><span>⏱ ${dur}</span><span>🎭 ${genre}</span><span>🔤 ${lang}</span>`;
-
-    const heroDesc = document.querySelector('.movie-hero-desc');
-    if (heroDesc && desc) heroDesc.textContent = desc;
-
     // Player thumbnail нэр
     const thumbName = document.querySelector('.player-thumb-name');
     if (thumbName && title) thumbName.textContent = title.toUpperCase();
@@ -712,8 +594,7 @@ async function loadMovieDetails() {
 
     // Оноо + үзсэн
     const fmtV = n => n >= 10000 ? (n/10000).toFixed(1)+'w' : n >= 1000 ? (n/1000).toFixed(1)+'к' : (n||'—');
-    if (rating) { setEl('heroScore', rating); setEl('detailRating', rating); }
-    setEl('heroViews', fmtV(m.views));
+    if (rating) setEl('detailRating', rating);
     setEl('detailViews', fmtV(m.views));
 
     // Poster icon
