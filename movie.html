@@ -648,9 +648,22 @@ function _onVideoMessage(e) {
   if (typeof data === 'string') { try { data = JSON.parse(data); } catch(_) { return; } }
 
   // Bunny player timeupdate: { event:'timeupdate', currentTime: X }
-  // эсвэл { event:'ontimeupdate', seconds: X } хэлбэртэй байж болно
   const ct = data?.currentTime ?? data?.seconds ?? data?.data?.currentTime ?? null;
   if (ct === null) return;
+
+  const fr = document.getElementById('playerFrame');
+
+  // Хэрэглэгч preview хязгаараас цааш seek хийсэн бол буцаана
+  if (ct > _previewSeconds) {
+    if (fr?.contentWindow) {
+      fr.contentWindow.postMessage(JSON.stringify({ command: 'seek', time: _previewSeconds - 2 }), '*');
+      fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
+    }
+    window.removeEventListener('message', _onVideoMessage);
+    _previewTimer = null;
+    lockAfterPreview();
+    return;
+  }
 
   const remaining = Math.max(0, _previewSeconds - Math.floor(ct));
   const timeEl = document.getElementById('previewTime');
@@ -661,8 +674,6 @@ function _onVideoMessage(e) {
   if (ct >= _previewSeconds) {
     window.removeEventListener('message', _onVideoMessage);
     _previewTimer = null;
-    // Bunny iframe-г pause хийх
-    const fr = document.getElementById('playerFrame');
     if (fr?.contentWindow) fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
     lockAfterPreview();
   }
