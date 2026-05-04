@@ -381,9 +381,13 @@ function fmtViews(n) {
 }
 function movieCardHTML(m, cls='') {
   const s = genreStyle[m.genre] || genreStyle['default'];
-  const priceBadge = m.free
+  const isFree = m.free || m.price === 0;
+  const priceLabel = m.price != null && m.price > 0
+    ? m.price.toLocaleString() + '₮'
+    : (window._moviePrice || '3,400₮');
+  const priceBadge = isFree
     ? `<span class="badge badge-right badge-free">Үнэгүй</span>`
-    : `<span class="badge badge-right" style="background:rgba(0,0,0,0.65);border:1px solid ${s.accent}55;color:${s.accent};font-size:.62rem;font-weight:700;letter-spacing:.5px;">${window._moviePrice||'3,400₮'}</span>`;
+    : `<span class="badge badge-right" style="background:rgba(0,0,0,0.65);border:1px solid ${s.accent}55;color:${s.accent};font-size:.62rem;font-weight:700;letter-spacing:.5px;">${priceLabel}</span>`;
   const hotBadge = m.hot ? `<span class="badge badge-right" style="top:2.2rem;background:rgba(255,80,0,0.18);border:1px solid rgba(255,80,0,0.4);color:#ff6b35;font-size:.58rem;">🔥 Hot</span>` : '';
   const genreTag = `<span class="badge badge-left" style="background:rgba(0,0,0,0.5);border:1px solid ${s.accent}33;color:${s.accent};font-size:.58rem;">${m.genre}</span>`;
   const views = m.views ? `<span style="color:var(--text-dim);display:flex;align-items:center;gap:0.2rem;font-size:.72rem;">👁 ${fmtViews(m.views)}</span>` : '';
@@ -492,7 +496,7 @@ function renderTop10() {
     top10El.innerHTML += `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="top10-card">
       <div class="top10-num">${i+1}</div>
       <div class="top10-poster" style="background:${s.bg};display:flex;align-items:center;justify-content:center;font-size:2.5rem;">
-        ${m.icon||'🎬'}
+        ${m.thumbnail ? `<img src="${m.thumbnail}" alt="${m.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : (m.icon||'🎬')}
         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}22,transparent 65%);"></div>
       </div>
     </a>`;
@@ -541,7 +545,9 @@ function renderSeriesRow() {
     const s = genreStyle[m.genre] || genreStyle['default'];
     return `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="movie-card row-card-md">
       <div class="movie-poster" style="background:${s.bg};">
-        <span class="poster-icon" style="opacity:.25;font-size:2.5rem;">${m.icon||'🎬'}</span>
+        ${m.thumbnail
+          ? `<img src="${m.thumbnail}" alt="${m.title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+          : `<span class="poster-icon" style="opacity:.25;font-size:2.5rem;">${m.icon||'🎬'}</span>`}
         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}18,transparent 65%);"></div>
         <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
       </div>
