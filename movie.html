@@ -631,24 +631,41 @@ function _fmtTime(s) {
 
 function startPreviewTimer() {
   if (subscribed || _previewTimer || _previewSeconds <= 0) return;
-  const bar  = document.getElementById('previewBar');
+  const bar    = document.getElementById('previewBar');
   const timeEl = document.getElementById('previewTime');
-  const fill = document.getElementById('previewFill');
+  const fill   = document.getElementById('previewFill');
   if (bar) bar.style.display = 'flex';
   if (timeEl) timeEl.textContent = _fmtTime(_previewSeconds);
 
-  _previewTimer = setInterval(() => {
-    _previewElapsed++;
-    const remaining = Math.max(0, _previewSeconds - _previewElapsed);
-    if (timeEl) timeEl.textContent = _fmtTime(remaining);
-    if (fill)   fill.style.width   = `${(_previewElapsed / _previewSeconds) * 100}%`;
+  // Bunny iframe-аас timeupdate event сонсоно — видеоны timestamp ашиглана
+  _previewTimer = true; // давхар эхлүүлэхгүйн тулд
+  window.addEventListener('message', _onVideoMessage);
+}
 
-    if (_previewElapsed >= _previewSeconds) {
-      clearInterval(_previewTimer);
-      _previewTimer = null;
-      lockAfterPreview();
-    }
-  }, 1000);
+function _onVideoMessage(e) {
+  if (subscribed) { window.removeEventListener('message', _onVideoMessage); return; }
+  let data = e.data;
+  if (typeof data === 'string') { try { data = JSON.parse(data); } catch(_) { return; } }
+
+  // Bunny player timeupdate: { event:'timeupdate', currentTime: X }
+  // эсвэл { event:'ontimeupdate', seconds: X } хэлбэртэй байж болно
+  const ct = data?.currentTime ?? data?.seconds ?? data?.data?.currentTime ?? null;
+  if (ct === null) return;
+
+  const remaining = Math.max(0, _previewSeconds - Math.floor(ct));
+  const timeEl = document.getElementById('previewTime');
+  const fill   = document.getElementById('previewFill');
+  if (timeEl) timeEl.textContent = _fmtTime(remaining);
+  if (fill)   fill.style.width   = `${Math.min(100, (ct / _previewSeconds) * 100)}%`;
+
+  if (ct >= _previewSeconds) {
+    window.removeEventListener('message', _onVideoMessage);
+    _previewTimer = null;
+    // Bunny iframe-г pause хийх
+    const fr = document.getElementById('playerFrame');
+    if (fr?.contentWindow) fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
+    lockAfterPreview();
+  }
 }
 
 function lockAfterPreview() {
