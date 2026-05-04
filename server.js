@@ -192,7 +192,7 @@ const BYL_PROJECT_ID = process.env.BYL_PROJECT_ID || '568';
 
 // Invoice үүсгэж payment URL буцаана
 app.post('/api/byl/checkout', async (req, res) => {
-  const { plan, uid } = req.body;
+  const { plan, uid, movieId } = req.body;
   if (!plan || !uid) return res.status(400).json({ error: 'plan болон uid шаардлагатай' });
   if (!BYL_TOKEN)    return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
 
@@ -208,6 +208,17 @@ app.post('/api/byl/checkout', async (req, res) => {
     if (pr.quarterly) planCfg.quarterly.amount = pr.quarterly;
     if (pr.movie)     planCfg.movie.amount     = pr.movie;
   } catch (_) {}
+
+  // movie plan үед тухайн киноны үнийг DB-ээс авна
+  if (plan === 'movie' && movieId) {
+    try {
+      const movie = await col('movies').findOne({ _id: oid(movieId) });
+      if (movie?.price > 0) {
+        planCfg.movie.amount = movie.price;
+        planCfg.movie.name   = movie.title || 'Дан Кино';
+      }
+    } catch (_) {}
+  }
 
   const p = planCfg[plan];
   if (!p) return res.status(400).json({ error: 'Буруу план' });

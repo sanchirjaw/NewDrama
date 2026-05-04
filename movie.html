@@ -839,7 +839,7 @@ async function openQpay(plan) {
     const res  = await fetch('/api/byl/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, uid: user.uid }),
+      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null }),
     });
     const data = await res.json();
     if (data.url) {
