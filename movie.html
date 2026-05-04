@@ -330,7 +330,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
       </div>
 
       <!-- Paywall -->
-      <div class="paywall" id="paywall">
+      <div class="paywall" id="paywall" style="display:none;">
         <div class="paywall-box">
           <h3>Үзэхийн тулд</h3>
           <p>Нэг кино үзэх эсвэл сарын багц авах — сонгоорой.</p>
@@ -618,7 +618,7 @@ async function loadRemoteSettings() {
       planInfo.monthly.amount   = `${mo}₮`;
       planInfo.quarterly.amount = `${qu}₮`;
     }
-    if (typeof settings.previewMinutes === 'number') {
+    if (typeof settings.previewMinutes === 'number' && settings.previewMinutes > 0) {
       _previewSeconds = settings.previewMinutes * 60;
     }
   } catch(e) {}
