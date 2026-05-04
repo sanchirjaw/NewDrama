@@ -636,19 +636,46 @@ function startPreviewTimer() {
   const fill   = document.getElementById('previewFill');
   if (bar) bar.style.display = 'flex';
   if (timeEl) timeEl.textContent = _fmtTime(_previewSeconds);
+  _previewTimer = true;
+  window.addEventListener('message', _onVideoMessage);
+}
 
-  _previewTimer = setInterval(() => {
-    _previewElapsed++;
-    const remaining = Math.max(0, _previewSeconds - _previewElapsed);
-    if (timeEl) timeEl.textContent = _fmtTime(remaining);
-    if (fill)   fill.style.width   = `${(_previewElapsed / _previewSeconds) * 100}%`;
+function _onVideoMessage(e) {
+  if (subscribed) { window.removeEventListener('message', _onVideoMessage); return; }
+  let data = e.data;
+  if (typeof data === 'string') { try { data = JSON.parse(data); } catch(_) { return; } }
 
-    if (_previewElapsed >= _previewSeconds) {
-      clearInterval(_previewTimer);
-      _previewTimer = null;
-      lockAfterPreview();
+  const ct = data?.currentTime ?? data?.seconds ?? data?.data?.currentTime ?? null;
+  if (ct === null) return;
+
+  const fr = document.getElementById('playerFrame');
+
+  // Preview хязгаараас цааш seek хийсэн бол буцаана
+  if (ct > _previewSeconds) {
+    if (fr?.contentWindow) {
+      fr.contentWindow.postMessage(JSON.stringify({ command: 'seek', time: _previewSeconds - 2 }), '*');
+      fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
     }
-  }, 1000);
+    window.removeEventListener('message', _onVideoMessage);
+    _previewTimer = null;
+    lockAfterPreview();
+    return;
+  }
+
+  // Progress bar шинэчлэх
+  const remaining = Math.max(0, _previewSeconds - Math.floor(ct));
+  const timeEl = document.getElementById('previewTime');
+  const fill   = document.getElementById('previewFill');
+  if (timeEl) timeEl.textContent = _fmtTime(remaining);
+  if (fill)   fill.style.width   = `${Math.min(100, (ct / _previewSeconds) * 100)}%`;
+
+  // Хязгаарт хүрсэн
+  if (ct >= _previewSeconds) {
+    if (fr?.contentWindow) fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
+    window.removeEventListener('message', _onVideoMessage);
+    _previewTimer = null;
+    lockAfterPreview();
+  }
 }
 
 function lockAfterPreview() {
