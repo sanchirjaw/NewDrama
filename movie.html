@@ -765,8 +765,8 @@ async function loadMovieDetails() {
       }
     }
 
-    // Per-movie preview override
-    if (m.previewMinutes != null) _previewSeconds = m.previewMinutes * 60;
+    // Per-movie preview override (0 эсвэл null бол default 3 мин хэрэглэнэ)
+    if (m.previewMinutes != null && m.previewMinutes > 0) _previewSeconds = m.previewMinutes * 60;
 
     // Details tab — score row + info grid
     const fmtV = n => n >= 10000 ? (n/10000).toFixed(1)+'w' : n >= 1000 ? (n/1000).toFixed(1)+'к' : (n||'—');

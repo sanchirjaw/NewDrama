@@ -1099,14 +1099,19 @@ async function uploadAndSave() {
   const videoId = await uploadVideoToBunny();
   if (videoId) {
     btn.textContent = '💾 Хадгалж байна...';
-    await saveMovie();
+    // Modal хаахгүйгээр хадгална — үнэ/preview засах боломж үлдэнэ
+    await saveMovie(true);
+    btn.disabled = false;
+    btn.textContent = '✓ Хадгалсан';
+    btn.style.background = 'var(--success, #22c55e)';
+    toast('✓ Upload & хадгалагдлаа! Үнэ, preview засаад дахин хадгалж болно.');
   } else {
     btn.disabled = false;
     btn.textContent = '⬆️ Upload & Хадгалах';
   }
 }
 
-async function saveMovie() {
+async function saveMovie(keepOpen = false) {
   const title = document.getElementById('mTitle').value.trim();
   if(!title){toast('Гарчиг оруулна уу','err');return;}
   const price   = parseInt(document.getElementById('mPrice').value)||0;
@@ -1128,16 +1133,18 @@ async function saveMovie() {
     await fetch(`/api/movies/${editingMovieId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
     const idx = moviesData.findIndex(x => String(x._id||x.id) === String(editingMovieId));
     if(idx > -1) Object.assign(moviesData[idx], movieObj);
-    toast('✓ Кино шинэчлэгдлээ');
+    if(!keepOpen) toast('✓ Кино шинэчлэгдлээ');
   } else {
     movieObj.views = 0;
     const res = await fetch('/api/movies', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(movieObj) });
     const saved = await res.json();
     moviesData.unshift(saved);
-    toast('✓ Кино нэмэгдлээ');
+    // Дараагийн хадгалалт edit горим болгоно
+    editingMovieId = saved._id;
+    if(!keepOpen) toast('✓ Кино нэмэгдлээ');
   }
   renderMovies(moviesData);
-  closeMovieModal();
+  if(!keepOpen) closeMovieModal();
 }
 function quickPriceEdit(id) {
   const m = moviesData.find(x=>x.id===id);
