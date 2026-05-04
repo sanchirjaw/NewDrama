@@ -613,15 +613,20 @@ async function loadMovieDetails() {
     }
 
     // Thumbnail — player thumb + sidebar poster
-    if (m.thumbnail) {
+    // m.thumbnail эсвэл Bunny CDN автомат thumbnail ашиглана
+    const _thumb = m.thumbnail ||
+      (_bunnyCfg.cdnHost && _videoId ? `https://${_bunnyCfg.cdnHost}/${_videoId}/thumbnail.jpg` : '');
+    if (_thumb) {
       const thumbIcon = document.querySelector('.player-thumb-icon');
       if (thumbIcon) {
-        thumbIcon.innerHTML = `<img src="${m.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+        thumbIcon.innerHTML = `<img src="${_thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
         thumbIcon.style.fontSize = '0';
       }
       const poster = document.getElementById('sidebarPoster');
       if (poster) {
-        poster.innerHTML = `<img src="${m.thumbnail}" style="width:100%;height:100%;object-fit:cover;">`;
+        poster.innerHTML = `<img src="${_thumb}" style="width:100%;height:100%;object-fit:cover;"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);opacity:0;transition:.2s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0"><span style="font-size:2.5rem;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.8);">▶</span></div>`;
+        poster.style.position = 'relative';
+        poster.style.overflow = 'hidden';
       }
     }
 
