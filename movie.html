@@ -304,7 +304,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
   <div class="player-wrap">
     <div class="player-container" id="playerCont">
 
-      <!-- Bunny.net embed — VIDEO_LIBRARY_ID, VIDEO_ID-г солих -->
+      <!-- Bunny.net embed -->
       <iframe
         id="playerFrame"
         src="about:blank"
@@ -312,6 +312,8 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture"
         allowfullscreen>
       </iframe>
+      <!-- Seek bar блок: iframe-ийн доод 60px-г хааж seek хийлгэхгүй -->
+      <div id="seekBlocker" style="display:none;position:absolute;bottom:0;left:0;right:0;height:60px;z-index:5;cursor:not-allowed;"></div>
 
       <!-- Preview countdown bar -->
       <div id="previewBar" style="display:none;position:absolute;top:0;left:0;right:0;z-index:10;background:rgba(0,0,0,0.75);padding:.5rem 1rem;display:none;align-items:center;gap:1rem;">
@@ -636,49 +638,28 @@ function startPreviewTimer() {
   const fill   = document.getElementById('previewFill');
   if (bar) bar.style.display = 'flex';
   if (timeEl) timeEl.textContent = _fmtTime(_previewSeconds);
-  _previewTimer = true;
-  window.addEventListener('message', _onVideoMessage);
-}
+  // Seek bar хаах
+  const blocker = document.getElementById('seekBlocker');
+  if (blocker) blocker.style.display = 'block';
 
-function _onVideoMessage(e) {
-  if (subscribed) { window.removeEventListener('message', _onVideoMessage); return; }
-  let data = e.data;
-  if (typeof data === 'string') { try { data = JSON.parse(data); } catch(_) { return; } }
-
-  const ct = data?.currentTime ?? data?.seconds ?? data?.data?.currentTime ?? null;
-  if (ct === null) return;
-
-  const fr = document.getElementById('playerFrame');
-
-  // Preview хязгаараас цааш seek хийсэн бол буцаана
-  if (ct > _previewSeconds) {
-    if (fr?.contentWindow) {
-      fr.contentWindow.postMessage(JSON.stringify({ command: 'seek', time: _previewSeconds - 2 }), '*');
-      fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
+  _previewTimer = setInterval(() => {
+    _previewElapsed++;
+    const remaining = Math.max(0, _previewSeconds - _previewElapsed);
+    if (timeEl) timeEl.textContent = _fmtTime(remaining);
+    if (fill)   fill.style.width   = `${(_previewElapsed / _previewSeconds) * 100}%`;
+    if (_previewElapsed >= _previewSeconds) {
+      clearInterval(_previewTimer);
+      _previewTimer = null;
+      lockAfterPreview();
     }
-    window.removeEventListener('message', _onVideoMessage);
-    _previewTimer = null;
-    lockAfterPreview();
-    return;
-  }
-
-  // Progress bar шинэчлэх
-  const remaining = Math.max(0, _previewSeconds - Math.floor(ct));
-  const timeEl = document.getElementById('previewTime');
-  const fill   = document.getElementById('previewFill');
-  if (timeEl) timeEl.textContent = _fmtTime(remaining);
-  if (fill)   fill.style.width   = `${Math.min(100, (ct / _previewSeconds) * 100)}%`;
-
-  // Хязгаарт хүрсэн
-  if (ct >= _previewSeconds) {
-    if (fr?.contentWindow) fr.contentWindow.postMessage(JSON.stringify({ command: 'pause' }), '*');
-    window.removeEventListener('message', _onVideoMessage);
-    _previewTimer = null;
-    lockAfterPreview();
-  }
+  }, 1000);
 }
+
 
 function lockAfterPreview() {
+  // Seek blocker нуух
+  const blocker = document.getElementById('seekBlocker');
+  if (blocker) blocker.style.display = 'none';
   // iframe нуух
   const iframe = document.getElementById('playerFrame');
   if (iframe) iframe.style.display = 'none';
