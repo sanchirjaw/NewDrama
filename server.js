@@ -20,6 +20,25 @@ app.use(express.json());
 // Static assets (css, js, images)
 app.use(express.static(path.join(__dirname)));
 
+// ── Lazy MongoDB connection (serverless-д хэрэгтэй) ──────────────
+let _connectPromise = null;
+function lazyConnect() {
+  if (!_connectPromise) {
+    _connectPromise = MongoClient.connect(MONGO_URI)
+      .then(client => { db = client.db(DB_NAME); })
+      .catch(err => { _connectPromise = null; throw err; });
+  }
+  return _connectPromise;
+}
+// API route бүрийн өмнө DB холболт баталгаажуулна
+app.use('/api', async (req, res, next) => {
+  if (!db) {
+    try { await lazyConnect(); }
+    catch(e) { return res.status(500).json({ error: 'DB холбогдсонгүй: ' + e.message }); }
+  }
+  next();
+});
+
 // Page routes — explicit so /login works without .html
 const pages = ['index','admin','login','movie','dashboard','pricing'];
 pages.forEach(p => {
@@ -268,7 +287,12 @@ app.post('/api/bunny/create-video', async (req, res) => {
   }
 });
 
-connect().catch(err => {
-  console.error('MongoDB холбогдсонгүй:', err.message);
-  process.exit(1);
-});
+// Локал орчинд шууд эхлүүлэх, Vercel-д module export хийнэ
+if (require.main === module) {
+  connect().catch(err => {
+    console.error('MongoDB холбогдсонгүй:', err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = app;
