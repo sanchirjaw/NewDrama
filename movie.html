@@ -636,6 +636,13 @@ async function loadMovieDetails() {
     // Тухайн киноны үнийг modal-д тохируулна
     if (m.price != null && m.price > 0) {
       planInfo.movie.amount = m.price.toLocaleString() + '₮';
+      // Sidebar price шууд шинэчлэх
+      const buyPrices = document.querySelectorAll('.buy-opt-price');
+      if (buyPrices[1]) buyPrices[1].textContent = planInfo.movie.amount;
+      const choicePrices = document.querySelectorAll('.choice-price');
+      if (choicePrices[0]) choicePrices[0].textContent = planInfo.movie.amount;
+      const qa = document.getElementById('qpayAmount');
+      if (qa) qa.textContent = planInfo.movie.amount;
     }
 
     // Details tab

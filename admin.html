@@ -1075,7 +1075,7 @@ async function openMovieModal(id) {
   document.getElementById('mRating').value  = m?.rating       || '';
   document.getElementById('mDur').value     = m?.duration     || '';
   document.getElementById('mVideoId').value = m?.videoId      || '';
-  document.getElementById('mPrice').value   = m?.price        ?? 0;
+  document.getElementById('mPrice').value   = m?.price != null ? m.price : _defPrice();
   document.getElementById('mDesc').value    = m?.desc || m?.description || '';
   document.getElementById('mPreview').value = m?.previewMinutes != null ? m.previewMinutes : '';
   document.getElementById('mThumb').value   = m?.thumbnail    || '';
