@@ -238,30 +238,41 @@ select.form-input option{background:var(--dark);}
 
     <!-- ===== DASHBOARD ===== -->
     <div class="panel active" id="panel-dashboard">
+      <!-- Хяналтын самбарын toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span style="font-size:.78rem;color:var(--text-dim);">Сараар харах:</span>
+          <input type="month" id="dashMonth" class="form-input btn-sm" style="width:auto;" onchange="refreshDashboard()">
+        </div>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-ghost btn-sm" onclick="setDashMonth('')">Бүгд</button>
+          <button class="btn btn-primary btn-sm" onclick="refreshAllData()">↻ Шинэчлэх</button>
+        </div>
+      </div>
       <div class="stats-grid">
         <div class="stat-card c-cyan">
           <div class="stat-icon">👥</div>
           <div class="stat-label">Нийт хэрэглэгч</div>
-          <div class="stat-value c-cyan">2,841</div>
-          <div class="stat-change up">↑ 12% өнгөрсөн сараас</div>
+          <div class="stat-value c-cyan" id="statTotalUsers">—</div>
+          <div class="stat-change up" id="statActiveUsers">Ачааллаж байна...</div>
         </div>
         <div class="stat-card c-green">
           <div class="stat-icon">✅</div>
           <div class="stat-label">Идэвхтэй багц</div>
-          <div class="stat-value c-green">1,204</div>
-          <div class="stat-change up">↑ 8% өнгөрсөн сараас</div>
+          <div class="stat-value c-green" id="statActiveSubs">—</div>
+          <div class="stat-change up" id="statSubChange"></div>
         </div>
         <div class="stat-card c-amber">
           <div class="stat-icon">💰</div>
-          <div class="stat-label">Энэ сарын орлого</div>
-          <div class="stat-value c-amber">18.4M₮</div>
-          <div class="stat-change up">↑ 23% өнгөрсөн сараас</div>
+          <div class="stat-label" id="statRevenueLabel">Орлого</div>
+          <div class="stat-value c-amber" id="statRevenue">—</div>
+          <div class="stat-change" id="statRevenueChange"></div>
         </div>
         <div class="stat-card c-purple">
           <div class="stat-icon">🎬</div>
           <div class="stat-label">Нийт кино</div>
-          <div class="stat-value c-purple">348</div>
-          <div class="stat-change up">↑ 14 шинэ нэмэгдсэн</div>
+          <div class="stat-value c-purple" id="statMovies">—</div>
+          <div class="stat-change up" id="statMovieChange"></div>
         </div>
       </div>
 
@@ -412,18 +423,20 @@ select.form-input option{background:var(--dark);}
     <div class="panel" id="panel-users">
       <div class="table-wrap">
         <div class="table-header">
-          <div class="table-title">Хэрэглэгчид <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;">(2,841 нийт)</span></div>
+          <div class="table-title">Хэрэглэгчид <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;" id="userCountLabel"></span></div>
           <div class="table-actions">
             <select class="form-input btn-sm" style="width:auto;" onchange="filterUsers(this.value)">
               <option value="">Бүх төлөв</option>
               <option value="active">Идэвхтэй</option>
+              <option value="free">Үнэгүй</option>
               <option value="expired">Дууссан</option>
             </select>
+            <button class="btn btn-ghost btn-sm" onclick="refreshAllData()" title="Шинэчлэх">↻ Шинэчлэх</button>
           </div>
         </div>
         <table>
           <thead><tr>
-            <th>Хэрэглэгч</th><th>Бүртгэл</th><th>Багц</th><th>Сүүлийн нэвтрэлт</th><th>Нийт төлбөр</th><th>Төлөв</th><th>Үйлдэл</th>
+            <th>Хэрэглэгч</th><th>Багц</th><th>🎬 Дан кино</th><th>📦 Сарын эрхээр</th><th>Нийт төлбөр</th><th>Сүүлийн нэвтрэлт</th><th>Үйлдэл</th>
           </tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
@@ -746,6 +759,10 @@ const revenueMonths = [
   {m:'7-р',v:9.2},{m:'8-р',v:11.4},{m:'9-р',v:13.1},{m:'10-р',v:14.8},{m:'11-р',v:16.5},{m:'12-р',v:18.4}
 ];
 
+/* ── Live DB state ── */
+let dbUsers = [];
+let dbPayments = [];
+
 /* ===== PANEL NAV ===== */
 function showPanel(id, el) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -807,19 +824,44 @@ function renderMovies(data) {
 }
 
 function renderUsers(data) {
-  document.getElementById('usersTableBody').innerHTML = data.map(u=>`
+  const lbl = document.getElementById('userCountLabel');
+  if(lbl) lbl.textContent = `(${data.length} хэрэглэгч)`;
+  const now = new Date();
+  document.getElementById('usersTableBody').innerHTML = data.map(u => {
+    const isDbUser = !!u.uid;
+    // Count дан кино purchases
+    const moviePurchases = isDbUser
+      ? dbPayments.filter(p => p.uid === u.uid && p.plan === 'movie' && p.status === 'paid').length
+      : null;
+    // Count subscription purchases
+    const subPurchases = isDbUser
+      ? dbPayments.filter(p => p.uid === u.uid && (p.plan === 'monthly' || p.plan === 'quarterly') && p.status === 'paid').length
+      : null;
+    // Plan info
+    const planKey = isDbUser ? u.plan : u.planKey;
+    const isActive = isDbUser
+      ? (u.planExpiry && new Date(u.planExpiry) > now)
+      : (u.status === 'active');
+    const planLabel = planKey === 'monthly' ? '1 сарын' : planKey === 'quarterly' ? '3 сарын' : '';
+    const planClass = planKey === 'monthly' ? 'pill-monthly' : planKey === 'quarterly' ? 'pill-quarterly' : '';
+    // Last login
+    let ll = u.lastLogin ? (isDbUser ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : u.lastLogin) : '—';
+    const displayName = (u.name || u.email || '—').replace(/'/g, '&#39;');
+    return `
     <tr>
-      <td><div style="font-weight:600;font-size:.85rem;">${u.name}<div style="font-size:.72rem;color:var(--text-dim);">${u.email}</div></div></td>
-      <td><span style="font-size:.75rem;color:var(--text-dim);">${u.login}</span></td>
-      <td>${u.planKey?`<span class="badge-pill pill-${u.planKey}">${u.plan}</span>`:'<span style="color:var(--text-muted);font-size:.78rem;">—</span>'}</td>
-      <td style="color:var(--text-dim);font-size:.78rem;">${u.lastLogin}</td>
-      <td style="font-weight:600;">${u.totalPaid.toLocaleString()}₮</td>
-      <td><span class="badge-pill ${u.status==='active'?'pill-active':'pill-expired'}">${u.status==='active'?'Идэвхтэй':'Дууссан'}</span></td>
+      <td><div style="font-weight:600;font-size:.85rem;">${u.name||u.email||'—'}<div style="font-size:.72rem;color:var(--text-dim);">${u.email||''}</div></div></td>
+      <td>${planLabel
+        ? `<span class="badge-pill ${planClass}">${planLabel}</span><span class="badge-pill ${isActive?'pill-active':'pill-expired'}" style="margin-left:.3rem;font-size:.6rem;">${isActive?'✓':'✕'}</span>`
+        : '<span style="color:var(--text-muted);font-size:.78rem;">Үнэгүй</span>'}</td>
+      <td><span style="font-weight:700;color:var(--amber);">${moviePurchases != null ? moviePurchases : '—'}</span></td>
+      <td><span style="font-weight:700;color:var(--cyan);">${subPurchases != null ? subPurchases : '—'}</span></td>
+      <td style="font-weight:600;">${(u.totalPaid||0).toLocaleString()}₮</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${ll}</td>
       <td><div class="action-btns">
-        <button class="icon-btn edit" title="Дэлгэрэнгүй" onclick="toast('${u.name} — дэлгэрэнгүй')">👁</button>
-        <button class="icon-btn del" title="Устгах" onclick="deleteUser(${u.id})">🗑️</button>
+        <button class="icon-btn edit" title="Дэлгэрэнгүй" onclick="toast('${displayName} — дэлгэрэнгүй')">👁</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function renderPayments(data) {
@@ -883,6 +925,135 @@ function renderRecentPayments() {
       <td style="color:var(--text-dim);font-size:.78rem;">${p.date}</td>
       <td><span class="badge-pill ${p.status==='success'?'pill-active':'pill-pending'}">${p.status==='success'?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
     </tr>`).join('');
+}
+
+/* ===== DASHBOARD REFRESH ===== */
+async function refreshAllData() {
+  toast('↻ Шинэчилж байна...');
+  try {
+    const [usersRes, paymentsRes] = await Promise.all([
+      fetch('/api/users'),
+      fetch('/api/payments'),
+    ]);
+    if (usersRes.ok) {
+      const data = await usersRes.json();
+      dbUsers.length = 0;
+      data.forEach(u => dbUsers.push(u));
+    }
+    if (paymentsRes.ok) {
+      const data = await paymentsRes.json();
+      dbPayments.length = 0;
+      data.forEach(p => dbPayments.push(p));
+    }
+  } catch(e) { console.warn('API алдаа:', e.message); }
+  refreshDashboard();
+  renderUsers(dbUsers.length ? dbUsers : usersData);
+  renderPaymentsDB();
+  updateBadges();
+  toast('✓ Өгөгдөл шинэчлэгдлээ');
+}
+
+function setDashMonth(val) {
+  const input = document.getElementById('dashMonth');
+  if(input) input.value = val;
+  refreshDashboard();
+}
+
+function refreshDashboard() {
+  const month = document.getElementById('dashMonth')?.value || '';
+  const filteredPay = month ? dbPayments.filter(p => p.date && p.date.startsWith(month)) : dbPayments;
+  const paidPay = filteredPay.filter(p => p.status === 'paid');
+  const now = new Date();
+
+  const totalUsers = dbUsers.length || usersData.length;
+  const activeSubs = dbUsers.length
+    ? dbUsers.filter(u => u.planExpiry && new Date(u.planExpiry) > now).length
+    : usersData.filter(u => u.status === 'active').length;
+  const revenue = paidPay.length
+    ? paidPay.reduce((s, p) => s + (p.amount||0), 0)
+    : (dbPayments.length ? 0 : 18420000);
+  const movieCount = moviesData.length;
+
+  document.getElementById('statTotalUsers').textContent = totalUsers;
+  document.getElementById('statActiveSubs').textContent = activeSubs;
+  document.getElementById('statRevenue').textContent    = revenue.toLocaleString() + '₮';
+  document.getElementById('statMovies').textContent     = movieCount;
+
+  const revLabel = document.getElementById('statRevenueLabel');
+  if(revLabel) revLabel.textContent = month ? `Орлого (${month})` : 'Орлого';
+  const activeEl = document.getElementById('statActiveUsers');
+  if(activeEl && dbUsers.length) {
+    const freeCount = dbUsers.filter(u => !u.planExpiry || new Date(u.planExpiry) <= now).length;
+    activeEl.textContent = `${freeCount} нь үнэгүй`;
+  }
+
+  // Finance meter with real revenue
+  renderFinanceMeter();
+
+  // Recent payments on dashboard
+  const recentSrc = (dbPayments.length ? filteredPay : paymentsData).slice(0, 5);
+  document.getElementById('recentPaymentsBody').innerHTML = recentSrc.map(p => {
+    const u = dbUsers.find(x => x.uid === p.uid);
+    const userName = u?.name || u?.email || p.user || p.uid || '—';
+    const planLabel = p.plan === 'monthly' ? '1 сарын' : p.plan === 'quarterly' ? '3 сарын' : p.plan === 'movie' ? 'Дан кино' : (p.plan||'—');
+    const pillCls = planLabel === '1 сарын' ? 'pill-monthly' : planLabel === '3 сарын' ? 'pill-quarterly' : 'pill-movie';
+    const statusOk = p.status === 'paid' || p.status === 'success';
+    return `<tr>
+      <td style="font-weight:600;">${userName}</td>
+      <td><span class="badge-pill ${pillCls}">${planLabel}</span></td>
+      <td style="font-weight:700;">${(p.amount||0).toLocaleString()}₮</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.method||'byl.mn'}</td>
+      <td style="color:var(--text-dim);font-size:.78rem;">${p.date||'—'}</td>
+      <td><span class="badge-pill ${statusOk?'pill-active':'pill-pending'}">${statusOk?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderTopBuyersDB();
+}
+
+function updateBadges() {
+  const pending = dbPayments.filter(p => p.status === 'pending').length;
+  const pb = document.getElementById('pendingBadge');
+  if(pb){ pb.textContent = pending; pb.style.display = pending > 0 ? '' : 'none'; }
+  const now = new Date();
+  const newU = dbUsers.filter(u => u.createdAt && (now - new Date(u.createdAt)) < 7*24*60*60*1000).length;
+  const nb = document.getElementById('newUsersBadge');
+  if(nb){ nb.textContent = newU; nb.style.display = newU > 0 ? '' : 'none'; }
+}
+
+function renderPaymentsDB() {
+  const src = dbPayments.length ? dbPayments.map(p => {
+    const u = dbUsers.find(x => x.uid === p.uid);
+    return {
+      id: String(p._id||'').slice(-6).toUpperCase() || '—',
+      user: u?.name || u?.email || p.uid || '—',
+      plan: p.plan === 'monthly' ? '1 сарын' : p.plan === 'quarterly' ? '3 сарын' : p.plan === 'movie' ? 'Дан кино' : (p.plan||'—'),
+      amount: p.amount || 0,
+      method: p.method || 'byl.mn',
+      date: p.date || '—',
+      status: (p.status === 'paid' || p.status === 'success') ? 'success' : 'pending',
+    };
+  }) : paymentsData;
+  renderPayments(src);
+}
+
+function renderTopBuyersDB() {
+  const src = dbUsers.length ? dbUsers : usersData;
+  const ranked = [...src].sort((a,b) => (b.totalPaid||0) - (a.totalPaid||0)).slice(0, 5);
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('topBuyersBody').innerHTML = ranked.map((u, i) => {
+    const planKey = u.planKey || u.plan;
+    const planLabel = planKey === 'monthly' ? '1 сарын' : planKey === 'quarterly' ? '3 сарын' : '—';
+    const provider = u.provider || u.login || '—';
+    const name = (u.name || u.email || '—').replace(/'/g,'&#39;');
+    return `<tr>
+      <td style="font-size:1.1rem;">${medals[i]||i+1}</td>
+      <td><div style="font-weight:600;font-size:.84rem;">${u.name||u.email||'—'}</div>
+          <div style="font-size:.7rem;color:var(--text-dim);">${provider} · ${planLabel}</div></td>
+      <td><span style="font-weight:700;color:var(--amber);">${(u.totalPaid||0).toLocaleString()}₮</span></td>
+      <td><button class="btn btn-success btn-sm" onclick="rewardUser('${name}')" style="font-size:.65rem;padding:.25rem .6rem;">🎁 Урамшуул</button></td>
+    </tr>`;
+  }).join('');
 }
 
 /* ===== MOVIE MODAL ===== */
@@ -996,14 +1167,69 @@ function approvePayment(id) {
 
 /* ===== FILTER ===== */
 function filterMovies(genre) { renderMovies(genre ? moviesData.filter(m=>m.genre===genre) : moviesData); }
-function filterUsers(status) { renderUsers(status ? usersData.filter(u=>u.status===status) : usersData); }
-function filterPayments(status) { renderPayments(status ? paymentsData.filter(p=>p.status===status) : paymentsData); }
+function filterUsers(status) {
+  const src = dbUsers.length ? dbUsers : usersData;
+  const now = new Date();
+  if (!status) { renderUsers(src); return; }
+  const filtered = src.filter(u => {
+    if (u.uid) { // DB user
+      const active = u.planExpiry && new Date(u.planExpiry) > now;
+      if (status === 'active')  return active;
+      if (status === 'expired') return !active && (u.plan !== 'free' && u.plan);
+      if (status === 'free')    return !u.plan || u.plan === 'free';
+    } else { return u.status === status; }
+  });
+  renderUsers(filtered);
+}
+function filterPayments(status) {
+  if (dbPayments.length) {
+    const src = status ? dbPayments.filter(p => {
+      if (status === 'success') return p.status === 'paid';
+      return p.status === status;
+    }) : dbPayments;
+    renderPayments(src.map(p => {
+      const u = dbUsers.find(x => x.uid === p.uid);
+      return {
+        id: String(p._id||'').slice(-6).toUpperCase()||'—',
+        user: u?.name||u?.email||p.uid||'—',
+        plan: p.plan==='monthly'?'1 сарын':p.plan==='quarterly'?'3 сарын':p.plan==='movie'?'Дан кино':(p.plan||'—'),
+        amount: p.amount||0, method: p.method||'byl.mn', date: p.date||'—',
+        status: (p.status==='paid'||p.status==='success')?'success':'pending',
+      };
+    }));
+  } else {
+    renderPayments(status ? paymentsData.filter(p=>p.status===status) : paymentsData);
+  }
+}
 function handleSearch(q) {
   q = q.toLowerCase();
   const activePanel = document.querySelector('.panel.active').id;
-  if(activePanel==='panel-movies') renderMovies(q ? moviesData.filter(m=>m.title.toLowerCase().includes(q)||m.genre.toLowerCase().includes(q)) : moviesData);
-  else if(activePanel==='panel-users') renderUsers(q ? usersData.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)) : usersData);
-  else if(activePanel==='panel-payments') renderPayments(q ? paymentsData.filter(p=>p.user.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)) : paymentsData);
+  if (activePanel === 'panel-movies') {
+    renderMovies(q ? moviesData.filter(m=>m.title.toLowerCase().includes(q)||m.genre.toLowerCase().includes(q)) : moviesData);
+  } else if (activePanel === 'panel-users') {
+    const src = dbUsers.length ? dbUsers : usersData;
+    renderUsers(q ? src.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)) : src);
+  } else if (activePanel === 'panel-payments') {
+    if (dbPayments.length) {
+      const filtered = q ? dbPayments.filter(p => {
+        const u = dbUsers.find(x=>x.uid===p.uid);
+        const name = (u?.name||u?.email||p.uid||'').toLowerCase();
+        return name.includes(q);
+      }) : dbPayments;
+      renderPayments(filtered.map(p => {
+        const u = dbUsers.find(x=>x.uid===p.uid);
+        return {
+          id: String(p._id||'').slice(-6).toUpperCase()||'—',
+          user: u?.name||u?.email||p.uid||'—',
+          plan: p.plan==='monthly'?'1 сарын':p.plan==='quarterly'?'3 сарын':p.plan==='movie'?'Дан кино':(p.plan||'—'),
+          amount: p.amount||0, method: p.method||'byl.mn', date: p.date||'—',
+          status: (p.status==='paid'||p.status==='success')?'success':'pending',
+        };
+      }));
+    } else {
+      renderPayments(q ? paymentsData.filter(p=>p.user.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)) : paymentsData);
+    }
+  }
 }
 function topbarAction() { openMovieModal(); }
 
@@ -1018,11 +1244,14 @@ function getExpenses() {
 function renderFinanceMeter() {
   const expenses = getExpenses();
   const totalExp = expenses.reduce((s,e) => s + (e.amount||0), 0);
-  const net      = REVENUE - totalExp;
-  const pct      = REVENUE > 0 ? Math.min((totalExp / REVENUE) * 100, 100) : 0;
-  const profPct  = REVENUE > 0 ? Math.round((net / REVENUE) * 100) : 100;
+  const revenue  = dbPayments.length
+    ? dbPayments.filter(p => p.status === 'paid').reduce((s,p) => s + (p.amount||0), 0)
+    : REVENUE;
+  const net      = revenue - totalExp;
+  const pct      = revenue > 0 ? Math.min((totalExp / revenue) * 100, 100) : 0;
+  const profPct  = revenue > 0 ? Math.round((net / revenue) * 100) : 100;
 
-  document.getElementById('meterRevLabel').textContent = REVENUE.toLocaleString() + '₮';
+  document.getElementById('meterRevLabel').textContent = revenue.toLocaleString() + '₮';
   document.getElementById('meterExpLabel').textContent = totalExp.toLocaleString() + '₮';
   document.getElementById('meterExpBar').style.width   = pct + '%';
   document.getElementById('netProfit').textContent     = net.toLocaleString() + '₮';
@@ -1082,22 +1311,7 @@ function deleteExpense(idx) {
 }
 
 /* ===== TOP BUYERS ===== */
-function renderTopBuyers() {
-  const ranked = [...usersData].sort((a,b) => b.totalPaid - a.totalPaid).slice(0, 5);
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-  document.getElementById('topBuyersBody').innerHTML = ranked.map((u, i) => `
-    <tr>
-      <td style="font-size:1.1rem;">${medals[i]}</td>
-      <td>
-        <div style="font-weight:600;font-size:.84rem;">${u.name}</div>
-        <div style="font-size:.7rem;color:var(--text-dim);">${u.login} · ${u.plan||'—'}</div>
-      </td>
-      <td><span style="font-weight:700;color:var(--amber);">${u.totalPaid.toLocaleString()}₮</span></td>
-      <td>
-        <button class="btn btn-success btn-sm" onclick="rewardUser('${u.name}')" style="font-size:.65rem;padding:.25rem .6rem;">🎁 Урамшуул</button>
-      </td>
-    </tr>`).join('');
-}
+function renderTopBuyers() { renderTopBuyersDB(); }
 
 function rewardUser(name) {
   toast(`🎁 ${name} — урамшуулал илгээгдлээ!`);
@@ -1399,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await loadPricesIntoInputs();
   await loadBunnySettings();
   renderChart();
-  // MongoDB-аас кинонууд ачаалах
+  // Movies татах
   try {
     const res = await fetch('/api/movies');
     const dbMovies = await res.json();
@@ -1415,10 +1629,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   renderTopViews();
   renderTopPurchased();
   renderFinanceMeter();
-  renderTopBuyers();
-  renderUsers(usersData);
-  renderPayments(paymentsData);
-  renderRecentPayments();
+  // Хэрэглэгч + Төлбөр — API-аас татаж stat + table-ийг шинэчлэх
+  await refreshAllData();
   document.getElementById('topbarActionBtn').style.display='none';
   document.getElementById('movieModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMovieModal();});
 });

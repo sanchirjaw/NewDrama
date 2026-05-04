@@ -34,8 +34,8 @@
   position:relative; z-index:2;
   max-width:1280px; margin:0 auto; width:100%;
   padding:3rem 2rem 4rem;
-  display:grid; grid-template-columns:1fr 340px;
-  gap:3rem; align-items:end;
+  display:grid; grid-template-columns:1fr 200px;
+  gap:2rem; align-items:end;
 }
 
 /* Left info */
@@ -71,19 +71,19 @@
 /* Right rating card */
 .movie-hero-card {
   background:rgba(12,12,20,0.8); border:1px solid rgba(255,255,255,0.08);
-  border-radius:var(--radius-xl); padding:2rem;
+  border-radius:var(--radius-lg); padding:1.1rem;
   backdrop-filter:blur(20px); text-align:center;
 }
 .mhc-score {
-  font-family:'Bebas Neue',sans-serif; font-size:5rem; line-height:1;
+  font-family:'Bebas Neue',sans-serif; font-size:2.8rem; line-height:1;
   background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
-.mhc-stars { color:var(--cyan); font-size:1rem; letter-spacing:3px; margin-bottom:0.4rem; }
-.mhc-count { font-size:0.75rem; color:var(--text-dim); margin-bottom:1.5rem; }
-.mhc-divider { height:1px; background:var(--border); margin-bottom:1.5rem; }
-.mhc-stat { margin-bottom:1rem; }
-.mhc-stat-val { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:#fff; }
-.mhc-stat-lbl { font-size:0.68rem; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:0.1rem; }
+.mhc-stars { color:var(--cyan); font-size:0.65rem; letter-spacing:2px; margin-bottom:0.25rem; }
+.mhc-count { font-size:0.6rem; color:var(--text-dim); margin-bottom:0.75rem; }
+.mhc-divider { height:1px; background:var(--border); margin-bottom:0.75rem; }
+.mhc-stat { margin-bottom:0.55rem; }
+.mhc-stat-val { font-family:'Bebas Neue',sans-serif; font-size:0.95rem; color:#fff; }
+.mhc-stat-lbl { font-size:0.55rem; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-top:0.05rem; }
 
 /* ===== PLAYER SECTION ===== */
 .player-section {
@@ -257,7 +257,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
     <li><a href="pricing.html">Үнэ</a></li>
   </ul>
   <div class="nav-right">
-    <a href="dashboard.html" class="nav-avatar" title="Профайл">Б</a>
+    <div id="navAuthBtn"><a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a></div>
   </div>
 </nav>
 
@@ -360,16 +360,16 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
           Хотын захаас олдсон нэгэн хохирогч нь хэргийг нэн даруй хянан шийдвэрлэх хэлтэст шилжүүлнэ. Мөрдөгч Ким Минжун хэргийг ганцаараа авч ажиллах болох боловч тэрбээр тун удалгүй энэ хэрэг зүгийн нэг аллагын хэрэг биш гэдгийг мэдэж авна.
         </p>
         <div class="score-row">
-          <div class="score-box"><div class="score-val">8.7</div><div class="score-lbl">IMDb</div></div>
-          <div class="score-box"><div class="score-val">94%</div><div class="score-lbl">Таалагдсан</div></div>
-          <div class="score-box"><div class="score-val">2.4К</div><div class="score-lbl">Үнэлгээ</div></div>
-          <div class="score-box"><div class="score-val">#3</div><div class="score-lbl">Топ 10</div></div>
+          <div class="score-box"><div class="score-val" id="detailRating">—</div><div class="score-lbl">Оноо</div></div>
+          <div class="score-box"><div class="score-val" id="detailViews">—</div><div class="score-lbl">Үзсэн</div></div>
+          <div class="score-box"><div class="score-val" id="detailYear">—</div><div class="score-lbl">Жил</div></div>
+          <div class="score-box"><div class="score-val" id="detailGenre">—</div><div class="score-lbl">Жанр</div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 2rem;font-size:0.85rem;">
-          <div><span style="color:var(--text-dim);">Найруулагч: </span><span>Пак Жун-хо</span></div>
-          <div><span style="color:var(--text-dim);">Зохиолч: </span><span>Ли Сан-ил</span></div>
-          <div><span style="color:var(--text-dim);">Улс: </span><span>Солонгос</span></div>
-          <div><span style="color:var(--text-dim);">Хэл: </span><span>Монгол дуу оруулга</span></div>
+          <div><span style="color:var(--text-dim);">Хугацаа: </span><span id="detailDur">—</span></div>
+          <div><span style="color:var(--text-dim);">Жанр: </span><span id="detailGenre2">—</span></div>
+          <div><span style="color:var(--text-dim);">Хэл: </span><span id="detailLang">Монгол дуу оруулга</span></div>
+          <div><span style="color:var(--text-dim);">Нэмэгдсэн: </span><span id="detailAdded">—</span></div>
         </div>
       </div>
 
@@ -528,18 +528,32 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
-firebase.initializeApp({
-  apiKey:            "AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM",
-  authDomain:        "newdrama-bec46.firebaseapp.com",
-  projectId:         "newdrama-bec46",
-  storageBucket:     "newdrama-bec46.firebasestorage.app",
-  messagingSenderId: "911248078297",
-  appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
-});
+if (!firebase.apps.length) {
+  firebase.initializeApp({
+    apiKey:            "AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM",
+    authDomain:        "newdrama-bec46.firebaseapp.com",
+    projectId:         "newdrama-bec46",
+    storageBucket:     "newdrama-bec46.firebasestorage.app",
+    messagingSenderId: "911248078297",
+    appId:             "1:911248078297:web:9f4c7f80f9923770ef95c8"
+  });
+}
 let subscribed = false;
 let currentUser = null;
 firebase.auth().onAuthStateChanged(async user => {
   currentUser = user;
+  // Nav auth button шинэчлэх
+  const navBtn = document.getElementById('navAuthBtn');
+  if (navBtn) {
+    if (user) {
+      const photo = user.photoURL
+        ? `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:6px;">`
+        : '👤';
+      navBtn.innerHTML = `<a href="dashboard.html" style="display:flex;align-items:center;padding:.4rem .9rem;background:rgba(255,255,255,0.08);border-radius:20px;font-size:.8rem;color:#fff;text-decoration:none;">${photo}${user.displayName?.split(' ')[0] || 'Профайл'}</a>`;
+    } else {
+      navBtn.innerHTML = `<a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>`;
+    }
+  }
   if (!user) return;
   // Sync хийх
   fetch('/api/users/sync', {
@@ -554,17 +568,9 @@ firebase.auth().onAuthStateChanged(async user => {
     const plan   = data.plan || 'free';
     const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
     const active = expiry ? expiry > new Date() : false;
-    // monthly, quarterly = бүх кино үзнэ
-    if ((plan === 'monthly' || plan === 'quarterly') && active) {
-      subscribed = true;
-    }
-    // movie plan нь тухайн кинонд хандах эрхтэй (спрощенный)
-    if (plan === 'movie' && active) {
-      subscribed = true;
-    }
-  } catch (e) {
-    console.warn('Plan шалгахад алдаа:', e.message);
-  }
+    if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
+    if (plan === 'movie' && active) subscribed = true;
+  } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
 });
 
 // Bunny embed — URL params-аас videoId унших, Library ID localStorage-аас
@@ -734,6 +740,18 @@ async function loadMovieDetails() {
     // Per-movie preview override
     if (m.previewMinutes != null) _previewSeconds = m.previewMinutes * 60;
 
+    // Details tab — score row + info grid
+    const fmtV = n => n >= 10000 ? (n/10000).toFixed(1)+'w' : n >= 1000 ? (n/1000).toFixed(1)+'к' : (n||'—');
+    const setEl = (id, val) => { const e = document.getElementById(id); if(e && val) e.textContent = val; };
+    setEl('detailRating', rating || '—');
+    setEl('detailViews',  fmtV(m.views));
+    setEl('detailYear',   year  || '—');
+    setEl('detailGenre',  genre || '—');
+    setEl('detailGenre2', genre || '—');
+    setEl('detailDur',    dur   || '—');
+    setEl('detailLang',   lang);
+    setEl('detailAdded',  m.added ? m.added.slice(0,10) : '—');
+
   } catch(e) { console.warn('Movie details алдаа:', e.message); }
 }
 
@@ -774,6 +792,10 @@ function _loadVideo() {
     toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
   }
   fr.style.display = 'block';
+  // Үзэлтийн тоо нэмэх
+  if (_movieId) {
+    fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(()=>{});
+  }
 }
 
 function openChoiceModal() {
@@ -839,7 +861,8 @@ function toggleWish(btn) {
 }
 
 function shareIt() {
-  if (navigator.share) navigator.share({ title:'Хар Шөнийн Нууц', url:location.href });
+  const title = document.title.replace(' — NEW DRAMA','');
+  if (navigator.share) navigator.share({ title, url: location.href });
   else { navigator.clipboard?.writeText(location.href); toast('✓ Холбоос хуулагдлаа'); }
 }
 

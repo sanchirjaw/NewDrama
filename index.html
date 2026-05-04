@@ -6,133 +6,6 @@
 <title>NEW DRAMA — Кино & Цуврал</title>
 <link rel="stylesheet" href="assets/style.css">
 <style>
-/* ===== HERO ===== */
-.hero {
-  position:relative; min-height:100vh;
-  display:flex; align-items:center; overflow:hidden;
-  padding-top:68px;
-}
-.hero-backdrop {
-  position:absolute; inset:0; z-index:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 60% 40%, rgba(168,85,247,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 20% 60%, rgba(0,229,255,0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(236,72,153,0.06) 0%, transparent 50%);
-}
-.hero-grid {
-  position:absolute; inset:0; z-index:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
-  background-size:72px 72px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
-}
-/* Floating orbs */
-.orb {
-  position:absolute; border-radius:50%; pointer-events:none;
-  animation:float 8s ease-in-out infinite;
-}
-.orb-1 { width:320px; height:320px; top:-80px; right:8%; background:radial-gradient(circle, rgba(168,85,247,0.1), transparent 70%); animation-delay:-2s; }
-.orb-2 { width:240px; height:240px; bottom:10%; left:5%; background:radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%); animation-delay:-5s; }
-.orb-3 { width:180px; height:180px; top:30%; right:25%; background:radial-gradient(circle, rgba(236,72,153,0.07), transparent 70%); animation-delay:-3s; }
-
-.hero-inner {
-  position:relative; z-index:1;
-  display:grid; grid-template-columns:1fr 1fr;
-  gap:4rem; align-items:center;
-  max-width:1280px; margin:0 auto; padding:6rem 2rem 4rem;
-  width:100%;
-}
-
-/* Left text */
-.hero-eyebrow {
-  display:inline-flex; align-items:center; gap:0.6rem;
-  padding:0.4rem 1rem; border-radius:99px;
-  background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.18);
-  font-size:0.72rem; font-weight:600; letter-spacing:3px;
-  text-transform:uppercase; color:var(--cyan);
-  margin-bottom:1.75rem;
-}
-.hero-eyebrow::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan); animation:pulse-glow 2s ease-in-out infinite; flex-shrink:0; }
-
-.hero-title {
-  font-family:'Bebas Neue', sans-serif;
-  font-size:clamp(5rem, 9vw, 9rem);
-  letter-spacing:6px; line-height:0.88;
-  margin-bottom:1.5rem;
-}
-.hero-title .line-1 { display:block; color:#fff; }
-.hero-title .line-2 {
-  display:block;
-  background:var(--grad);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  background-size:200% 200%;
-  animation:gradientShift 4s ease infinite;
-}
-
-.hero-desc {
-  color:var(--text-dim); font-size:1rem; line-height:1.75;
-  font-weight:300; max-width:440px; margin-bottom:2.5rem;
-}
-
-.hero-actions { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
-
-.hero-stats {
-  display:flex; gap:2rem; margin-top:2.5rem;
-  padding-top:2rem; border-top:1px solid var(--border);
-}
-.hero-stat-num {
-  font-family:'Bebas Neue', sans-serif; font-size:1.6rem;
-  background:var(--grad);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-}
-.hero-stat-lbl { font-size:0.7rem; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-top:0.1rem; }
-
-/* Right visual — featured card stack */
-.hero-visual { position:relative; height:500px; }
-.hero-card-main {
-  position:absolute; right:0; top:20px;
-  width:260px; border-radius:20px; overflow:hidden;
-  background:linear-gradient(160deg, #1e0b3d, #0c0c14);
-  border:1px solid rgba(255,255,255,0.08);
-  box-shadow:0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(168,85,247,0.12);
-  animation:float 7s ease-in-out infinite;
-}
-.hero-card-poster {
-  aspect-ratio:2/3;
-  background:linear-gradient(160deg, #2d0f5e, #1a0a2e, #0c0c14);
-  display:flex; align-items:center; justify-content:center; font-size:5rem;
-  position:relative;
-}
-.hero-card-poster::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(to top, rgba(12,12,20,0.9) 0%, transparent 50%);
-}
-.hero-card-info { padding:1.25rem; }
-.hero-card-title { font-weight:700; font-size:0.95rem; color:#fff; margin-bottom:0.3rem; }
-.hero-card-meta { font-size:0.75rem; color:var(--text-dim); }
-
-.hero-card-side {
-  position:absolute; left:0; top:60px;
-  width:200px; border-radius:16px; overflow:hidden;
-  background:rgba(12,12,20,0.9);
-  border:1px solid rgba(255,255,255,0.07);
-  box-shadow:0 16px 48px rgba(0,0,0,0.4);
-  animation:float 9s ease-in-out infinite; animation-delay:-4s;
-}
-.hero-card-side-poster {
-  aspect-ratio:16/9;
-  background:linear-gradient(160deg, #0f2d3d, #0c0c14);
-  display:flex; align-items:center; justify-content:center; font-size:2rem;
-  position:relative;
-}
-.hero-card-side-poster::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(to top, rgba(12,12,20,0.8) 0%, transparent 60%);
-}
-.hero-card-side-info { padding:0.875rem; }
-.hero-card-side-title { font-size:0.8rem; font-weight:600; color:#fff; margin-bottom:0.2rem; }
-.hero-card-side-meta { font-size:0.68rem; color:var(--text-dim); }
 
 /* ===== TICKER ===== */
 .ticker {
@@ -287,11 +160,6 @@
 .promo-strip-price span { font-family:'Outfit', sans-serif; font-size:0.88rem; color:var(--text-dim); -webkit-text-fill-color:var(--text-dim); }
 
 @media (max-width:900px) {
-  .hero-inner { grid-template-columns:1fr; text-align:center; padding:5rem 1.5rem 3rem; }
-  .hero-desc { max-width:none; }
-  .hero-actions { justify-content:center; }
-  .hero-stats { justify-content:center; }
-  .hero-visual { display:none; }
   .featured-banner { min-height:auto; }
   .featured-banner-rating { display:none; }
   .featured-banner-info { padding:2rem 1.5rem; }
@@ -323,60 +191,6 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-backdrop"></div>
-  <div class="hero-grid"></div>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-
-  <div class="hero-inner">
-    <div class="hero-left">
-      <div class="hero-eyebrow">Шинэ цуврал нэмэгдлээ</div>
-      <h1 class="hero-title">
-        <span class="line-1">NEW</span>
-        <span class="line-2">DRAMA</span>
-      </h1>
-      <p class="hero-desc">Дэлхийн шилдэг кино, хятад цуврал, хөгжмийг Монгол хэлээр. Монгол дуу оруулгатай.</p>
-      <div class="hero-actions">
-        <a href="#movies" class="btn-primary">▶&nbsp; Кино үзэх</a>
-        <a href="pricing.html" class="btn-secondary">Багц & Үнэ</a>
-      </div>
-      <div class="hero-stats">
-        <div>
-          <div class="hero-stat-num">2,400+</div>
-          <div class="hero-stat-lbl">Кино</div>
-        </div>
-        <div>
-          <div class="hero-stat-num">500+</div>
-          <div class="hero-stat-lbl">Дуу оруулга</div>
-        </div>
-        <div>
-          <div class="hero-stat-num">50K+</div>
-          <div class="hero-stat-lbl">Үзэгч</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="hero-visual">
-      <div class="hero-card-side" id="heroCardSide">
-        <div class="hero-card-side-poster" id="heroSideIcon">🌺</div>
-        <div class="hero-card-side-info">
-          <div class="hero-card-side-title" id="heroSideTitle">Хайрын Мэдрэмж</div>
-          <div class="hero-card-side-meta" id="heroSideMeta">★ 9.3 · 40 анги</div>
-        </div>
-      </div>
-      <div class="hero-card-main" id="heroCardMain">
-        <div class="hero-card-poster" id="heroMainIcon">🎬</div>
-        <div class="hero-card-info">
-          <div class="hero-card-title" id="heroMainTitle">Хар Шөнийн Нууц</div>
-          <div class="hero-card-meta" id="heroMainMeta">★ 8.7 · 2024 · Триллер</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- TICKER -->
 <div class="ticker">
@@ -456,8 +270,8 @@
 </section>
 
 
-<!-- CONTINUE WATCHING -->
-<section class="row-section" id="cwSection">
+<!-- CONTINUE WATCHING — зөвхөн нэвтэрсэн + үзэлтийн түүхтэй бол харагдана -->
+<section class="row-section" id="cwSection" style="display:none;">
   <div class="container">
     <div class="section-head">
       <div>
@@ -593,33 +407,40 @@ function movieCardHTML(m, cls='') {
   </a>`;
 }
 
-// Featured banner — localStorage-аас уншина, эсвэл хамгийн их үзэлттэйг харуулна
-function applyFeatured() {
-  const f = JSON.parse(localStorage.getItem('nd_featured') || '{}');
+// Featured banner — API settings → localStorage → хамгийн их үзэлттэй
+async function applyFeatured() {
+  // API-аас featured ID авах
+  let featuredId = null;
+  try {
+    const sr = await fetch('/api/settings');
+    if (sr.ok) {
+      const s = await sr.json();
+      if (s.featuredId) featuredId = String(s.featuredId);
+    }
+  } catch(e) {}
+  if (!featuredId) {
+    const f = JSON.parse(localStorage.getItem('nd_featured') || '{}');
+    if (f.id) featuredId = String(f.id);
+  }
   let m = null;
-  if (f.id) m = movies.find(x => String(x._id||x.id) === String(f.id));
+  if (featuredId) m = movies.find(x => String(x._id||x.id) === featuredId);
   if (!m && movies.length) m = [...movies].sort((a,b)=>(b.views||0)-(a.views||0))[0];
   if (!m) return;
   const s = genreStyle[m.genre] || genreStyle['default'];
-  document.getElementById('featuredBg').textContent        = m.icon || '🎬';
+  if (m.thumbnail) {
+    const bg = document.getElementById('featuredBg');
+    if (bg) { bg.innerHTML=''; bg.style.cssText='position:absolute;inset:0;background-image:url('+m.thumbnail+');background-size:cover;background-position:center;opacity:.18;font-size:0;'; }
+  } else {
+    document.getElementById('featuredBg').textContent = m.icon || '🎬';
+  }
   document.getElementById('featuredTitle').textContent     = m.title;
   document.getElementById('featuredRating').textContent    = m.rating || '—';
   document.getElementById('featuredDesc').textContent      = m.desc || `${m.genre} · ${m.year} · Монгол дуу оруулгатай`;
-  document.getElementById('featuredMeta').innerHTML        = `<span>🎬 ${m.year||''}</span><span>🌍 Хятад</span><span style="color:${s.accent}">★ ${m.rating}</span>`;
+  document.getElementById('featuredMeta').innerHTML        = `<span>🎬 ${m.year||''}</span><span>🎭 ${m.genre||''}</span><span style="color:${s.accent}">★ ${m.rating}</span>`;
   document.getElementById('featuredLink').href             = `movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}`;
-  document.getElementById('featuredBanner').style.background = `linear-gradient(160deg, ${s.bg.includes('gradient')?'#1e0b3d':s.bg}, #0c0c14)`;
+  document.getElementById('featuredBanner').style.background = `linear-gradient(160deg,#1e0b3d,#0c0c14)`;
 }
 
-// Hero карт тохируулга
-(function applyHeroCards() {
-  const h = JSON.parse(localStorage.getItem('nd_hero') || '{}');
-  if (h.mainTitle) document.getElementById('heroMainTitle').textContent = h.mainTitle;
-  if (h.mainMeta)  document.getElementById('heroMainMeta').textContent  = h.mainMeta;
-  if (h.mainIcon)  document.getElementById('heroMainIcon').textContent  = h.mainIcon;
-  if (h.sideTitle) document.getElementById('heroSideTitle').textContent = h.sideTitle;
-  if (h.sideMeta)  document.getElementById('heroSideMeta').textContent  = h.sideMeta;
-  if (h.sideIcon)  document.getElementById('heroSideIcon').textContent  = h.sideIcon;
-})();
 
 // Load prices from admin settings
 (async function applyPrices() {
@@ -657,7 +478,7 @@ async function loadMovies() {
   renderGrid(movies);
   renderTop10();
   renderSeriesRow();
-  applyFeatured();
+  await applyFeatured();
 }
 
 // Grid
@@ -734,29 +555,37 @@ function renderSeriesRow() {
   }).join('');
 }
 
-// Continue watching
-const cwEl = document.getElementById('cwRow');
-cwData.forEach(c => {
-  const s = genreStyle[c.genre] || genreStyle['default'];
-  const barColor = c.pct === 100 ? 'var(--success,#22c55e)' : s.accent;
-  cwEl.innerHTML += `
-  <a href="movie.html" class="cw-card">
-    <div class="cw-thumb" style="background:${s.bg};">
-      <span style="font-size:2rem;position:relative;z-index:1;">${c.icon}</span>
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}22,transparent 65%);"></div>
-      <div class="cw-progress"><div class="cw-bar" style="width:${c.pct}%;background:${barColor};box-shadow:0 0 8px ${s.glow};"></div></div>
-      <div class="cw-play"><div class="play-btn" style="background:linear-gradient(135deg,${s.accent},${s.accent}99);">▶</div></div>
-      ${c.pct===100?`<div style="position:absolute;top:.5rem;right:.5rem;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:.6rem;font-weight:700;padding:.15rem .45rem;border-radius:99px;letter-spacing:1px;">✓ ДУУССАН</div>`:''}
-    </div>
-    <div class="cw-info">
-      <div class="cw-title">${c.title}</div>
-      <div class="cw-meta" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>${c.meta}</span>
-        <span style="color:${s.accent};font-size:.68rem;font-weight:700;">${c.pct}%</span>
+// Continue watching — зөвхөн нэвтэрсэн хэрэглэгчид, localStorage-аас
+function renderContinueWatching(user) {
+  const section = document.getElementById('cwSection');
+  const cwEl    = document.getElementById('cwRow');
+  if (!section || !cwEl) return;
+  if (!user) { section.style.display = 'none'; return; }
+  // localStorage-аас үзэж байсан кинонуудыг уншина
+  const history = JSON.parse(localStorage.getItem('nd_watch_history') || '[]');
+  if (!history.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  cwEl.innerHTML = history.slice(0, 10).map(c => {
+    const m = movies.find(x => String(x._id||x.id) === String(c.id));
+    if (!m) return '';
+    const s   = genreStyle[m.genre] || genreStyle['default'];
+    const pct = Math.min(100, Math.round((c.elapsed / (c.total || 1)) * 100));
+    const barColor = pct === 100 ? 'var(--success,#22c55e)' : s.accent;
+    return `
+    <a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="cw-card">
+      <div class="cw-thumb" style="background:${s.bg};">
+        ${m.thumbnail ? `<img src="${m.thumbnail}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : `<span style="font-size:2rem;position:relative;z-index:1;">${m.icon||'🎬'}</span>`}
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,${s.accent}22,transparent 65%);"></div>
+        <div class="cw-progress"><div class="cw-bar" style="width:${pct}%;background:${barColor};"></div></div>
+        <div class="cw-play"><div class="play-btn" style="background:linear-gradient(135deg,${s.accent},${s.accent}99);">▶</div></div>
       </div>
-    </div>
-  </a>`;
-});
+      <div class="cw-info">
+        <div class="cw-title">${m.title}</div>
+        <div class="cw-meta"><span>${m.year} · ${m.genre}</span><span style="color:${s.accent};font-size:.68rem;font-weight:700;">${pct}%</span></div>
+      </div>
+    </a>`;
+  }).join('');
+}
 
 // Ticker
 const tItems = [
@@ -820,13 +649,15 @@ if (!firebase.apps.length) {
 }
 firebase.auth().onAuthStateChanged(user => {
   const btn = document.getElementById('navAuthBtn');
-  if (!btn) return;
-  if (user) {
-    const photo = user.photoURL ? `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:6px;">` : '👤';
-    btn.innerHTML = `<a href="dashboard.html" style="display:flex;align-items:center;padding:.4rem .9rem;background:rgba(255,255,255,0.08);border-radius:20px;font-size:.8rem;color:#fff;text-decoration:none;">${photo}${user.displayName?.split(' ')[0] || 'Профайл'}</a>`;
-  } else {
-    btn.innerHTML = `<a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>`;
+  if (btn) {
+    if (user) {
+      const photo = user.photoURL ? `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:6px;">` : '👤';
+      btn.innerHTML = `<a href="dashboard.html" style="display:flex;align-items:center;padding:.4rem .9rem;background:rgba(255,255,255,0.08);border-radius:20px;font-size:.8rem;color:#fff;text-decoration:none;">${photo}${user.displayName?.split(' ')[0] || 'Профайл'}</a>`;
+    } else {
+      btn.innerHTML = `<a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>`;
+    }
   }
+  renderContinueWatching(user);
 });
 </script>
 </body>

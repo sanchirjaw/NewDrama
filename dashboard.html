@@ -245,7 +245,7 @@
     <li><a href="pricing.html">Үнэ</a></li>
   </ul>
   <div class="nav-right">
-    <div class="nav-avatar" title="Профайл">Б</div>
+    <div class="nav-avatar" id="navAvatarTop" title="Профайл">Б</div>
     <button class="btn-ghost" onclick="logout()" style="font-size:.8rem;padding:.42rem .9rem;">Гарах</button>
   </div>
 </nav>
@@ -287,7 +287,7 @@
     <div class="dash-side-footer">
       <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:var(--radius);padding:1rem;text-align:center;">
         <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;">Багц дуусах хүртэл</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">18 хоног</div>
+        <div id="sidebarDaysLeft" style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
         <a href="pricing.html" class="btn-primary" style="width:100%;justify-content:center;font-size:.78rem;padding:.55rem 1rem;margin-top:.875rem;border-radius:99px;">Сунгах</a>
       </div>
     </div>
@@ -300,40 +300,25 @@
     <div class="dash-panel active" id="p-home">
       <div class="welcome-card">
         <div>
-          <h2>Сайн байна уу, Болд! 👋</h2>
+          <h2>Сайн байна уу, <span id="welcomeName">...</span>! 👋</h2>
           <p>Өнөөдөр ямар кино үзэх вэ? 2,400+ контент хүлээж байна.</p>
         </div>
         <a href="index.html#movies" class="btn-primary">▶&nbsp; Кино үзэх</a>
       </div>
 
       <div class="qs-grid">
-        <div class="qs-card"><div class="qs-icon">🎬</div><div><div class="qs-num">24</div><div class="qs-lbl">Үзсэн кино</div></div></div>
-        <div class="qs-card"><div class="qs-icon">♥</div><div><div class="qs-num">12</div><div class="qs-lbl">Хадгалсан</div></div></div>
-        <div class="qs-card"><div class="qs-icon">⏱</div><div><div class="qs-num">48ц</div><div class="qs-lbl">Нийт цаг</div></div></div>
-        <div class="qs-card"><div class="qs-icon">🏆</div><div><div class="qs-num">18</div><div class="qs-lbl">Багц хоног</div></div></div>
+        <div class="qs-card"><div class="qs-icon">🎬</div><div><div class="qs-num" id="qsWatched">0</div><div class="qs-lbl">Үзсэн кино</div></div></div>
+        <div class="qs-card"><div class="qs-icon">♥</div><div><div class="qs-num" id="qsWished">0</div><div class="qs-lbl">Хадгалсан</div></div></div>
+        <div class="qs-card"><div class="qs-icon">⏱</div><div><div class="qs-num" id="qsHours">0ц</div><div class="qs-lbl">Нийт цаг</div></div></div>
+        <div class="qs-card"><div class="qs-icon">🏆</div><div><div class="qs-num" id="qsDaysLeft">—</div><div class="qs-lbl">Багц хоног</div></div></div>
       </div>
 
       <div class="panel-header">
         <div class="panel-label">✦ Үргэлжлүүлэх</div>
         <h2 class="panel-title">Зогссон Кинонууд</h2>
       </div>
-      <div class="cw-row">
-        <a href="movie.html" class="cw-mini">
-          <div class="cw-mini-thumb">🎬<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:65%"></div></div></div>
-          <div class="cw-mini-info"><div class="cw-mini-title">Хар Шөнийн Нууц</div><div class="cw-mini-meta">65% · 47 мин үлдсэн</div></div>
-        </a>
-        <a href="movie.html" class="cw-mini">
-          <div class="cw-mini-thumb">🌺<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:30%"></div></div></div>
-          <div class="cw-mini-info"><div class="cw-mini-title">Хайрын Мэдрэмж</div><div class="cw-mini-meta">Анги 8 · 30%</div></div>
-        </a>
-        <a href="movie.html" class="cw-mini">
-          <div class="cw-mini-thumb">⚔️<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:90%"></div></div></div>
-          <div class="cw-mini-info"><div class="cw-mini-title">Эзэн Хааны Сүлд</div><div class="cw-mini-meta">90% · 14 мин үлдсэн</div></div>
-        </a>
-        <a href="movie.html" class="cw-mini">
-          <div class="cw-mini-thumb">🔥<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:100%"></div></div></div>
-          <div class="cw-mini-info"><div class="cw-mini-title">Галт Тэрэг</div><div class="cw-mini-meta">Дуусгасан ✓</div></div>
-        </a>
+      <div class="cw-row" id="cwRow">
+        <div style="color:var(--text-dim);font-size:.88rem;padding:.5rem 0;">Ачааллаж байна…</div>
       </div>
     </div>
 
@@ -352,43 +337,8 @@
         <div class="panel-label">✦ Түүх</div>
         <h2 class="panel-title">Үзсэн Түүх</h2>
       </div>
-      <div class="hist-list">
-        <a href="movie.html" class="hist-item">
-          <div class="hist-thumb">🎬</div>
-          <div style="flex:1;min-width:0;">
-            <div class="hist-title">Хар Шөнийн Нууц</div>
-            <div class="hist-meta">2024 · Триллер · 2ц 15мин</div>
-            <div class="hist-prog"><div style="width:65%;"></div></div>
-          </div>
-          <div class="hist-date">Өнөөдөр</div>
-        </a>
-        <a href="movie.html" class="hist-item">
-          <div class="hist-thumb">⚔️</div>
-          <div style="flex:1;min-width:0;">
-            <div class="hist-title">Эзэн Хааны Сүлд</div>
-            <div class="hist-meta">2023 · Түүхэн · 2ц 40мин</div>
-            <div class="hist-prog"><div style="width:90%;"></div></div>
-          </div>
-          <div class="hist-date">Өчигдөр</div>
-        </a>
-        <a href="movie.html" class="hist-item">
-          <div class="hist-thumb">🔥</div>
-          <div style="flex:1;min-width:0;">
-            <div class="hist-title">Галт Тэрэг</div>
-            <div class="hist-meta">2024 · Триллер · 2ц 5мин</div>
-            <div class="hist-prog"><div style="width:100%;"></div></div>
-          </div>
-          <div class="hist-date">3 өдрийн өмнө</div>
-        </a>
-        <a href="movie.html" class="hist-item">
-          <div class="hist-thumb">🌺</div>
-          <div style="flex:1;min-width:0;">
-            <div class="hist-title">Хайрын Мэдрэмж — Анги 8</div>
-            <div class="hist-meta">2024 · Драм цуврал</div>
-            <div class="hist-prog"><div style="width:30%;"></div></div>
-          </div>
-          <div class="hist-date">4 өдрийн өмнө</div>
-        </a>
+      <div class="hist-list" id="histList">
+        <div style="color:var(--text-dim);font-size:.88rem;padding:1rem 0;">Ачааллаж байна…</div>
       </div>
     </div>
 
@@ -422,25 +372,8 @@
             <th>Огноо</th><th>Тайлбар</th><th>Арга</th><th style="text-align:right;">Дүн</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td style="color:var(--text-dim);">2024.11.15</td>
-            <td>Стандарт Багц — 11-р сар</td>
-            <td><span class="pay-method-tag">📱 QPay</span></td>
-            <td style="text-align:right;" class="pay-amount">9,900₮</td>
-          </tr>
-          <tr>
-            <td style="color:var(--text-dim);">2024.10.15</td>
-            <td>Стандарт Багц — 10-р сар</td>
-            <td><span class="pay-method-tag">📱 QPay</span></td>
-            <td style="text-align:right;" class="pay-amount">9,900₮</td>
-          </tr>
-          <tr>
-            <td style="color:var(--text-dim);">2024.09.20</td>
-            <td>Галт Тэрэг — Нэг кино</td>
-            <td><span class="pay-method-tag">🏦 SocialPay</span></td>
-            <td style="text-align:right;" class="pay-amount">2,500₮</td>
-          </tr>
+        <tbody id="payTbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:2rem;">Ачааллаж байна…</td></tr>
         </tbody>
       </table>
     </div>
@@ -455,10 +388,10 @@
         <div class="settings-block">
           <div class="settings-block-title">Хувийн мэдээлэл</div>
           <div class="form-row-2">
-            <div class="form-group"><label class="form-label">Нэр</label><input class="form-input" value="Болд"></div>
-            <div class="form-group"><label class="form-label">Овог</label><input class="form-input" value="Баатар"></div>
+            <div class="form-group"><label class="form-label">Нэр</label><input class="form-input" id="settingFirstName" value=""></div>
+            <div class="form-group"><label class="form-label">Овог</label><input class="form-input" id="settingLastName" value=""></div>
           </div>
-          <div class="form-group"><label class="form-label">Имэйл</label><input class="form-input" type="email" value="bold@gmail.com"></div>
+          <div class="form-group"><label class="form-label">Имэйл</label><input class="form-input" id="settingEmail" type="email" value=""></div>
           <div class="form-group"><label class="form-label">Утас</label><input class="form-input" type="tel" placeholder="+976 9999 9999"></div>
           <button class="btn-primary" onclick="toast('✓ Тохиргоо хадгалагдлаа')">Хадгалах</button>
         </div>
@@ -499,22 +432,130 @@
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-// Wishlist data
-const wishMovies = [
-  {title:'Хар Шөнийн Нууц',year:'2024',genre:'Триллер',rating:'8.7',icon:'🎬'},
-  {title:'Тэнгэрийн Цэцэг',year:'2024',genre:'Анимэ',rating:'8.9',icon:'🌸'},
-  {title:'Хаадын Ордон',year:'2023',genre:'Түүхэн',rating:'9.1',icon:'👑'},
-  {title:'Зүрхний Аялал',year:'2024',genre:'Романтик',rating:'8.0',icon:'💕'},
-];
-document.getElementById('wishGrid').innerHTML = wishMovies.map(m=>`
-  <a href="movie.html" class="movie-card">
-    <div class="movie-poster"><span class="poster-icon">${m.icon}</span></div>
-    <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
-    <div class="movie-card-info">
-      <div class="movie-card-title">${m.title}</div>
-      <div class="movie-card-meta"><span>${m.year} · ${m.genre}</span><span class="movie-card-rating">★ ${m.rating}</span></div>
-    </div>
-  </a>`).join('');
+// ===== Render wishlist from localStorage =====
+function renderWishlist() {
+  const wishGrid = document.getElementById('wishGrid');
+  if (!wishGrid) return;
+  const raw = localStorage.getItem('nd_wishlist');
+  let list = [];
+  try { list = raw ? JSON.parse(raw) : []; } catch(e) {}
+  if (!list.length) {
+    wishGrid.innerHTML = '<div style="color:var(--text-dim);font-size:.88rem;padding:1rem 0;grid-column:1/-1;">Хадгалсан кино байхгүй байна</div>';
+    return;
+  }
+  wishGrid.innerHTML = list.map(m => {
+    const thumb = m.poster || m.thumbnail || '';
+    const posterHtml = thumb
+      ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+      : `<span class="poster-icon">🎬</span>`;
+    const url = m.id ? `movie.html?id=${m.id}` : 'movie.html';
+    return `<a href="${url}" class="movie-card">
+      <div class="movie-poster">${posterHtml}</div>
+      <div class="movie-card-overlay"><div class="play-btn">▶</div></div>
+      <div class="movie-card-info">
+        <div class="movie-card-title">${m.title || '—'}</div>
+        <div class="movie-card-meta"><span>${m.year || ''} · ${m.genre || ''}</span><span class="movie-card-rating">★ ${m.rating || '—'}</span></div>
+      </div>
+    </a>`;
+  }).join('');
+  // Update sidebar badge
+  const badge = document.querySelector('.dash-nav-badge');
+  if (badge) badge.textContent = list.length;
+  // Update qs-card
+  const qsWished = document.getElementById('qsWished');
+  if (qsWished) qsWished.textContent = list.length;
+}
+renderWishlist();
+
+// ===== Continue Watching render =====
+function renderCW(history) {
+  const row = document.getElementById('cwRow');
+  if (!row) return;
+  if (!history || !history.length) {
+    row.innerHTML = '<div style="color:var(--text-dim);font-size:.88rem;padding:.5rem 0;">Үзсэн кино байхгүй байна</div>';
+    return;
+  }
+  const recent = [...history].reverse().slice(0, 8);
+  row.innerHTML = recent.map(h => {
+    const progress = h.progress || 0;
+    const url = h.id ? `movie.html?id=${h.id}` : 'movie.html';
+    const thumb = h.poster || h.thumbnail || '';
+    const thumbHtml = thumb
+      ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+      : '🎬';
+    const meta = progress >= 99 ? 'Дуусгасан ✓' : `${Math.round(progress)}% үзсэн`;
+    return `<a href="${url}" class="cw-mini">
+      <div class="cw-mini-thumb">${thumbHtml}<div class="cw-mini-prog"><div class="cw-mini-bar" style="width:${progress}%"></div></div></div>
+      <div class="cw-mini-info"><div class="cw-mini-title">${h.title || '—'}</div><div class="cw-mini-meta">${meta}</div></div>
+    </a>`;
+  }).join('');
+  row.querySelectorAll('.cw-mini').forEach(el => {
+    el.style.opacity = '0'; el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease,transform 0.5s ease';
+    io.observe(el);
+  });
+}
+
+// ===== History render =====
+function relativeDate(ts) {
+  const diff = Date.now() - ts;
+  const d = Math.floor(diff / 86400000);
+  if (d === 0) return 'Өнөөдөр';
+  if (d === 1) return 'Өчигдөр';
+  return `${d} өдрийн өмнө`;
+}
+function renderHistory(history) {
+  const list = document.getElementById('histList');
+  if (!list) return;
+  if (!history || !history.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:.88rem;padding:1rem 0;">Үзсэн кино байхгүй байна</div>';
+    return;
+  }
+  const sorted = [...history].reverse();
+  list.innerHTML = sorted.map(h => {
+    const progress = h.progress || 0;
+    const url = h.id ? `movie.html?id=${h.id}` : 'movie.html';
+    const thumb = h.poster || h.thumbnail || '';
+    const thumbHtml = thumb
+      ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);" onerror="this.style.display='none'">`
+      : '🎬';
+    const dateStr = h.timestamp ? relativeDate(h.timestamp) : '—';
+    const meta = [h.year, h.genre].filter(Boolean).join(' · ');
+    return `<a href="${url}" class="hist-item">
+      <div class="hist-thumb">${thumbHtml}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="hist-title">${h.title || '—'}</div>
+        <div class="hist-meta">${meta}</div>
+        <div class="hist-prog"><div style="width:${progress}%;"></div></div>
+      </div>
+      <div class="hist-date">${dateStr}</div>
+    </a>`;
+  }).join('');
+}
+
+// ===== Payments render =====
+function renderPayments(payments, uid) {
+  const tbody = document.getElementById('payTbody');
+  if (!tbody) return;
+  const mine = (payments || []).filter(p => p.uid === uid && p.status === 'paid')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (!mine.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:2rem;">Төлбөрийн түүх байхгүй</td></tr>';
+    return;
+  }
+  const PLAN_DESC = { monthly:'Сарын Багц', quarterly:'3 Сарын Багц', movie:'Дан Кино' };
+  tbody.innerHTML = mine.map(p => {
+    const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('mn-MN') : '—';
+    const desc = PLAN_DESC[p.plan] || p.plan || '—';
+    const method = p.method || 'byl.mn';
+    return `<tr>
+      <td style="color:var(--text-dim);">${date}</td>
+      <td>${desc}</td>
+      <td><span class="pay-method-tag">💳 ${method}</span></td>
+      <td style="text-align:right;" class="pay-amount">${(p.amount || 0).toLocaleString()}₮</td>
+    </tr>`;
+  }).join('');
+}
 
 function go(id, el) {
   document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
@@ -573,26 +614,94 @@ const PLAN_LABEL = {
 firebase.auth().onAuthStateChanged(async user => {
   if (!user) { location.href = 'login.html'; return; }
 
-  // Firebase мэдээлэл
+  // ── Firebase мэдээлэл UI-д харуулах ──────────────────────────────
+  const displayName = user.displayName || user.email?.split('@')[0] || 'Хэрэглэгч';
+  const firstName   = displayName.split(' ')[0] || displayName;
+
   const nameEl  = document.getElementById('dashUserName');
   const emailEl = document.getElementById('dashUserEmail');
   const avEl    = document.getElementById('dashAv');
-  if (nameEl)  nameEl.textContent  = user.displayName || 'Хэрэглэгч';
-  if (emailEl) emailEl.textContent = user.email || '';
-  if (avEl && user.displayName)    avEl.textContent = user.displayName.charAt(0).toUpperCase();
+  const navAv   = document.getElementById('navAvatarTop');
+  const welcomeNameEl = document.getElementById('welcomeName');
 
-  // MongoDB-с plan авах
+  if (nameEl)  nameEl.textContent  = displayName;
+  if (emailEl) emailEl.textContent = user.email || '';
+  if (welcomeNameEl) welcomeNameEl.textContent = firstName;
+
+  // Sidebar + nav avatar: photo эсвэл үсэг
+  const avLetter = displayName.charAt(0).toUpperCase();
+  if (avEl) {
+    if (user.photoURL) {
+      avEl.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentNode.textContent='${avLetter}'">`;
+    } else {
+      avEl.textContent = avLetter;
+    }
+  }
+  if (navAv) {
+    if (user.photoURL) {
+      navAv.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentNode.textContent='${avLetter}'">`;
+    } else {
+      navAv.textContent = avLetter;
+    }
+  }
+
+  // ── Settings хэсгийн утга ────────────────────────────────────────
+  const parts = displayName.split(' ');
+  const sfn = document.getElementById('settingFirstName');
+  const sln = document.getElementById('settingLastName');
+  const sem = document.getElementById('settingEmail');
+  if (sfn) sfn.value = parts[0] || '';
+  if (sln) sln.value = parts.slice(1).join(' ') || '';
+  if (sem) sem.value = user.email || '';
+
+  // ── Watch history (localStorage) ────────────────────────────────
+  let watchHistory = [];
+  try { watchHistory = JSON.parse(localStorage.getItem('nd_watch_history') || '[]'); } catch(e) {}
+
+  const qsWatched = document.getElementById('qsWatched');
+  if (qsWatched) qsWatched.textContent = watchHistory.length;
+
+  // Нийт цаг (орчин тоологч дутагдвал 1.5ц/кино тооцно)
+  const totalHrs = watchHistory.reduce((s, h) => s + (h.durationMin || 90), 0);
+  const qsHours = document.getElementById('qsHours');
+  if (qsHours) qsHours.textContent = Math.round(totalHrs / 60) + 'ц';
+
+  renderCW(watchHistory);
+  renderHistory(watchHistory);
+
+  // ── MongoDB sync ─────────────────────────────────────────────────
+  try {
+    await fetch('/api/users/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid:      user.uid,
+        name:     user.displayName || user.email?.split('@')[0] || '',
+        email:    user.email || '',
+        photo:    user.photoURL || '',
+        provider: user.providerData?.[0]?.providerId || 'password',
+      })
+    });
+  } catch(e) { console.warn('Sync алдаа:', e.message); }
+
+  // ── Plan мэдээлэл MongoDB-с ─────────────────────────────────────
   try {
     const res  = await fetch(`/api/users/me/${user.uid}`);
     const data = await res.json();
-    const plan   = data.plan || 'free';
-    const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
-    const active = expiry ? expiry > new Date() : false;
+    const plan     = data.plan || 'free';
+    const expiry   = data.planExpiry ? new Date(data.planExpiry) : null;
+    const active   = expiry ? expiry > new Date() : false;
     const daysLeft = expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
 
-    // Sidebar badge
+    // Sidebar badge & footer
     const badge = document.getElementById('dashPlanBadge');
     if (badge) badge.textContent = PLAN_LABEL[plan] || '✦ ' + plan;
+    const sdl = document.getElementById('sidebarDaysLeft');
+    if (sdl) sdl.textContent = plan === 'free' ? '—' : daysLeft + ' хоног';
+
+    // Quick stat — дансны хоног
+    const qsDL = document.getElementById('qsDaysLeft');
+    if (qsDL) qsDL.textContent = plan === 'free' ? '—' : daysLeft;
 
     // Sub panel
     const planName   = document.getElementById('subPlanName');
@@ -606,12 +715,33 @@ firebase.auth().onAuthStateChanged(async user => {
         ? `Идэвхтэй · ${expiry.toLocaleDateString('mn-MN')} хүртэл`
         : 'Дуусгавар болсон';
     if (daysEl) daysEl.textContent = plan === 'free' ? '—' : daysLeft;
-    if (paidEl) paidEl.textContent = ((data.totalPaid || 0)).toLocaleString() + '₮';
+    if (paidEl) paidEl.textContent = (data.totalPaid || 0).toLocaleString() + '₮';
   } catch (e) {
     console.warn('Plan авахад алдаа:', e.message);
+    const sdl = document.getElementById('sidebarDaysLeft');
+    if (sdl) sdl.textContent = '—';
   }
 
-  // Payment success шалгах
+  // ── Төлбөрийн түүх ───────────────────────────────────────────────
+  try {
+    const pres = await fetch('/api/payments');
+    if (pres.ok) {
+      const payments = await pres.json();
+      renderPayments(payments, user.uid);
+      // totalPaid тооцох (subPlanStatus аль хэдийн байгаа тул зөвхөн sub-stat шинэчилнэ)
+      const total = payments
+        .filter(p => p.uid === user.uid && p.status === 'paid')
+        .reduce((s, p) => s + (p.amount || 0), 0);
+      const paidEl = document.getElementById('subTotalPaid');
+      if (paidEl && total > 0) paidEl.textContent = total.toLocaleString() + '₮';
+    }
+  } catch(e) {
+    console.warn('Payments алдаа:', e.message);
+    const tbody = document.getElementById('payTbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:2rem;">Мэдээлэл авах боломжгүй</td></tr>';
+  }
+
+  // ── Амжилттай төлбөрийн мэдэгдэл ────────────────────────────────
   const params = new URLSearchParams(location.search);
   if (params.get('success') === '1') {
     const plan = params.get('plan') || '';
@@ -620,7 +750,6 @@ firebase.auth().onAuthStateChanged(async user => {
                                         '🎉 Төлбөр амжилттай!';
     showToast(msg);
     history.replaceState({}, '', '/dashboard');
-    // Кино хуудас руу буцах
     const returnMovie = sessionStorage.getItem('nd_returnMovie');
     if (returnMovie) {
       sessionStorage.removeItem('nd_returnMovie');
