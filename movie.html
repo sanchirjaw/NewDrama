@@ -269,18 +269,12 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
   <div class="movie-hero-content">
     <div>
       <div class="movie-hero-eyebrow">
-        <span class="mh-badge mh-badge-new">✦ Шинэ</span>
         <span class="mh-badge mh-badge-hd">Full HD</span>
         <span class="mh-badge mh-badge-age">16+</span>
       </div>
-      <h1 class="movie-hero-title">Хар Шөнийн<br>Нууц</h1>
-      <div class="movie-hero-meta">
-        <span>🎬 2024</span>
-        <span>⏱ 2ц 15мин</span>
-        <span>🌍 Солонгос</span>
-        <span>🔤 Монгол дуу оруулга</span>
-      </div>
-      <p class="movie-hero-desc">Нууцлаг хэрэг хянан шийдвэрлэх ажиллагааны өрнөл. Залуу мөрдөгч нь хотын хамгийн аюултай гэмт хэргийг илрүүлэхэд хүч чармайлт гаргана.</p>
+      <h1 class="movie-hero-title"> </h1>
+      <div class="movie-hero-meta"></div>
+      <p class="movie-hero-desc"> </p>
       <div class="movie-hero-actions">
         <button class="btn-primary" onclick="tryPlay()">▶&nbsp; Үзэх</button>
         <button class="btn-secondary" onclick="toggleWish(this)">♡&nbsp; Хадгалах</button>
@@ -288,13 +282,10 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
       </div>
     </div>
     <div class="movie-hero-card">
-      <div class="mhc-score">8.7</div>
+      <div class="mhc-score" id="heroScore">—</div>
       <div class="mhc-stars">★★★★☆</div>
-      <div class="mhc-count">2,400+ үнэлгээ</div>
       <div class="mhc-divider"></div>
-      <div class="mhc-stat"><div class="mhc-stat-val">94%</div><div class="mhc-stat-lbl">Таалагдсан</div></div>
-      <div class="mhc-stat"><div class="mhc-stat-val">8.2K</div><div class="mhc-stat-lbl">Үзсэн</div></div>
-      <div class="mhc-stat"><div class="mhc-stat-val">#3</div><div class="mhc-stat-lbl">Топ 10 дотор</div></div>
+      <div class="mhc-stat"><div class="mhc-stat-val" id="heroViews">—</div><div class="mhc-stat-lbl">Үзсэн</div></div>
     </div>
   </div>
 </section>
@@ -719,11 +710,11 @@ async function loadMovieDetails() {
     const detailDesc = document.querySelector('.movie-desc-text');
     if (detailDesc && desc) detailDesc.textContent = desc;
 
-    // Оноо
-    if (rating) {
-      const scoreEl = document.querySelector('.mhc-score');
-      if (scoreEl) scoreEl.textContent = rating;
-    }
+    // Оноо + үзсэн
+    const fmtV = n => n >= 10000 ? (n/10000).toFixed(1)+'w' : n >= 1000 ? (n/1000).toFixed(1)+'к' : (n||'—');
+    if (rating) { setEl('heroScore', rating); setEl('detailRating', rating); }
+    setEl('heroViews', fmtV(m.views));
+    setEl('detailViews', fmtV(m.views));
 
     // Poster icon
     if (m.icon) {
@@ -755,11 +746,8 @@ async function loadMovieDetails() {
       planInfo.movie.amount = m.price.toLocaleString() + '₮';
     }
 
-    // Details tab — score row + info grid
-    const fmtV = n => n >= 10000 ? (n/10000).toFixed(1)+'w' : n >= 1000 ? (n/1000).toFixed(1)+'к' : (n||'—');
+    // Details tab
     const setEl = (id, val) => { const e = document.getElementById(id); if(e && val) e.textContent = val; };
-    setEl('detailRating', rating || '—');
-    setEl('detailViews',  fmtV(m.views));
     setEl('detailYear',   year  || '—');
     setEl('detailGenre',  genre || '—');
     setEl('detailGenre2', genre || '—');
