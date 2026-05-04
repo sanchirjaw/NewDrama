@@ -571,6 +571,7 @@ firebase.auth().onAuthStateChanged(async user => {
     if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
     if (plan === 'movie' && active) subscribed = true;
   } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
+
 });
 
 // Bunny embed — URL params-аас videoId унших, Library ID localStorage-аас
