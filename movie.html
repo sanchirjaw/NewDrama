@@ -791,7 +791,11 @@ async function openQpay(plan) {
     });
     const data = await res.json();
     if (data.url) {
-      window.location.href = data.url;
+      // Шинэ tab-д нээнэ, хуудас ижил байна
+      window.open(data.url, '_blank');
+      document.getElementById('qpayModal').classList.remove('show');
+      // Төлбөр батлагдахыг хүлээж poll хийнэ
+      _startPaymentPolling(user.uid);
     } else {
       throw new Error(data.error || 'Алдаа гарлаа');
     }
@@ -801,6 +805,35 @@ async function openQpay(plan) {
     toast('❌ ' + e.message, 'err');
   }
 }
+
+let _pollTimer = null;
+function _startPaymentPolling(uid) {
+  if (_pollTimer) return;
+  toast('💳 Төлбөрийн хуудас нээгдлээ — төлсний дараа кино автоматаар эхэлнэ', 'ok');
+  let attempts = 0;
+  _pollTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > 72) { clearInterval(_pollTimer); _pollTimer = null; return; } // 6 мин
+    try {
+      const r = await fetch(`/api/users/me/${uid}`);
+      if (!r.ok) return;
+      const u = await r.json();
+      const expiry = u.planExpiry ? new Date(u.planExpiry) : null;
+      if (expiry && expiry > new Date()) {
+        clearInterval(_pollTimer); _pollTimer = null;
+        subscribed = true;
+        // Preview / trailer зогсоох
+        if (_previewTimer) { clearInterval(_previewTimer); _previewTimer = null; }
+        const pb = document.getElementById('previewBar');    if (pb) pb.style.display = 'none';
+        const pe = document.getElementById('previewEndOverlay'); if (pe) pe.style.display = 'none';
+        const tb = document.getElementById('trailerBar');    if (tb) tb.style.display = 'none';
+        toast('✅ Төлбөр амжилттай! Кино эхэлж байна...', 'ok');
+        setTimeout(() => _loadVideo(), 1200);
+      }
+    } catch(e) {}
+  }, 5000);
+}
+
 function closeQpay() { document.getElementById('qpayModal').classList.remove('show'); }
 function backToChoice() {
   document.getElementById('qpayModal').classList.remove('show');
