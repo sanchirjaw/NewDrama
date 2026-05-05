@@ -234,8 +234,9 @@ app.post('/api/byl/checkout', async (req, res) => {
       body: JSON.stringify({
         amount: p.amount,
         description: `NEW DRAMA · ${p.name}`,
-        auto_advance: true,
-        success_url: req.body.returnUrl || 'https://newdrama.mn',
+        success_url:  req.body.returnUrl || 'https://newdrama.mn',
+        redirect_url: req.body.returnUrl || 'https://newdrama.mn',
+        return_url:   req.body.returnUrl || 'https://newdrama.mn',
       }),
     });
     const data = await r.json();
