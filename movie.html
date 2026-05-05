@@ -498,7 +498,8 @@ const planInfo = {
 let _previewSeconds = 3 * 60; // default 3 минут
 let _previewTimer   = null;
 let _previewElapsed = 0;
-let _trailerVideoId = '';
+let _trailerVideoId  = '';
+let _trailerSeconds  = 0;  // trailer-ын бодит урт (секундаар)
 
 async function loadRemoteSettings() {
   try {
@@ -579,6 +580,7 @@ async function loadMovieDetails() {
     // videoId + trailerVideoId авах
     if (m.videoId && !_videoId) _videoId = m.videoId;
     if (m.trailerVideoId) _trailerVideoId = m.trailerVideoId;
+    if (m.trailerDuration > 0) _trailerSeconds = m.trailerDuration;
 
     const title  = m.title    || '';
     const desc   = m.desc     || m.description || '';
@@ -699,14 +701,47 @@ function _loadTrailerVideo() {
   const fr = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
   fr.src = `https://iframe.mediadelivery.net/embed/${_libraryId}/${_trailerVideoId}?autoplay=true&responsive=true`;
   fr.style.display = 'block';
-  // Trailer bar харуулах
-  const tb = document.getElementById('trailerBar');
-  if (tb) tb.style.display = 'flex';
-  // Preview бүрэлдэхүүн нуух
-  const pb = document.getElementById('previewBar');
-  if (pb) pb.style.display = 'none';
+  // Seek blocker хэрэггүй — trailer бүтнээр үзэж болно
   const sb = document.getElementById('seekBlocker');
   if (sb) sb.style.display = 'none';
+  // Trailer bar нуух (previewBar-ыг ашиглана)
+  const tb = document.getElementById('trailerBar');
+  if (tb) tb.style.display = 'none';
+  // PreviewBar-ыг "Trailer" болгож харуулна
+  startTrailerTimer();
+}
+
+function startTrailerTimer() {
+  if (_previewTimer) return; // аль хэдийн эхэлсэн
+  const bar    = document.getElementById('previewBar');
+  const timeEl = document.getElementById('previewTime');
+  const fill   = document.getElementById('previewFill');
+  const lbl    = bar?.querySelector('span');
+  if (!bar) return;
+  // Label өөрчлөх
+  if (lbl) lbl.textContent = '🎬 Trailer:';
+  bar.style.display = 'flex';
+  // Countdown: trailer duration байвал тэрээр, үгүй бол count-up
+  const total = _trailerSeconds > 0 ? _trailerSeconds : 0;
+  let elapsed = 0;
+  if (timeEl) timeEl.textContent = total > 0 ? _fmtTime(total) : '0:00';
+  if (fill) fill.style.width = '0%';
+  _previewTimer = setInterval(() => {
+    elapsed++;
+    if (total > 0) {
+      // Countdown
+      const remaining = Math.max(0, total - elapsed);
+      if (timeEl) timeEl.textContent = _fmtTime(remaining);
+      if (fill) fill.style.width = `${Math.min(100, elapsed / total * 100)}%`;
+      if (remaining === 0) {
+        clearInterval(_previewTimer); _previewTimer = null;
+        lockAfterPreview();
+      }
+    } else {
+      // Count-up (duration мэдэгдэхгүй үед)
+      if (timeEl) timeEl.textContent = _fmtTime(elapsed);
+    }
+  }, 1000);
 }
 function _loadVideo() {
   document.getElementById('playerThumb').style.display = 'none';

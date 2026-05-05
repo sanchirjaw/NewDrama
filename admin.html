@@ -1482,6 +1482,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let _selectedTrailerFile = null;
 
+// Видео файлаас duration авах
+function getVideoDuration(file) {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { URL.revokeObjectURL(video.src); resolve(Math.ceil(video.duration)); };
+    video.onerror = () => resolve(null);
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 function handleTrailerFileSelect(input) {
   _selectedTrailerFile = input.files[0];
   const nameEl = document.getElementById('mTrailerFileName');
@@ -1513,6 +1524,8 @@ async function uploadTrailerAndSave() {
   const btn = document.getElementById('trailerUploadBtn');
   btn.disabled = true; btn.textContent = '⏳ Uploading...';
   const title = (document.getElementById('mTitle').value || 'Trailer') + ' — Trailer';
+  // Trailer-ын үргэлжлэх хугацааг файлаас авна
+  const trailerDuration = await getVideoDuration(_selectedTrailerFile);
   try {
     // 1. Create video entry
     const r = await fetch('/api/bunny/create-video', {
@@ -1545,10 +1558,10 @@ async function uploadTrailerAndSave() {
           // DB-д хадгалах
           await fetch(`/api/movies/${editingMovieId}`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ trailerVideoId })
+            body: JSON.stringify({ trailerVideoId, trailerDuration })
           });
           const idx = moviesData.findIndex(x => String(x._id||x.id) === String(editingMovieId));
-          if (idx > -1) moviesData[idx].trailerVideoId = trailerVideoId;
+          if (idx > -1) { moviesData[idx].trailerVideoId = trailerVideoId; moviesData[idx].trailerDuration = trailerDuration; }
         } else {
           toast('Upload алдаа: ' + xhr.status, 'err');
           btn.disabled = false; btn.textContent = '⬆️ Upload Trailer';
