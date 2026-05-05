@@ -219,6 +219,12 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         <button onclick="openChoiceModal()" style="background:var(--grad);border:none;border-radius:99px;padding:.75rem 2.5rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:#000;cursor:pointer;">▶ Бүтэн үзэх</button>
       </div>
 
+      <!-- Trailer bar — trailer үзэж байх үед харагдана -->
+      <div id="trailerBar" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:10;background:linear-gradient(to top,rgba(7,7,14,0.92) 0%,transparent 100%);padding:1.5rem 2rem 1rem;align-items:center;justify-content:space-between;gap:1rem;">
+        <span style="font-size:.78rem;color:rgba(255,255,255,0.65);white-space:nowrap;">🎬 Trailer үзэж байна</span>
+        <button onclick="openChoiceModal()" style="background:var(--grad);border:none;border-radius:99px;padding:.5rem 1.5rem;font-size:.82rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:.5px;flex-shrink:0;">▶ Бүтэн үзэх</button>
+      </div>
+
       <!-- Thumbnail -->
       <div class="player-thumb" id="playerThumb" onclick="tryPlay()">
         <div class="player-thumb-icon">🎬</div>
@@ -492,6 +498,7 @@ const planInfo = {
 let _previewSeconds = 3 * 60; // default 3 минут
 let _previewTimer   = null;
 let _previewElapsed = 0;
+let _trailerVideoId = '';
 
 async function loadRemoteSettings() {
   try {
@@ -569,8 +576,9 @@ async function loadMovieDetails() {
     if (!res.ok) return;
     const m = await res.json();
 
-    // videoId авах
+    // videoId + trailerVideoId авах
     if (m.videoId && !_videoId) _videoId = m.videoId;
+    if (m.trailerVideoId) _trailerVideoId = m.trailerVideoId;
 
     const title  = m.title    || '';
     const desc   = m.desc     || m.description || '';
@@ -677,9 +685,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function tryPlay() {
-  if (!subscribed && _previewSeconds <= 0) { openChoiceModal(); return; }
+  if (subscribed) { _loadVideo(); return; }
+  // Trailer байвал trailer харуулна
+  if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
+  // Preview timer
+  if (_previewSeconds <= 0) { openChoiceModal(); return; }
   _loadVideo();
-  if (!subscribed) startPreviewTimer();
+  startPreviewTimer();
+}
+function _loadTrailerVideo() {
+  document.getElementById('playerThumb').style.display = 'none';
+  document.getElementById('paywall').style.display     = 'none';
+  const fr = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
+  fr.src = `https://iframe.mediadelivery.net/embed/${_libraryId}/${_trailerVideoId}?autoplay=true&responsive=true`;
+  fr.style.display = 'block';
+  // Trailer bar харуулах
+  const tb = document.getElementById('trailerBar');
+  if (tb) tb.style.display = 'flex';
+  // Preview бүрэлдэхүүн нуух
+  const pb = document.getElementById('previewBar');
+  if (pb) pb.style.display = 'none';
+  const sb = document.getElementById('seekBlocker');
+  if (sb) sb.style.display = 'none';
 }
 function _loadVideo() {
   document.getElementById('playerThumb').style.display = 'none';

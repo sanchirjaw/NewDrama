@@ -671,6 +671,23 @@ select.form-input option{background:var(--dark);}
               <div id="uploadProgressText" style="font-size:.72rem;color:var(--text-dim);margin-top:.25rem;">0%</div>
             </div>
           </div>
+          <!-- Trailer -->
+          <div style="border-top:1px solid var(--border);margin-top:.75rem;padding-top:.75rem;">
+            <label class="form-label" style="margin-bottom:.35rem;">🎬 Trailer Video ID</label>
+            <input class="form-input" id="mTrailerVideoId" placeholder="auto-filled after upload" style="margin-bottom:.5rem;" readonly>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+              <input type="file" id="mTrailerFile" accept="video/*" style="display:none;" onchange="handleTrailerFileSelect(this)">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mTrailerFile').click()">📁 Trailer сонгох</button>
+              <span id="mTrailerFileName" style="font-size:.75rem;color:var(--text-dim);">Файл сонгоогүй</span>
+              <button type="button" class="btn btn-primary btn-sm" id="trailerUploadBtn" onclick="uploadTrailerAndSave()" disabled>⬆️ Upload Trailer</button>
+            </div>
+            <div id="trailerProgressWrap" style="display:none;margin-top:.5rem;">
+              <div style="background:var(--card2);border-radius:99px;height:6px;overflow:hidden;">
+                <div id="trailerProgressBar" style="height:100%;background:var(--grad);width:0%;transition:width .3s;"></div>
+              </div>
+              <div id="trailerProgressText" style="font-size:.72rem;color:var(--text-dim);margin-top:.25rem;">0%</div>
+            </div>
+          </div>
         </div>
       </div>
       <!-- Thumbnail -->
@@ -1075,7 +1092,8 @@ async function openMovieModal(id) {
   document.getElementById('mRating').value  = m?.rating       || '';
   document.getElementById('mDur').value     = m?.duration     || '';
   document.getElementById('mVideoId').value = m?.videoId      || '';
-  document.getElementById('mPrice').value   = m?.price != null ? m.price : _defPrice();
+  document.getElementById('mPrice').value        = m?.price != null ? m.price : _defPrice();
+  document.getElementById('mTrailerVideoId').value = m?.trailerVideoId || '';
   document.getElementById('mDesc').value    = m?.desc || m?.description || '';
   document.getElementById('mPreview').value = m?.previewMinutes != null ? m.previewMinutes : '';
   document.getElementById('mThumb').value   = m?.thumbnail    || '';
@@ -1125,6 +1143,7 @@ async function saveMovie(keepOpen = false) {
     duration:       document.getElementById('mDur').value,
     hot:            document.getElementById('mHot').checked,
     videoId:        document.getElementById('mVideoId').value,
+    trailerVideoId: document.getElementById('mTrailerVideoId').value || null,
     desc:           document.getElementById('mDesc').value,
     thumbnail:      document.getElementById('mThumb').value,
     previewMinutes: previewVal !== '' ? parseInt(previewVal) : null,
@@ -1460,6 +1479,93 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+let _selectedTrailerFile = null;
+
+function handleTrailerFileSelect(input) {
+  _selectedTrailerFile = input.files[0];
+  const nameEl = document.getElementById('mTrailerFileName');
+  const btn    = document.getElementById('trailerUploadBtn');
+  if (_selectedTrailerFile) {
+    const mb = (_selectedTrailerFile.size / 1024 / 1024).toFixed(1);
+    nameEl.textContent = `${_selectedTrailerFile.name} (${mb}MB)`;
+    nameEl.style.color = 'var(--cyan)';
+    btn.disabled = false;
+  } else {
+    nameEl.textContent = 'Файл сонгоогүй';
+    nameEl.style.color = '';
+    btn.disabled = true;
+  }
+}
+
+async function uploadTrailerAndSave() {
+  if (!_selectedTrailerFile) return;
+  // Кино байхгүй бол эхлээд хадгална
+  if (!editingMovieId) {
+    await saveMovie(true);
+    if (!editingMovieId) { toast('Кино эхлээд хадгална уу', 'err'); return; }
+  }
+  const cfg = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+  if (!cfg.libraryId || !cfg.apiKey) {
+    toast('⚙️ Bunny Library ID болон API Key тохируулна уу', 'err');
+    return;
+  }
+  const btn = document.getElementById('trailerUploadBtn');
+  btn.disabled = true; btn.textContent = '⏳ Uploading...';
+  const title = (document.getElementById('mTitle').value || 'Trailer') + ' — Trailer';
+  try {
+    // 1. Create video entry
+    const r = await fetch('/api/bunny/create-video', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, libraryId: cfg.libraryId, apiKey: cfg.apiKey })
+    });
+    const data = await r.json();
+    if (!data.guid) { toast('Bunny entry алдаа', 'err'); btn.disabled=false; btn.textContent='⬆️ Upload Trailer'; return; }
+    const trailerVideoId = data.guid;
+    // 2. Upload file
+    const wrap = document.getElementById('trailerProgressWrap');
+    const bar  = document.getElementById('trailerProgressBar');
+    const txt  = document.getElementById('trailerProgressText');
+    wrap.style.display = 'block';
+    await new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round(e.loaded / e.total * 100);
+          bar.style.width = pct + '%';
+          txt.textContent = `${pct}%`;
+        }
+      };
+      xhr.onload = async () => {
+        if (xhr.status === 200) {
+          document.getElementById('mTrailerVideoId').value = trailerVideoId;
+          txt.textContent = '✓ Trailer upload дууслаа!'; txt.style.color = 'var(--success,#22c55e)';
+          toast('✓ Trailer upload дууслаа');
+          btn.textContent = '✓ Дууслаа';
+          // DB-д хадгалах
+          await fetch(`/api/movies/${editingMovieId}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trailerVideoId })
+          });
+          const idx = moviesData.findIndex(x => String(x._id||x.id) === String(editingMovieId));
+          if (idx > -1) moviesData[idx].trailerVideoId = trailerVideoId;
+        } else {
+          toast('Upload алдаа: ' + xhr.status, 'err');
+          btn.disabled = false; btn.textContent = '⬆️ Upload Trailer';
+        }
+        resolve();
+      };
+      xhr.onerror = () => { toast('Upload алдаа', 'err'); btn.disabled=false; btn.textContent='⬆️ Upload Trailer'; resolve(); };
+      xhr.open('PUT', `https://video.bunnycdn.com/library/${cfg.libraryId}/videos/${trailerVideoId}`);
+      xhr.setRequestHeader('AccessKey', cfg.apiKey);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.send(_selectedTrailerFile);
+    });
+  } catch(e) {
+    toast('Алдаа: ' + e.message, 'err');
+    btn.disabled = false; btn.textContent = '⬆️ Upload Trailer';
+  }
+}
 
 function handleVideoFileSelect(input) {
   _selectedVideoFile = input.files[0];
