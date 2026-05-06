@@ -726,17 +726,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (qa) qa.textContent = planInfo.movie.amount;
 });
 
+// _playingTrailer: trailer тоглуулж байгаа эсэх (main preview-оос ялгах)
+let _playingTrailer    = false;
+let _playingMainPreview = false;
+
 function tryPlay() {
   if (!_authReady) return;
   if (subscribed) { _loadVideo(); return; }
-  // Trailer байвал main player-т харуулна
+  // Trailer байвал → trailer
   if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
-  // Trailer байхгүй → paywall
+  // Trailer байхгүй, preview > 0 → preview таймертай үндсэн кино
+  if (_previewSeconds > 0 && _libraryId && _videoId) { _loadMainPreview(); return; }
+  // Trailer байхгүй, preview = 0, videoId байна → дуустал үзнэ, төгсгөлд paywall
+  if (_libraryId && _videoId) { _loadMainPreview(); return; }
+  // Video ч байхгүй → paywall
   document.getElementById('playerThumb').style.display = 'none';
   document.getElementById('paywall').style.display = 'flex';
 }
 
 function _loadTrailerVideo() {
+  _playingTrailer     = true;
+  _playingMainPreview = false;
   document.getElementById('playerThumb').style.display = 'none';
   document.getElementById('paywall').style.display     = 'none';
   const fr = document.getElementById('playerFrame');
@@ -746,15 +756,43 @@ function _loadTrailerVideo() {
   if (tb) tb.style.display = 'flex';
 }
 
-// Trailer дуусахад paywall харуулна
+// Trailer байхгүй үед үндсэн кинийг preview-р тоглуулна
+function _loadMainPreview() {
+  _playingTrailer     = false;
+  _playingMainPreview = true;
+  document.getElementById('playerThumb').style.display = 'none';
+  document.getElementById('paywall').style.display     = 'none';
+  const fr  = document.getElementById('playerFrame');
+  const url = _getBunnyUrl();
+  if (!url) { document.getElementById('paywall').style.display = 'flex'; return; }
+  fr.src = url;
+  fr.style.display = 'block';
+  // Preview таймер байвал эхлүүлнэ
+  if (_previewSeconds > 0) startPreviewTimer();
+  // Preview = 0 → ended event дэлгэц дэх paywall-аар хаагдана (доорх listener)
+}
+
+// Bunny ended / near-end → paywall
 window.addEventListener('message', e => {
   if (subscribed) return;
   const d = e.data;
   const ended = d === 'BunnyCDN.Ended'
     || (typeof d === 'object' && (d?.action === 'ended' || d?.event === 'ended'));
-  if (ended && _trailerVideoId) {
+
+  if (!ended) return;
+
+  if (_playingTrailer) {
+    // Trailer дуусав → trailerBar нуух, paywall
+    _playingTrailer = false;
     const tb = document.getElementById('trailerBar');
     if (tb) tb.style.display = 'none';
+    document.getElementById('paywall').style.display = 'flex';
+  } else if (_playingMainPreview) {
+    // Үндсэн кино preview дуусав (preview=0 тул дуустал үзсэн) → paywall
+    _playingMainPreview = false;
+    if (_previewTimer) { clearInterval(_previewTimer); _previewTimer = null; }
+    const bar = document.getElementById('previewBar');
+    if (bar) bar.style.display = 'none';
     document.getElementById('paywall').style.display = 'flex';
   }
 });
@@ -762,6 +800,9 @@ window.addEventListener('message', e => {
 function closeTrailerModal() {} // backward compat stub
 
 function _loadVideo() {
+  // Flags reset
+  _playingTrailer     = false;
+  _playingMainPreview = false;
   // Бүх overlay нуух
   const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
   hide('playerThumb');
