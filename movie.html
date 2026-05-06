@@ -854,8 +854,10 @@ async function _checkAndPlay(uid) {
       if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
       _payPollUid = null;
       subscribed = true;
-      document.getElementById('paywall')?.style && (document.getElementById('paywall').style.display = 'none');
-      document.getElementById('playerThumb')?.style && (document.getElementById('playerThumb').style.display = 'none');
+      // Бүх modal болон overlay хаах
+      document.getElementById('choiceModal')?.classList.remove('show');
+      document.getElementById('qpayModal')?.classList.remove('show');
+      closeTrailerModal();
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
       _loadVideo();
       return true;
