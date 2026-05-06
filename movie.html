@@ -388,9 +388,14 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
     <div style="font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--cyan);margin-bottom:.6rem;">QPay</div>
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:#fff;margin-bottom:.3rem;" id="qpayTitle">Дан кино</h3>
     <p style="color:var(--text-dim);font-size:.8rem;margin-bottom:1.5rem;">QPay аппаар QR кодыг уншуулна уу</p>
-    <div style="width:170px;height:170px;margin:0 auto 1.25rem;background:#fff;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;padding:1rem;">
+    <div id="qpayQrBox" style="width:170px;height:170px;margin:0 auto 1.25rem;background:#fff;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;padding:1rem;">
       <div style="font-size:2.5rem;">📱</div>
       <div style="font-size:.72rem;color:#555;text-align:center;line-height:1.4;">QPay QR код<br><span style="font-size:.62rem;color:#aaa;">(backend холбогдсоны дараа)</span></div>
+    </div>
+    <!-- Хүлээж байна хэсэг -->
+    <div id="qpayWaitBox" style="display:none;flex-direction:column;align-items:center;gap:1rem;margin:0 auto 1.25rem;padding:1.5rem 0;">
+      <div style="width:52px;height:52px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:var(--cyan,#00e5ff);animation:spin 1s linear infinite;"></div>
+      <div style="font-size:.82rem;color:var(--text-dim,#8888a8);line-height:1.6;text-align:center;">был.mn дээр төлбөр хийснийхээ<br>дараа кино автоматаар нэгдэнэ</div>
     </div>
     <div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" id="qpayAmount">3,400₮</div>
@@ -408,6 +413,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 .modal-ov.show{display:flex;}
 .modal-bx{background:var(--dark,#0d0d1a);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2rem;width:100%;position:relative;animation:mFadeUp .3s ease;max-height:90vh;overflow-y:auto;}
 @keyframes mFadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 .modal-x{position:absolute;top:.875rem;right:.875rem;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:transparent;cursor:pointer;color:rgba(255,255,255,0.5);font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .modal-x:hover{color:#fff;border-color:rgba(255,255,255,0.2);}
 .choice-card{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
@@ -827,11 +833,16 @@ async function openQpay(plan) {
       } else {
         window.open(data.url, '_blank');
       }
-      document.getElementById('qpayModal').classList.remove('show');
-      toast('💳 Төлбөрийн хуудас нээгдлээ...', 'ok');
 
-      // был.mn redirect хийхгүй тул арын хуудаснаас DB-г poll хийнэ
-      // Webhook ирмэгц planExpiry шинэчлэгдэх ба бид автоматаар тоглуулна
+      // Modal-д "хүлээж байна" байдал харуулна — төлбөр баталгаажсан даруйд автоматаар хаагдана
+      document.getElementById('qpayTitle').textContent  = 'Төлбөр хүлээж байна';
+      document.getElementById('qpayAmount').textContent = '';
+      document.getElementById('qpayDesc').textContent   = '💳 был.mn дээр төлбөр хийснийхээ дараа кино автоматаар нэгдэнэ...';
+      const qpayWait = document.getElementById('qpayWaitBox');
+      if (qpayWait) qpayWait.style.display = 'flex';
+      const qpayQr = document.getElementById('qpayQrBox');
+      if (qpayQr) qpayQr.style.display = 'none';
+
       _startPaymentPoll(user.uid);
     } else {
       if (bylTab && !bylTab.closed) bylTab.close();
@@ -859,6 +870,11 @@ async function _checkAndPlay(uid) {
       // Бүх modal болон overlay хаах
       document.getElementById('choiceModal')?.classList.remove('show');
       document.getElementById('qpayModal')?.classList.remove('show');
+      // qpayModal-ийн state-ийг reset хийнэ
+      const qw = document.getElementById('qpayWaitBox');
+      const qq = document.getElementById('qpayQrBox');
+      if (qw) qw.style.display = 'none';
+      if (qq) qq.style.display = 'flex';
       closeTrailerModal();
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
       _loadVideo();
