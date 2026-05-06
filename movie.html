@@ -381,23 +381,22 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
   </div>
 </div>
 
-<!-- QPay Modal — был.mn iframe -->
+<!-- QPay Modal — төлбөр хүлээж байна -->
 <div class="modal-ov" id="qpayModal">
-  <div class="modal-bx" style="max-width:480px;padding:0;overflow:hidden;background:#fff;border-radius:20px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:#07070e;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan,#00e5ff);animation:blink 1.2s ease-in-out infinite;"></div>
-        <span style="font-size:.75rem;color:rgba(255,255,255,0.7);" id="qpayStatusText">Төлбөр хүлээж байна...</span>
+  <div class="modal-bx" style="max-width:400px;text-align:center;">
+    <button onclick="closeQpay()" class="modal-x">✕</button>
+    <div id="qpayLoadBox" style="display:flex;flex-direction:column;align-items:center;gap:1.25rem;padding:1rem 0 .5rem;">
+      <div style="width:56px;height:56px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div>
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:.4rem;" id="qpayStatusText">Төлбөр хүлээж байна...</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,0.45);line-height:1.6;">был.mn дээр төлбөр хийснийхээ дараа<br>кино автоматаар нэгдэнэ</div>
       </div>
-      <button onclick="closeQpay()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:99px;color:rgba(255,255,255,0.6);font-size:.75rem;padding:.25rem .75rem;cursor:pointer;">✕ Хаах</button>
+      <div style="display:flex;align-items:center;gap:.4rem;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);border-radius:99px;padding:.4rem 1rem;font-size:.72rem;color:rgba(255,255,255,0.5);">
+        <div style="width:6px;height:6px;border-radius:50%;background:#00e5ff;animation:blink 1.2s ease-in-out infinite;"></div>
+        Шалгаж байна...
+      </div>
     </div>
-    <!-- Loading -->
-    <div id="qpayLoadBox" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;height:420px;background:#07070e;">
-      <div style="width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div>
-      <div style="font-size:.82rem;color:rgba(255,255,255,0.5);">Холбогдож байна...</div>
-    </div>
-    <!-- был.mn iframe -->
-    <iframe id="bylFrame" src="about:blank" style="display:none;width:100%;height:520px;border:none;" allowpayment></iframe>
+    <button onclick="closeQpay()" style="width:100%;margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.4);font-size:.8rem;cursor:pointer;padding:.6rem;">✕ Цуцлах</button>
   </div>
 </div>
 
@@ -804,13 +803,14 @@ async function openQpay(plan) {
     return;
   }
 
-  // Modal нээж loading харуулах
+  // Popup блок гарахгүйн тулд fetch-ийн ӨМНӨ шинэ таб нээнэ
+  const bylTab = window.open('', '_blank');
+  if (bylTab) bylTab.document.write('<html><body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:1rem;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div><p style="color:rgba(255,255,255,0.5);font-size:.9rem;">Холбогдож байна...</p><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
+
+  // Modal нээж spinner харуулах
   document.getElementById('choiceModal').classList.remove('show');
   document.getElementById('qpayModal').classList.add('show');
-  document.getElementById('qpayLoadBox').style.display = 'flex';
-  document.getElementById('bylFrame').style.display    = 'none';
-  document.getElementById('bylFrame').src              = 'about:blank';
-  document.getElementById('qpayStatusText').textContent = 'Холбогдож байна...';
+  document.getElementById('qpayStatusText').textContent = 'Төлбөр хүлээж байна...';
 
   try {
     const res  = await fetch('/api/byl/checkout', {
@@ -820,18 +820,15 @@ async function openQpay(plan) {
     });
     const data = await res.json();
     if (data.url) {
-      // iframe-д был.mn төлбөрийн хуудас харуулна
-      const fr = document.getElementById('bylFrame');
-      fr.src = data.url;
-      fr.style.display = 'block';
-      document.getElementById('qpayLoadBox').style.display = 'none';
-      document.getElementById('qpayStatusText').textContent = 'Төлбөр хүлээж байна...';
-
+      if (bylTab && !bylTab.closed) bylTab.location.href = data.url;
+      else window.open(data.url, '_blank');
       _startPaymentPoll(user.uid);
     } else {
+      if (bylTab && !bylTab.closed) bylTab.close();
       throw new Error(data.error || 'Алдаа гарлаа');
     }
   } catch (e) {
+    if (bylTab && !bylTab.closed) bylTab.close();
     document.getElementById('qpayModal').classList.remove('show');
     document.getElementById('choiceModal').classList.add('show');
     toast('❌ ' + e.message, 'err');
@@ -856,9 +853,6 @@ async function _checkAndPlay(uid) {
       // Бүх modal болон overlay хаах
       document.getElementById('choiceModal')?.classList.remove('show');
       document.getElementById('qpayModal')?.classList.remove('show');
-      // qpayModal-ийн iframe reset
-      const fr = document.getElementById('bylFrame');
-      if (fr) { fr.src = 'about:blank'; fr.style.display = 'none'; }
       closeTrailerModal();
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
       _loadVideo();
@@ -898,8 +892,6 @@ document.addEventListener('visibilitychange', async () => {
 
 function closeQpay() {
   document.getElementById('qpayModal').classList.remove('show');
-  const fr = document.getElementById('bylFrame');
-  if (fr) { fr.src = 'about:blank'; fr.style.display = 'none'; }
   if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
   _payPollUid = null;
 }

@@ -438,21 +438,22 @@
   </div>
 </footer>
 
-<!-- Payment Modal — был.mn iframe -->
+<!-- Payment Modal — төлбөр хүлээж байна -->
 <div class="modal-overlay" id="bylModal">
-  <div class="modal-box" style="padding:0;max-width:480px;background:#fff;border-radius:20px;overflow:hidden;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:#07070e;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#00e5ff;animation:blink 1.2s ease-in-out infinite;"></div>
-        <span style="font-size:.75rem;color:rgba(255,255,255,0.7);" id="bylStatusText">Холбогдож байна...</span>
+  <div class="modal-box" style="max-width:400px;text-align:center;">
+    <button class="modal-close" onclick="closeBylModal()">✕</button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1.25rem;padding:1rem 0 .5rem;">
+      <div style="width:56px;height:56px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div>
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:.4rem;" id="bylStatusText">Төлбөр хүлээж байна...</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,0.45);line-height:1.6;">был.mn дээр төлбөр хийснийхээ дараа<br>багц автоматаар идэвхжинэ</div>
       </div>
-      <button onclick="closeBylModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:99px;color:rgba(255,255,255,0.6);font-size:.75rem;padding:.25rem .75rem;cursor:pointer;">✕ Хаах</button>
+      <div style="display:flex;align-items:center;gap:.4rem;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);border-radius:99px;padding:.4rem 1rem;font-size:.72rem;color:rgba(255,255,255,0.5);">
+        <div style="width:6px;height:6px;border-radius:50%;background:#00e5ff;animation:blink 1.2s ease-in-out infinite;"></div>
+        Шалгаж байна...
+      </div>
     </div>
-    <div id="bylLoadBox" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;height:420px;background:#07070e;">
-      <div style="width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div>
-      <div style="font-size:.82rem;color:rgba(255,255,255,0.5);">Холбогдож байна...</div>
-    </div>
-    <iframe id="bylFrame" src="about:blank" style="display:none;width:100%;height:520px;border:none;" allowpayment></iframe>
+    <button onclick="closeBylModal()" style="width:100%;margin-top:.5rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.4);font-size:.8rem;cursor:pointer;padding:.6rem;">✕ Цуцлах</button>
   </div>
 </div>
 <style>
@@ -547,14 +548,15 @@ async function startPayment(planKey, btn) {
     setTimeout(() => window.location.href = '/login', 1400);
     return;
   }
-  // Modal нээж loading харуулах
-  document.getElementById('bylModal').classList.add('show');
-  document.getElementById('bylLoadBox').style.display = 'flex';
-  document.getElementById('bylFrame').style.display   = 'none';
-  document.getElementById('bylFrame').src             = 'about:blank';
-  document.getElementById('bylStatusText').textContent = 'Холбогдож байна...';
+  // Popup блок гарахгүйн тулд fetch-ийн ӨМНӨ шинэ таб нээнэ
+  const bylTab = window.open('', '_blank');
+  if (bylTab) bylTab.document.write('<html><body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:1rem;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div><p style="color:rgba(255,255,255,0.5);font-size:.9rem;">Холбогдож байна...</p><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
 
-  if (btn) { btn.disabled = true; btn.textContent = 'Уншиж байна...'; }
+  // Modal нээж spinner харуулах
+  document.getElementById('bylModal').classList.add('show');
+  document.getElementById('bylStatusText').textContent = 'Төлбөр хүлээж байна...';
+
+  if (btn) { btn.disabled = true; }
 
   try {
     const res  = await fetch('/api/byl/checkout', {
@@ -564,26 +566,23 @@ async function startPayment(planKey, btn) {
     });
     const data = await res.json();
     if (data.url) {
-      const fr = document.getElementById('bylFrame');
-      fr.src = data.url;
-      fr.style.display = 'block';
-      document.getElementById('bylLoadBox').style.display = 'none';
-      document.getElementById('bylStatusText').textContent = 'Төлбөр хүлээж байна...';
+      if (bylTab && !bylTab.closed) bylTab.location.href = data.url;
+      else window.open(data.url, '_blank');
       _startPoll(user.uid);
     } else {
+      if (bylTab && !bylTab.closed) bylTab.close();
       throw new Error(data.error || 'Алдаа гарлаа');
     }
   } catch (e) {
+    if (bylTab && !bylTab.closed) bylTab.close();
     closeBylModal();
     toast('❌ ' + e.message, 'err');
   }
-  if (btn) { btn.disabled = false; btn.textContent = btn._origText || btn.textContent; }
+  if (btn) { btn.disabled = false; }
 }
 
 function closeBylModal() {
   document.getElementById('bylModal').classList.remove('show');
-  document.getElementById('bylFrame').src = 'about:blank';
-  document.getElementById('bylFrame').style.display = 'none';
   if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
   _pollUid = null;
 }
