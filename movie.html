@@ -240,10 +240,14 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
       </div>
 
       <!-- Trailer Modal -->
-      <div id="trailerModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;">
+      <div id="trailerModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
         <div style="position:relative;width:min(900px,95vw);aspect-ratio:16/9;">
           <iframe id="trailerFrame" src="about:blank" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
           <button onclick="closeTrailerModal()" style="position:absolute;top:-2.5rem;right:0;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">✕ Хаах</button>
+        </div>
+        <div style="display:flex;gap:.75rem;align-items:center;">
+          <button onclick="closeTrailerModal();openChoiceModal();" style="background:var(--grad);border:none;border-radius:99px;padding:.65rem 2rem;font-size:.9rem;font-weight:700;color:#07070e;cursor:pointer;letter-spacing:.5px;">▶ Бүтэн үзэх</button>
+          <button onclick="closeTrailerModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:99px;padding:.65rem 1.5rem;font-size:.9rem;color:#fff;cursor:pointer;">Хаах</button>
         </div>
       </div>
     </div>
