@@ -845,7 +845,11 @@ async function _checkAndPlay(uid) {
   try {
     const me = await fetch(`/api/users/me/${uid}`).then(r => r.json());
     const expiry = me.planExpiry ? new Date(me.planExpiry) : null;
-    if (expiry && expiry > new Date()) {
+    // Дан кино: purchasedMovies дотор тухайн кино байгаа эсэх
+    const movieAccess = Array.isArray(me.purchasedMovies)
+      ? me.purchasedMovies.some(pm => pm.movieId === _movieId && new Date(pm.expiry) > new Date())
+      : false;
+    if (movieAccess || (expiry && expiry > new Date())) {
       if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
       _payPollUid = null;
       subscribed = true;

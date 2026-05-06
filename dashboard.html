@@ -690,31 +690,36 @@ firebase.auth().onAuthStateChanged(async user => {
     const data = await res.json();
     const plan     = data.plan || 'free';
     const expiry   = data.planExpiry ? new Date(data.planExpiry) : null;
-    const active   = expiry ? expiry > new Date() : false;
-    const daysLeft = expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
+    // plan === 'movie' бол ерөнхий subscription биш — зөвхөн monthly/quarterly харуулна
+    const isSubPlan = plan === 'monthly' || plan === 'quarterly';
+    const active    = isSubPlan && expiry ? expiry > new Date() : false;
+    const daysLeft  = isSubPlan && expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
+    // Дан кино тоолох
+    const now = new Date();
+    const activeSingleMovies = (data.purchasedMovies || []).filter(pm => new Date(pm.expiry) > now).length;
 
     // Sidebar badge & footer
     const badge = document.getElementById('dashPlanBadge');
-    if (badge) badge.textContent = PLAN_LABEL[plan] || '✦ ' + plan;
+    if (badge) badge.textContent = isSubPlan ? (PLAN_LABEL[plan] || '✦ ' + plan) : '✦ Үнэгүй';
     const sdl = document.getElementById('sidebarDaysLeft');
-    if (sdl) sdl.textContent = plan === 'free' ? '—' : daysLeft + ' хоног';
+    if (sdl) sdl.textContent = isSubPlan && active ? daysLeft + ' хоног' : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
 
     // Quick stat — дансны хоног
     const qsDL = document.getElementById('qsDaysLeft');
-    if (qsDL) qsDL.textContent = plan === 'free' ? '—' : daysLeft;
+    if (qsDL) qsDL.textContent = isSubPlan && active ? daysLeft : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
 
     // Sub panel
     const planName   = document.getElementById('subPlanName');
     const planStatus = document.getElementById('subPlanStatus');
     const daysEl     = document.getElementById('subDaysLeft');
     const paidEl     = document.getElementById('subTotalPaid');
-    if (planName)   planName.textContent   = PLAN_LABEL[plan] || plan;
-    if (planStatus) planStatus.textContent = plan === 'free'
+    if (planName)   planName.textContent   = isSubPlan ? (PLAN_LABEL[plan] || plan) : 'Үнэгүй';
+    if (planStatus) planStatus.textContent = !isSubPlan
       ? 'Идэвхгүй · Багц авна уу'
       : active
         ? `Идэвхтэй · ${expiry.toLocaleDateString('mn-MN')} хүртэл`
         : 'Дуусгавар болсон';
-    if (daysEl) daysEl.textContent = plan === 'free' ? '—' : daysLeft;
+    if (daysEl) daysEl.textContent = isSubPlan && active ? daysLeft : '—';
     if (paidEl) paidEl.textContent = (data.totalPaid || 0).toLocaleString() + '₮';
   } catch (e) {
     console.warn('Plan авахад алдаа:', e.message);

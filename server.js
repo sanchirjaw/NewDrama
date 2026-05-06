@@ -245,6 +245,8 @@ app.post('/api/byl/checkout', async (req, res) => {
 
     await col('payments').insertOne({
       uid, plan, amount: p.amount, days: p.days,
+      movieId: plan === 'movie' ? (movieId || null) : null,
+      movieTitle: plan === 'movie' ? (p.name || 'Дан Кино') : null,
       status: 'pending',
       date: new Date().toISOString().slice(0, 10),
       bylInvoiceId: inv.id,
@@ -256,27 +258,50 @@ app.post('/api/byl/checkout', async (req, res) => {
   }
 });
 
+/* ── Shared: payment баталгаажсан үед хэрэглэгчид эрх олгох ── */
+async function grantAccess(payment) {
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + (payment.days || 30));
+  const user = await col('users').findOne({ uid: payment.uid });
+
+  if (payment.plan === 'movie') {
+    // Дан кино: purchasedMovies array-д нэмнэ, subscription-г өөрчлөхгүй
+    await col('users').updateOne(
+      { uid: payment.uid },
+      {
+        $push: { purchasedMovies: {
+          movieId:   payment.movieId || null,
+          movieTitle: payment.movieTitle || 'Дан Кино',
+          expiry,
+          paidAt: new Date(),
+        }},
+        $set: { totalPaid: (user?.totalPaid || 0) + (payment.amount || 0) },
+      }
+    );
+  } else {
+    // Monthly / Quarterly: ерөнхий subscription тавина
+    await col('users').updateOne(
+      { uid: payment.uid },
+      { $set: { plan: payment.plan, planExpiry: expiry,
+                totalPaid: (user?.totalPaid || 0) + (payment.amount || 0) } }
+    );
+  }
+
+  await col('payments').updateOne(
+    { _id: payment._id },
+    { $set: { status: 'paid', paidAt: new Date() } }
+  );
+}
+
 // Webhook — byl.mn invoice.paid дуудна
 app.post('/api/byl/webhook', async (req, res) => {
   try {
     const event = req.body;
     if (event.type === 'invoice.paid') {
-      // byl.mn payload: { data: { object: { id: 54485, ... } } }
       const invoiceId = event.data?.object?.id ?? event.data?.id;
       const payment   = invoiceId ? await col('payments').findOne({ bylInvoiceId: invoiceId }) : null;
       if (payment && payment.status !== 'paid') {
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + (payment.days || 30));
-        const user = await col('users').findOne({ uid: payment.uid });
-        await col('users').updateOne(
-          { uid: payment.uid },
-          { $set: { plan: payment.plan, planExpiry: expiry,
-                    totalPaid: (user?.totalPaid || 0) + payment.amount } }
-        );
-        await col('payments').updateOne(
-          { _id: payment._id },
-          { $set: { status: 'paid', paidAt: new Date() } }
-        );
+        await grantAccess(payment);
       }
     }
     res.status(200).json({ ok: true });
@@ -314,23 +339,7 @@ app.post('/api/payments/:id/approve', async (req, res) => {
     if (!payment) return res.status(404).json({ error: 'Төлбөр олдсонгүй' });
     if (payment.status === 'paid') return res.json({ ok: true, already: true });
 
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + (payment.days || 30));
-
-    const user = await col('users').findOne({ uid: payment.uid });
-    await col('users').updateOne(
-      { uid: payment.uid },
-      { $set: {
-          plan: payment.plan,
-          planExpiry: expiry,
-          totalPaid: (user?.totalPaid || 0) + (payment.amount || 0)
-        }
-      }
-    );
-    await col('payments').updateOne(
-      { _id: payment._id },
-      { $set: { status: 'paid', paidAt: new Date() } }
-    );
+    await grantAccess(payment);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
