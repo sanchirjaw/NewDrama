@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Хар Шөнийн Нууц — NEW DRAMA</title>
+<title>NEW DRAMA</title>
 <link rel="stylesheet" href="assets/style.css">
 <style>
 /* ===== PLAYER SECTION ===== */
@@ -219,14 +219,9 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         <button onclick="openChoiceModal()" style="background:var(--grad);border:none;border-radius:99px;padding:.75rem 2.5rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:#000;cursor:pointer;">▶ Бүтэн үзэх</button>
       </div>
 
-      <!-- Trailer bar — trailer үзэж байх үед харагдана -->
-      <div id="trailerBar" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:10;background:linear-gradient(to top,rgba(7,7,14,0.92) 0%,transparent 100%);padding:1.5rem 2rem 1rem;align-items:center;justify-content:space-between;gap:1rem;">
-        <span style="font-size:.78rem;color:rgba(255,255,255,0.65);white-space:nowrap;">🎬 Trailer үзэж байна</span>
-        <button onclick="openChoiceModal()" style="background:var(--grad);border:none;border-radius:99px;padding:.5rem 1.5rem;font-size:.82rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:.5px;flex-shrink:0;">▶ Бүтэн үзэх</button>
-      </div>
 
       <!-- Thumbnail -->
-      <div class="player-thumb" id="playerThumb" onclick="tryPlay()">
+      <div class="player-thumb" id="playerThumb" onclick="_authReady ? tryPlay() : void 0">
         <div class="player-thumb-icon">🎬</div>
         <div class="player-thumb-name"></div>
         <div class="player-thumb-play">▶</div>
@@ -239,7 +234,16 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
           <p>Нэг кино үзэх эсвэл сарын багц авах — сонгоорой.</p>
           <div class="paywall-actions">
             <button class="btn-primary" onclick="openChoiceModal()">▶ Сонголт харах</button>
+            <button id="paywallTrailerBtn" onclick="openTrailerModal()" style="display:none;padding:.65rem 1.3rem;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:.85rem;cursor:pointer;">🎬 Trailer үзэх</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Trailer Modal -->
+      <div id="trailerModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;">
+        <div style="position:relative;width:min(900px,95vw);aspect-ratio:16/9;">
+          <iframe id="trailerFrame" src="about:blank" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
+          <button onclick="closeTrailerModal()" style="position:absolute;top:-2.5rem;right:0;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">✕ Хаах</button>
         </div>
       </div>
     </div>
@@ -436,6 +440,20 @@ if (!firebase.apps.length) {
 }
 let subscribed = false;
 let currentUser = null;
+let _authReady        = false;  // auth + plan шалгалт дууссан
+let _movieDetailsReady = false; // loadMovieDetails дууссан
+
+// Хоёулаа бэлэн болсны дараа нэг л удаа дуудна
+let _autoPlayFired = false;
+function _maybeAutoPlay() {
+  if (!_authReady || !_movieDetailsReady || _autoPlayFired) return;
+  _autoPlayFired = true;
+  if (subscribed) {
+    tryPlay(); // → _loadVideo() → үндсэн кино
+  }
+  // Unsubscribed: thumb дарахдаа л tryPlay() дуудна (onclick-д гарна)
+}
+
 firebase.auth().onAuthStateChanged(async user => {
   currentUser = user;
   // Nav auth button шинэчлэх
@@ -450,7 +468,7 @@ firebase.auth().onAuthStateChanged(async user => {
       navBtn.innerHTML = `<a href="login.html" class="btn-primary" style="padding:.5rem 1.15rem;font-size:.8rem;">Нэвтрэх</a>`;
     }
   }
-  if (!user) return;
+  if (!user) { _authReady = true; return; }
   // Sync хийх
   fetch('/api/users/sync', {
     method: 'POST',
@@ -466,12 +484,9 @@ firebase.auth().onAuthStateChanged(async user => {
     const active = expiry ? expiry > new Date() : false;
     if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
     if (plan === 'movie' && active) subscribed = true;
-    // Төлбөр хийгээд буцаж ирсэн бол автоматаар тоглуулна
-    if (subscribed && document.getElementById('playerThumb')?.style.display !== 'none') {
-      setTimeout(() => tryPlay(), 800);
-    }
   } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
-
+  _authReady = true;
+  _maybeAutoPlay();
 });
 
 // Bunny embed — URL params-аас videoId унших, Library ID localStorage-аас
@@ -494,6 +509,20 @@ const planInfo = {
   monthly:   { title:'1 Сарын багц', amount:`${_mo}₮`, desc:'1 сарын хязгааргүй хандалт' },
   quarterly: { title:'3 Сарын багц', amount:`${_qu}₮`, desc:'3 сарын хязгааргүй хандалт' },
 };
+
+// localStorage-аас кэшлэгдсэн үнийг ШУУД DOM-д тавина — DOMContentLoaded хүлээхгүй
+// Ингэснээр hardcode утга харагдах flash арилна
+(function() {
+  const bp = document.querySelectorAll('.buy-opt-price');
+  if (bp[0]) bp[0].textContent = `${_mo}₮`;
+  if (bp[1]) bp[1].textContent = `${_mv}₮`;
+  const cp = document.querySelectorAll('.choice-price');
+  if (cp[0]) cp[0].textContent = `${_mv}₮`;
+  if (cp[1]) cp[1].textContent = `${_mo}₮`;
+  if (cp[2]) cp[2].textContent = `${_qu}₮`;
+  const qa = document.getElementById('qpayAmount');
+  if (qa) qa.textContent = `${_mv}₮`;
+})();
 
 let _previewSeconds = 3 * 60; // default 3 минут
 let _previewTimer   = null;
@@ -622,10 +651,18 @@ async function loadMovieDetails() {
     const _thumb = m.thumbnail ||
       (_bunnyCfg.cdnHost && _videoId ? `https://${_bunnyCfg.cdnHost}/${_videoId}/thumbnail.jpg` : '');
     if (_thumb) {
-      const thumbIcon = document.querySelector('.player-thumb-icon');
-      if (thumbIcon) {
-        thumbIcon.innerHTML = `<img src="${_thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
-        thumbIcon.style.fontSize = '0';
+      const playerThumb = document.getElementById('playerThumb');
+      if (playerThumb) {
+        // Бүтэн player-г дүүргэх cover зураг
+        playerThumb.style.backgroundImage = `url('${_thumb}')`;
+        playerThumb.style.backgroundSize = 'cover';
+        playerThumb.style.backgroundPosition = 'center';
+        playerThumb.style.backgroundRepeat = 'no-repeat';
+        // Overlay gradient — play товч харагдахын тулд
+        playerThumb.style.background = `linear-gradient(to top, rgba(7,7,14,0.7) 0%, rgba(7,7,14,0.2) 50%, rgba(7,7,14,0.4) 100%), url('${_thumb}') center/cover no-repeat`;
+        // Emoji icon нуух
+        const thumbIcon = document.querySelector('.player-thumb-icon');
+        if (thumbIcon) thumbIcon.style.display = 'none';
       }
       const poster = document.getElementById('sidebarPoster');
       if (poster) {
@@ -670,6 +707,11 @@ async function loadMovieDetails() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRemoteSettings();
   await loadMovieDetails();
+
+  // Settings + movie details хоёулаа дуусаад flag тавина
+  _movieDetailsReady = true;
+  _maybeAutoPlay();   // auth аль хэдийн дуусчихсан бол шууд тоглуулна
+
   // choice modal prices
   document.querySelectorAll('.choice-price').forEach((el, i) => {
     if (i === 0) el.textContent = planInfo.movie.amount;
@@ -687,65 +729,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function tryPlay() {
+  if (!_authReady) return;
   if (subscribed) { _loadVideo(); return; }
-  // Trailer байвал trailer харуулна
-  if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
-  // Preview timer
-  if (_previewSeconds <= 0) { openChoiceModal(); return; }
-  _loadVideo();
-  startPreviewTimer();
-}
-function _loadTrailerVideo() {
-  document.getElementById('playerThumb').style.display = 'none';
-  document.getElementById('paywall').style.display     = 'none';
-  const fr = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
-  fr.src = `https://iframe.mediadelivery.net/embed/${_libraryId}/${_trailerVideoId}?autoplay=true&responsive=true`;
-  fr.style.display = 'block';
-  // Seek blocker хэрэггүй — trailer бүтнээр үзэж болно
-  const sb = document.getElementById('seekBlocker');
-  if (sb) sb.style.display = 'none';
-  // Trailer bar нуух (previewBar-ыг ашиглана)
-  const tb = document.getElementById('trailerBar');
-  if (tb) tb.style.display = 'none';
-  // PreviewBar-ыг "Trailer" болгож харуулна
-  startTrailerTimer();
+  // Subscribed биш → paywall харуулна; trailer товч байвал харуулна
+  _showPaywall();
 }
 
-function startTrailerTimer() {
-  if (_previewTimer) return; // аль хэдийн эхэлсэн
-  const bar    = document.getElementById('previewBar');
-  const timeEl = document.getElementById('previewTime');
-  const fill   = document.getElementById('previewFill');
-  const lbl    = bar?.querySelector('span');
-  if (!bar) return;
-  // Label өөрчлөх
-  if (lbl) lbl.textContent = '🎬 Trailer:';
-  bar.style.display = 'flex';
-  // Countdown: trailer duration байвал тэрээр, үгүй бол count-up
-  const total = _trailerSeconds > 0 ? _trailerSeconds : 0;
-  let elapsed = 0;
-  if (timeEl) timeEl.textContent = total > 0 ? _fmtTime(total) : '0:00';
-  if (fill) fill.style.width = '0%';
-  _previewTimer = setInterval(() => {
-    elapsed++;
-    if (total > 0) {
-      // Countdown
-      const remaining = Math.max(0, total - elapsed);
-      if (timeEl) timeEl.textContent = _fmtTime(remaining);
-      if (fill) fill.style.width = `${Math.min(100, elapsed / total * 100)}%`;
-      if (remaining === 0) {
-        clearInterval(_previewTimer); _previewTimer = null;
-        lockAfterPreview();
-      }
-    } else {
-      // Count-up (duration мэдэгдэхгүй үед)
-      if (timeEl) timeEl.textContent = _fmtTime(elapsed);
-    }
-  }, 1000);
-}
-function _loadVideo() {
+function _showPaywall() {
   document.getElementById('playerThumb').style.display = 'none';
-  document.getElementById('paywall').style.display     = 'none';
+  document.getElementById('paywall').style.display = 'flex';
+  // Trailer байвал "Trailer үзэх" товч харуулна
+  const tb = document.getElementById('paywallTrailerBtn');
+  if (tb) tb.style.display = (_trailerVideoId && _libraryId) ? '' : 'none';
+}
+
+// Trailer — тусдаа modal-д нээнэ (үндсэн player-г огт ашиглахгүй)
+function openTrailerModal() {
+  if (!_trailerVideoId || !_libraryId) return;
+  const modal = document.getElementById('trailerModal');
+  const fr    = document.getElementById('trailerFrame');
+  fr.src = `https://iframe.mediadelivery.net/embed/${_libraryId}/${_trailerVideoId}?autoplay=true&responsive=true`;
+  modal.style.display = 'flex';
+}
+function closeTrailerModal() {
+  const modal = document.getElementById('trailerModal');
+  const fr    = document.getElementById('trailerFrame');
+  modal.style.display = 'none';
+  fr.src = 'about:blank'; // player зогсоох
+}
+
+function _loadVideo() {
+  // Бүх overlay нуух
+  const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+  hide('playerThumb');
+  hide('paywall');
+  hide('previewBar');
+  hide('previewEndOverlay');
+  hide('seekBlocker');
+  hide('trailerBar');
+  // Preview timer зогсоох
+  if (_previewTimer) { clearInterval(_previewTimer); _previewTimer = null; }
+
   const fr  = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
   const url = _getBunnyUrl();
   if (url) {
@@ -776,6 +800,10 @@ async function openQpay(plan) {
     return;
   }
 
+  // Popup блок гарахгүйн тулд fetch-ийн ӨМНӨ шинэ таб нээнэ (хэрэглэгч дарж байгаа мөчид)
+  const bylTab = window.open('', '_blank');
+  if (bylTab) bylTab.document.write('<html><body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><p>Уншиж байна...</p></body></html>');
+
   // Loading харуулах
   document.getElementById('choiceModal').classList.remove('show');
   document.getElementById('qpayModal').classList.add('show');
@@ -787,20 +815,81 @@ async function openQpay(plan) {
     const res  = await fetch('/api/byl/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null, returnUrl: window.location.href }),
+      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null }),
     });
     const data = await res.json();
     if (data.url) {
-      window.location.href = data.url;
+      // Нээгдсэн таб-д был.mn URL-ийг тавина
+      if (bylTab && !bylTab.closed) {
+        bylTab.location.href = data.url;
+      } else {
+        window.open(data.url, '_blank');
+      }
+      document.getElementById('qpayModal').classList.remove('show');
+      toast('💳 Төлбөрийн хуудас нээгдлээ...', 'ok');
+
+      // был.mn redirect хийхгүй тул арын хуудаснаас DB-г poll хийнэ
+      // Webhook ирмэгц planExpiry шинэчлэгдэх ба бид автоматаар тоглуулна
+      _startPaymentPoll(user.uid);
     } else {
+      if (bylTab && !bylTab.closed) bylTab.close();
       throw new Error(data.error || 'Алдаа гарлаа');
     }
   } catch (e) {
+    if (bylTab && !bylTab.closed) bylTab.close();
     document.getElementById('qpayModal').classList.remove('show');
     document.getElementById('choiceModal').classList.add('show');
     toast('❌ ' + e.message, 'err');
   }
 }
+
+let _payPollTimer = null;
+let _payPollUid   = null;
+
+async function _checkAndPlay(uid) {
+  try {
+    const me = await fetch(`/api/users/me/${uid}`).then(r => r.json());
+    const expiry = me.planExpiry ? new Date(me.planExpiry) : null;
+    if (expiry && expiry > new Date()) {
+      if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
+      _payPollUid = null;
+      subscribed = true;
+      document.getElementById('paywall')?.style && (document.getElementById('paywall').style.display = 'none');
+      document.getElementById('playerThumb')?.style && (document.getElementById('playerThumb').style.display = 'none');
+      toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
+      _loadVideo();
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
+function _startPaymentPoll(uid) {
+  if (_payPollTimer) clearInterval(_payPollTimer);
+  _payPollUid = uid;
+  let attempts = 0;
+  const MAX = 150; // 5 минут
+
+  _payPollTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > MAX) {
+      clearInterval(_payPollTimer);
+      _payPollTimer = null;
+      _payPollUid = null;
+      toast('⏱ Хугацаа дууслаа. Дахин оролдоно уу.', 'err');
+      openChoiceModal();
+      return;
+    }
+    await _checkAndPlay(uid);
+  }, 2000);
+}
+
+// Хэрэглэгч был.mn-ийг хаагаад movie tab руу буцаж ирэхэд шууд шалгана
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && _payPollUid && !subscribed) {
+    await _checkAndPlay(_payPollUid);
+  }
+});
 
 
 function closeQpay() { document.getElementById('qpayModal').classList.remove('show'); }
@@ -838,16 +927,6 @@ function toast(msg, type='ok') {
   setTimeout(()=>t.remove(), 3000);
 }
 
-// Bunny player-ийн ended event — trailer дуусахад paywall харуулна
-window.addEventListener('message', (e) => {
-  if (subscribed) return;
-  const data = e.data;
-  const isEnded = data === 'BunnyCDN.Ended'
-    || (typeof data === 'object' && (data?.action === 'ended' || data?.event === 'ended'));
-  if (isEnded && _trailerVideoId) {
-    lockAfterPreview();
-  }
-});
 
 window.addEventListener('scroll', ()=>{
   document.getElementById('mainNav').classList.toggle('scrolled', scrollY>40);

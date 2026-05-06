@@ -892,7 +892,7 @@ function renderPayments(data) {
       <td style="color:var(--text-dim);font-size:.78rem;">${p.date}</td>
       <td><span class="badge-pill ${p.status==='success'?'pill-active':'pill-pending'}">${p.status==='success'?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
       <td><div class="action-btns">
-        ${p.status==='pending'?`<button class="icon-btn edit" onclick="approvePayment('${p.id}')">✓</button>`:''}
+        ${p.status==='pending'?`<button class="icon-btn edit" onclick="approvePayment('${p._id||p.id}')">✓</button>`:''}
         <button class="icon-btn" onclick="toast('${p.id} дэлгэрэнгүй')">👁</button>
       </div></td>
     </tr>`).join('');
@@ -1042,12 +1042,13 @@ function renderPaymentsDB() {
   const src = dbPayments.length ? dbPayments.map(p => {
     const u = dbUsers.find(x => x.uid === p.uid);
     return {
-      id: String(p._id||'').slice(-6).toUpperCase() || '—',
-      user: u?.name || u?.email || p.uid || '—',
-      plan: p.plan === 'monthly' ? '1 сарын' : p.plan === 'quarterly' ? '3 сарын' : p.plan === 'movie' ? 'Дан кино' : (p.plan||'—'),
+      id:     String(p._id||'').slice(-6).toUpperCase() || '—',
+      _id:    String(p._id || ''),   // бүтэн MongoDB _id — approve API-д хэрэгтэй
+      user:   u?.name || u?.email || p.uid || '—',
+      plan:   p.plan === 'monthly' ? '1 сарын' : p.plan === 'quarterly' ? '3 сарын' : p.plan === 'movie' ? 'Дан кино' : (p.plan||'—'),
       amount: p.amount || 0,
       method: p.method || 'byl.mn',
-      date: p.date || '—',
+      date:   p.date || '—',
       status: (p.status === 'paid' || p.status === 'success') ? 'success' : 'pending',
     };
   }) : paymentsData;
@@ -1191,9 +1192,20 @@ function deleteUser(id) {
   const i = usersData.findIndex(x=>x.id===id);
   if(i>-1){usersData.splice(i,1);renderUsers(usersData);toast('Хэрэглэгч устгагдлаа','err');}
 }
-function approvePayment(id) {
-  const p = paymentsData.find(x=>x.id===id);
-  if(p){p.status='success';renderPayments(paymentsData);toast('Төлбөр баталгаажлаа');}
+async function approvePayment(id) {
+  if (!confirm('Энэ төлбөрийг баталгаажуулах уу? Хэрэглэгчид план идэвхжинэ.')) return;
+  try {
+    const res  = await fetch(`/api/payments/${id}/approve`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      toast('✓ Төлбөр баталгаажлаа — хэрэглэгчид план нэмэгдлээ');
+      await loadData(); // хүснэгтийг DB-ээс дахин ачаална
+    } else {
+      toast('Алдаа: ' + (data.error || 'Тодорхойгүй'), 'err');
+    }
+  } catch (e) {
+    toast('Сервер алдаа: ' + e.message, 'err');
+  }
 }
 
 /* ===== FILTER ===== */

@@ -234,9 +234,9 @@ app.post('/api/byl/checkout', async (req, res) => {
       body: JSON.stringify({
         amount: p.amount,
         description: `NEW DRAMA · ${p.name}`,
-        success_url:  req.body.returnUrl || 'https://newdrama.mn',
-        redirect_url: req.body.returnUrl || 'https://newdrama.mn',
-        return_url:   req.body.returnUrl || 'https://newdrama.mn',
+        success_url:  'https://newdrama.mn/paid',
+        redirect_url: 'https://newdrama.mn/paid',
+        return_url:   'https://newdrama.mn/paid',
       }),
     });
     const data = await r.json();
@@ -261,7 +261,8 @@ app.post('/api/byl/webhook', async (req, res) => {
   try {
     const event = req.body;
     if (event.type === 'invoice.paid') {
-      const invoiceId = event.data?.id;
+      // byl.mn payload: { data: { object: { id: 54485, ... } } }
+      const invoiceId = event.data?.object?.id ?? event.data?.id;
       const payment   = invoiceId ? await col('payments').findOne({ bylInvoiceId: invoiceId }) : null;
       if (payment && payment.status !== 'paid') {
         const expiry = new Date();
@@ -302,6 +303,51 @@ app.post('/api/bunny/create-video', async (req, res) => {
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+/* ════════════════════════════════
+   PAYMENTS — Manual approve
+════════════════════════════════ */
+app.post('/api/payments/:id/approve', async (req, res) => {
+  try {
+    const payment = await col('payments').findOne({ _id: oid(req.params.id) });
+    if (!payment) return res.status(404).json({ error: 'Төлбөр олдсонгүй' });
+    if (payment.status === 'paid') return res.json({ ok: true, already: true });
+
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + (payment.days || 30));
+
+    const user = await col('users').findOne({ uid: payment.uid });
+    await col('users').updateOne(
+      { uid: payment.uid },
+      { $set: {
+          plan: payment.plan,
+          planExpiry: expiry,
+          totalPaid: (user?.totalPaid || 0) + (payment.amount || 0)
+        }
+      }
+    );
+    await col('payments').updateOne(
+      { _id: payment._id },
+      { $set: { status: 'paid', paidAt: new Date() } }
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ════════════════════════════════
+   PAID — byl.mn success_url redirect page (auto-closes tab)
+════════════════════════════════ */
+app.get('/paid', (req, res) => {
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Амжилттай</title></head>
+<body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:1rem;">
+<div style="font-size:3rem;">✅</div>
+<div style="font-size:1.2rem;">Төлбөр амжилттай!</div>
+<div style="color:#aaa;font-size:.9rem;">Таб автоматаар хаагдана...</div>
+<script>window.close();</script>
+</body></html>`);
 });
 
 // Локал орчинд шууд эхлүүлэх, Vercel-д module export хийнэ
