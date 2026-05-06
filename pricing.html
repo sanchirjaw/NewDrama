@@ -438,25 +438,27 @@
   </div>
 </footer>
 
-<!-- QPay Modal -->
-<div class="modal-overlay" id="modal">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-label">QPay төлбөр</div>
-    <h3 class="modal-title" id="modalTitle">Стандарт Багц</h3>
-    <p class="modal-sub">QPay аппаар QR кодыг уншуулна уу</p>
-    <div class="qr-box">
-      <div class="qr-box-icon">📱</div>
-      QPay QR код<br>
-      <small style="color:#aaa;font-size:0.65rem;">(backend холбогдсоны дараа)</small>
+<!-- Payment Modal — был.mn iframe -->
+<div class="modal-overlay" id="bylModal">
+  <div class="modal-box" style="padding:0;max-width:480px;background:#fff;border-radius:20px;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:#07070e;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#00e5ff;animation:blink 1.2s ease-in-out infinite;"></div>
+        <span style="font-size:.75rem;color:rgba(255,255,255,0.7);" id="bylStatusText">Холбогдож байна...</span>
+      </div>
+      <button onclick="closeBylModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:99px;color:rgba(255,255,255,0.6);font-size:.75rem;padding:.25rem .75rem;cursor:pointer;">✕ Хаах</button>
     </div>
-    <div class="modal-amount-box">
-      <div class="modal-amount" id="modalAmount">12,000₮ / сар</div>
-      <div class="modal-amount-sub">NEW DRAMA · QPay дансны дугаар хүлээгдэж байна</div>
+    <div id="bylLoadBox" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;height:420px;background:#07070e;">
+      <div style="width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,229,255,0.15);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div>
+      <div style="font-size:.82rem;color:rgba(255,255,255,0.5);">Холбогдож байна...</div>
     </div>
-    <button class="btn-primary" style="width:100%;justify-content:center;border-radius:12px;" onclick="confirmPay()">✓ Төлбөр хийлээ</button>
+    <iframe id="bylFrame" src="about:blank" style="display:none;width:100%;height:520px;border:none;" allowpayment></iframe>
   </div>
 </div>
+<style>
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+</style>
 
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -516,17 +518,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (modalAmt) modalAmt.textContent = `${plans.monthly.amount.toLocaleString()}₮ ${plans.monthly.label}`;
 });
 
+let _pollTimer = null;
+let _pollUid   = null;
+
 async function startPayment(planKey, btn) {
-  // Нэвтэрсэн эсэх шалгах
+  if (planKey === 'movie') {
+    // Дан кино → кино сонгох хуудас руу
+    window.location.href = 'index.html#movies';
+    return;
+  }
   const user = firebase.auth().currentUser;
   if (!user) {
     toast('⚠ Эхлээд нэвтэрнэ үү', 'err');
     setTimeout(() => window.location.href = '/login', 1400);
     return;
   }
-  const origText = btn.textContent;
-  btn.disabled   = true;
-  btn.textContent = 'Уншиж байна...';
+  // Modal нээж loading харуулах
+  document.getElementById('bylModal').classList.add('show');
+  document.getElementById('bylLoadBox').style.display = 'flex';
+  document.getElementById('bylFrame').style.display   = 'none';
+  document.getElementById('bylFrame').src             = 'about:blank';
+  document.getElementById('bylStatusText').textContent = 'Холбогдож байна...';
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Уншиж байна...'; }
+
   try {
     const res  = await fetch('/api/byl/checkout', {
       method: 'POST',
@@ -535,19 +550,65 @@ async function startPayment(planKey, btn) {
     });
     const data = await res.json();
     if (data.url) {
-      btn.textContent = 'Шилжиж байна...';
-      window.location.href = data.url;
+      const fr = document.getElementById('bylFrame');
+      fr.src = data.url;
+      fr.style.display = 'block';
+      document.getElementById('bylLoadBox').style.display = 'none';
+      document.getElementById('bylStatusText').textContent = 'Төлбөр хүлээж байна...';
+      _startPoll(user.uid);
     } else {
       throw new Error(data.error || 'Алдаа гарлаа');
     }
   } catch (e) {
+    closeBylModal();
     toast('❌ ' + e.message, 'err');
-    btn.disabled    = false;
-    btn.textContent = origText;
   }
+  if (btn) { btn.disabled = false; btn.textContent = btn._origText || btn.textContent; }
 }
-function openModal(planKey) { startPayment(planKey, document.activeElement); }
-function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+function closeBylModal() {
+  document.getElementById('bylModal').classList.remove('show');
+  document.getElementById('bylFrame').src = 'about:blank';
+  document.getElementById('bylFrame').style.display = 'none';
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  _pollUid = null;
+}
+
+function _startPoll(uid) {
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollUid = uid;
+  let attempts = 0;
+  _pollTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > 150) { clearInterval(_pollTimer); _pollTimer = null; closeBylModal(); toast('⏱ Хугацаа дууслаа', 'err'); return; }
+    try {
+      const me = await fetch(`/api/users/me/${uid}`).then(r => r.json());
+      const expiry = me.planExpiry ? new Date(me.planExpiry) : null;
+      if (expiry && expiry > new Date()) {
+        clearInterval(_pollTimer); _pollTimer = null;
+        closeBylModal();
+        toast('✅ Багц амжилттай идэвхжлээ! Дашборд руу шилжиж байна...', 'ok');
+        setTimeout(() => window.location.href = '/dashboard', 1800);
+      }
+    } catch(_) {}
+  }, 2000);
+}
+
+// Tab руу буцаж ирэхэд шууд шалгана
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && _pollUid) {
+    try {
+      const me = await fetch(`/api/users/me/${_pollUid}`).then(r => r.json());
+      const expiry = me.planExpiry ? new Date(me.planExpiry) : null;
+      if (expiry && expiry > new Date()) {
+        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+        closeBylModal();
+        toast('✅ Багц амжилттай идэвхжлээ!', 'ok');
+        setTimeout(() => window.location.href = '/dashboard', 1800);
+      }
+    } catch(_) {}
+  }
+});
 
 function selectPay(el) {
   document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
