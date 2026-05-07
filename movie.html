@@ -195,9 +195,13 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         id="playerFrame"
         src="about:blank"
         style="width:100%;height:100%;border:none;display:none;"
-        allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture"
-        allowfullscreen>
+        allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;fullscreen"
+        allowfullscreen
+        referrerpolicy="no-referrer"
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms">
       </iframe>
+      <!-- IDM татах хориглох overlay -->
+      <div id="idmBlock" style="position:absolute;inset:0;z-index:4;pointer-events:none;user-select:none;" ondragstart="return false;" oncontextmenu="return false;"></div>
 
 
       <!-- Thumbnail -->
@@ -529,6 +533,8 @@ async function loadRemoteSettings() {
 
 
 
+let _currentMovie = null; // watch history-д хадгалах мэдээлэл
+
 async function loadMovieDetails() {
   if (!_movieId) return;
   try {
@@ -628,7 +634,30 @@ async function loadMovieDetails() {
     setEl('detailLang',   lang);
     setEl('detailAdded',  m.added ? m.added.slice(0,10) : '—');
 
+    // Watch history-д хадгалах мэдээлэл
+    _currentMovie = {
+      id:          _movieId,
+      title:       m.title || '',
+      poster:      m.thumbnail || (_bunnyCfg.cdnHost && _videoId ? `https://${_bunnyCfg.cdnHost}/${_videoId}/thumbnail.jpg` : ''),
+      year:        m.year  || '',
+      genre:       m.genre || '',
+      durationMin: parseInt(m.duration) || 90,
+    };
+
   } catch(e) { console.warn('Movie details алдаа:', e.message); }
+}
+
+// Watch history localStorage-д хадгалах
+function _saveWatchHistory(progress) {
+  if (!_currentMovie || !_movieId) return;
+  try {
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem('nd_watch_history') || '[]'); } catch(_){}
+    hist = hist.filter(h => h.id !== _movieId); // хуучин entry арилгана
+    hist.unshift({ ..._currentMovie, timestamp: Date.now(), progress: progress ?? 0 });
+    if (hist.length > 50) hist.length = 50;
+    localStorage.setItem('nd_watch_history', JSON.stringify(hist));
+  } catch(_){}
 }
 
 // Apply prices to choice modal cards and sidebar
@@ -675,16 +704,42 @@ function _loadTrailerVideo() {
   if (tb) tb.style.display = 'flex';
 }
 
-// Trailer дуусахад paywall харуулна
+// Bunny postMessage listener — trailer end + progress tracking
+let _lastProgressSave = 0;
 window.addEventListener('message', e => {
-  if (subscribed) return;
   const d = e.data;
-  const ended = d === 'BunnyCDN.Ended'
-    || (typeof d === 'object' && (d?.action === 'ended' || d?.event === 'ended'));
-  if (!ended || !_trailerVideoId) return;
-  const tb = document.getElementById('trailerBar');
-  if (tb) tb.style.display = 'none';
-  document.getElementById('paywall').style.display = 'flex';
+  if (!d || typeof d !== 'object') {
+    // String event
+    if (!subscribed && d === 'BunnyCDN.Ended' && _trailerVideoId) {
+      const tb = document.getElementById('trailerBar');
+      if (tb) tb.style.display = 'none';
+      document.getElementById('paywall').style.display = 'flex';
+    }
+    return;
+  }
+
+  const action = d.action || d.event || '';
+
+  // Trailer дуусахад paywall
+  if (!subscribed && action === 'ended' && _trailerVideoId) {
+    const tb = document.getElementById('trailerBar');
+    if (tb) tb.style.display = 'none';
+    document.getElementById('paywall').style.display = 'flex';
+    return;
+  }
+
+  // Subscribed хэрэглэгчийн progress хадгалах (30 секунд тутам)
+  if (subscribed && (action === 'timeupdate' || action === 'progress')) {
+    const now = Date.now();
+    if (now - _lastProgressSave < 30000) return;
+    _lastProgressSave = now;
+    const cur = d.currentTime || d.currenttime || 0;
+    const dur = d.duration || 1;
+    if (dur > 0) {
+      const pct = Math.min(99, Math.round((cur / dur) * 100));
+      _saveWatchHistory(pct);
+    }
+  }
 });
 
 function closeTrailerModal() {} // backward compat stub
@@ -705,6 +760,10 @@ function _loadVideo() {
     toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
   }
   fr.style.display = 'block';
+
+  // Watch history-д анхны бичилт (progress=0)
+  _saveWatchHistory(0);
+
   // Үзэлтийн тоо нэмэх
   if (_movieId) {
     fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(()=>{});
