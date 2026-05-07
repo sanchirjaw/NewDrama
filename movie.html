@@ -482,6 +482,19 @@ function _getBunnyUrl() {
   return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&responsive=true`;
 }
 
+// Signed URL (BUNNY_TOKEN_KEY тохируулсан бол IDM-с хамгаална)
+async function _getSignedBunnyUrl(videoId, libId) {
+  try {
+    const res  = await fetch('/api/bunny/signed-url', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ videoId, libraryId: libId }),
+    });
+    const data = await res.json();
+    return data.url || _getBunnyUrl();
+  } catch(_) { return _getBunnyUrl(); }
+}
+
 const _pp = JSON.parse(localStorage.getItem('nd_prices') || '{}');
 const _mv = (_pp.movie     || 3400).toLocaleString();
 const _mo = (_pp.monthly   || 12000).toLocaleString();
@@ -694,14 +707,14 @@ function tryPlay() {
   openChoiceModal();
 }
 
-function _loadTrailerVideo() {
+async function _loadTrailerVideo() {
   document.getElementById('playerThumb').style.display = 'none';
   document.getElementById('paywall').style.display     = 'none';
   const fr = document.getElementById('playerFrame');
-  fr.src = `https://iframe.mediadelivery.net/embed/${_libraryId}/${_trailerVideoId}?autoplay=true&responsive=true`;
   fr.style.display = 'block';
   const tb = document.getElementById('trailerBar');
   if (tb) tb.style.display = 'flex';
+  fr.src = await _getSignedBunnyUrl(_trailerVideoId, _libraryId);
 }
 
 // Bunny postMessage listener — trailer end + progress tracking
@@ -752,14 +765,13 @@ function _loadVideo() {
   hide('trailerBar');
 
   const fr  = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
-  const url = _getBunnyUrl();
-  if (url) {
-    fr.src = url;
+  if (_libraryId && _videoId) {
+    fr.style.display = 'block';
+    _getSignedBunnyUrl(_videoId, _libraryId).then(url => { fr.src = url; });
   } else {
     fr.src = 'about:blank';
     toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
   }
-  fr.style.display = 'block';
 
   // Watch history-д анхны бичилт (progress=0)
   _saveWatchHistory(0);

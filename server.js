@@ -6,6 +6,7 @@ const express    = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors       = require('cors');
 const path       = require('path');
+const crypto     = require('crypto');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -328,6 +329,31 @@ app.post('/api/bunny/create-video', async (req, res) => {
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+/* ════════════════════════════════
+   BUNNY — Signed embed URL (IDM хориглох)
+════════════════════════════════ */
+app.post('/api/bunny/signed-url', async (req, res) => {
+  const { videoId, libraryId } = req.body;
+  if (!videoId || !libraryId) return res.status(400).json({ error: 'videoId, libraryId шаардлагатай' });
+
+  // Bunny Token Authentication Key — .env-д BUNNY_TOKEN_KEY=... гэж тавина
+  const tokenKey = process.env.BUNNY_TOKEN_KEY;
+  if (!tokenKey) {
+    // Token key тохируулаагүй → хамгаалалтгүй URL буцаана
+    return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true` });
+  }
+
+  // 2 цагийн хугацаатай signed URL үүсгэнэ
+  const expiry = Math.floor(Date.now() / 1000) + 7200;
+  const token  = crypto
+    .createHash('sha256')
+    .update(tokenKey + videoId + expiry)
+    .digest('hex');
+
+  const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
+  res.json({ url });
 });
 
 /* ════════════════════════════════
