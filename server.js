@@ -263,7 +263,6 @@ app.post('/api/byl/checkout', async (req, res) => {
 async function grantAccess(payment) {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + (payment.days || 30));
-  const user = await col('users').findOne({ uid: payment.uid });
 
   if (payment.plan === 'movie') {
     // Дан кино: purchasedMovies array-д нэмнэ, subscription-г өөрчлөхгүй
@@ -271,20 +270,22 @@ async function grantAccess(payment) {
       { uid: payment.uid },
       {
         $push: { purchasedMovies: {
-          movieId:   payment.movieId || null,
+          movieId:    payment.movieId || null,
           movieTitle: payment.movieTitle || 'Дан Кино',
           expiry,
           paidAt: new Date(),
         }},
-        $set: { totalPaid: (user?.totalPaid || 0) + (payment.amount || 0) },
+        $inc: { totalPaid: payment.amount || 0 },
       }
     );
   } else {
     // Monthly / Quarterly: ерөнхий subscription тавина
     await col('users').updateOne(
       { uid: payment.uid },
-      { $set: { plan: payment.plan, planExpiry: expiry,
-                totalPaid: (user?.totalPaid || 0) + (payment.amount || 0) } }
+      {
+        $set: { plan: payment.plan, planExpiry: expiry },
+        $inc: { totalPaid: payment.amount || 0 },
+      }
     );
   }
 

@@ -201,7 +201,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         sandbox="allow-scripts allow-same-origin allow-presentation allow-forms">
       </iframe>
       <!-- IDM татах хориглох overlay -->
-      <div id="idmBlock" style="position:absolute;inset:0;z-index:4;pointer-events:none;user-select:none;" ondragstart="return false;" oncontextmenu="return false;"></div>
+      <div id="idmBlock" style="position:absolute;inset:0;z-index:4;pointer-events:none;user-select:none;" ondragstart="return false;"></div>
 
 
       <!-- Thumbnail -->
@@ -483,7 +483,11 @@ function _getBunnyUrl() {
 }
 
 // Signed URL (BUNNY_TOKEN_KEY тохируулсан бол IDM-с хамгаална)
+// Cache: 2 цагийн token-г 1ц55м хадгалж давхардсан fetch-с зайлсхийнэ
+const _signedUrlCache = {};
 async function _getSignedBunnyUrl(videoId, libId) {
+  const cached = _signedUrlCache[videoId];
+  if (cached && cached.expires > Date.now()) return cached.url;
   try {
     const res  = await fetch('/api/bunny/signed-url', {
       method:  'POST',
@@ -491,7 +495,9 @@ async function _getSignedBunnyUrl(videoId, libId) {
       body:    JSON.stringify({ videoId, libraryId: libId }),
     });
     const data = await res.json();
-    return data.url || _getBunnyUrl();
+    const url = data.url || _getBunnyUrl();
+    _signedUrlCache[videoId] = { url, expires: Date.now() + 6900000 }; // 1ц55м
+    return url;
   } catch(_) { return _getBunnyUrl(); }
 }
 
@@ -519,8 +525,7 @@ const planInfo = {
   if (qa) qa.textContent = `${_mv}₮`;
 })();
 
-let _trailerVideoId  = '';
-let _trailerSeconds  = 0;  // trailer-ын бодит урт (секундаар)
+let _trailerVideoId = '';
 
 async function loadRemoteSettings() {
   try {
@@ -558,7 +563,6 @@ async function loadMovieDetails() {
     // videoId + trailerVideoId авах
     if (m.videoId && !_videoId) _videoId = m.videoId;
     if (m.trailerVideoId) _trailerVideoId = m.trailerVideoId;
-    if (m.trailerDuration > 0) _trailerSeconds = m.trailerDuration;
 
     const title  = m.title    || '';
     const desc   = m.desc     || m.description || '';
@@ -664,9 +668,8 @@ async function loadMovieDetails() {
 function _saveWatchHistory(progress) {
   if (!_currentMovie || !_movieId) return;
   try {
-    let hist = [];
-    try { hist = JSON.parse(localStorage.getItem('nd_watch_history') || '[]'); } catch(_){}
-    hist = hist.filter(h => h.id !== _movieId); // хуучин entry арилгана
+    let hist = JSON.parse(localStorage.getItem('nd_watch_history') || '[]');
+    hist = hist.filter(h => h.id !== _movieId);
     hist.unshift({ ..._currentMovie, timestamp: Date.now(), progress: progress ?? 0 });
     if (hist.length > 50) hist.length = 50;
     localStorage.setItem('nd_watch_history', JSON.stringify(hist));
@@ -748,14 +751,11 @@ window.addEventListener('message', e => {
     _lastProgressSave = now;
     const cur = d.currentTime || d.currenttime || 0;
     const dur = d.duration || 1;
-    if (dur > 0) {
-      const pct = Math.min(99, Math.round((cur / dur) * 100));
-      _saveWatchHistory(pct);
-    }
+    const pct = Math.min(99, Math.round((cur / dur) * 100));
+    _saveWatchHistory(pct);
   }
 });
 
-function closeTrailerModal() {} // backward compat stub
 
 function _loadVideo() {
   // Бүх overlay нуух
@@ -844,10 +844,8 @@ async function _checkAndPlay(uid) {
       if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
       _payPollUid = null;
       subscribed = true;
-      // Бүх modal болон overlay хаах
       document.getElementById('choiceModal')?.classList.remove('show');
       document.getElementById('qpayModal')?.classList.remove('show');
-      closeTrailerModal();
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
       _loadVideo();
       return true;
