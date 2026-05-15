@@ -211,10 +211,8 @@
     <div class="featured-banner-grad"></div>
     <div class="featured-banner-info">
       <div class="featured-banner-badge">✦ Шинэ &nbsp;·&nbsp; HD</div>
-      <h2 class="featured-banner-title" id="featuredTitle">Хар Шөнийн Нууц</h2>
-      <div class="featured-banner-meta" id="featuredMeta">
-        <span>🎬 2024</span><span>🌍 Хятад</span><span>🔞 16+</span>
-      </div>
+      <h2 class="featured-banner-title" id="featuredTitle"></h2>
+      <div class="featured-banner-meta" id="featuredMeta"></div>
       <p class="featured-banner-desc" id="featuredDesc">Нүүр хуудсын онцлох кино. Admin-аас солих боломжтой.</p>
       <div class="featured-banner-actions">
         <a href="movie.html" class="btn-primary" id="featuredLink">▶&nbsp; Үзэх</a>
@@ -345,33 +343,7 @@ const genreStyle = {
 
 /* ---- DATA ---- */
 const cats = ['Бүгд','Экшн','Драм','Комеди','Аймшиг','Романтик','Баримтат','Анимэ','Триллер','Түүхэн'];
-const movies = [
-  {id:1,title:'Сүүлчийн Мөрдөгч',year:'2024',genre:'Экшн',rating:'8.2',icon:'💥',free:false,hot:true,views:48200,videoId:'abc-001'},
-  {id:2,title:'Цэцгийн Зам',year:'2024',genre:'Драм',rating:'9.1',icon:'🎭',free:false,views:31500,videoId:'abc-002'},
-  {id:3,title:'Хөршийн Нууц',year:'2023',genre:'Комеди',rating:'7.8',icon:'😂',free:true,views:92100,videoId:'abc-003'},
-  {id:4,title:'Харанхуйн Дуудлага',year:'2024',genre:'Аймшиг',rating:'8.5',icon:'👻',free:false,hot:true,views:67400,videoId:'abc-004'},
-  {id:5,title:'Зүрхний Аялал',year:'2024',genre:'Романтик',rating:'8.0',icon:'💕',free:false,views:24800,videoId:'abc-005'},
-  {id:6,title:'Эзэн Хааны Сүлд',year:'2023',genre:'Түүхэн',rating:'9.0',icon:'⚔️',free:false,views:115000,videoId:'abc-006'},
-  {id:7,title:'Галт Тэрэг',year:'2024',genre:'Триллер',rating:'8.8',icon:'🔍',free:false,views:53700,videoId:'abc-007'},
-  {id:8,title:'Тэнгэрийн Цэцэг',year:'2024',genre:'Анимэ',rating:'8.9',icon:'🌸',free:true,views:88600,videoId:'abc-008'},
-  {id:9,title:'Хотын Буян',year:'2024',genre:'Драм',rating:'8.3',icon:'🌆',free:false,views:19300,videoId:'abc-009'},
-  {id:10,title:'Нуурын Нулимс',year:'2023',genre:'Романтик',rating:'8.6',icon:'🌊',free:false,views:41200,videoId:'abc-010'},
-];
-const series = [
-  {title:'Хайрын Мэдрэмж',year:'2024',genre:'Драм',rating:'9.3',icon:'🌺',eps:'40 анги'},
-  {title:'Гэрлийн Замаар',year:'2024',genre:'Романтик',rating:'8.7',icon:'✨',eps:'36 анги'},
-  {title:'Хаадын Ордон',year:'2023',genre:'Түүхэн',rating:'9.1',icon:'👑',eps:'60 анги'},
-  {title:'Хотын Нууц',year:'2024',genre:'Триллер',rating:'8.4',icon:'🏙️',eps:'24 анги'},
-  {title:'Цэнхэр Тэнгэр',year:'2024',genre:'Романтик',rating:'8.8',icon:'☁️',eps:'32 анги'},
-  {title:'Буяны Замд',year:'2024',genre:'Драм',rating:'9.0',icon:'🌿',eps:'45 анги'},
-];
-const cwData = [
-  {title:'Хар Шөнийн Нууц',meta:'47 мин үлдсэн',icon:'🎬',pct:65,genre:'Триллер'},
-  {title:'Хайрын Мэдрэмж',meta:'Анги 8 · 30% үлдсэн',icon:'🌺',pct:30,genre:'Романтик'},
-  {title:'Эзэн Хааны Сүлд',meta:'14 мин үлдсэн',icon:'⚔️',pct:90,genre:'Түүхэн'},
-  {title:'Галт Тэрэг',meta:'✓ Дуусгасан',icon:'🔥',pct:100,genre:'Триллер'},
-  {title:'Тэнгэрийн Цэцэг',meta:'Анги 3 · 55% үлдсэн',icon:'🌸',pct:45,genre:'Анимэ'},
-];
+const movies = []; // DB-аас ачаалагдана
 
 /* ---- RENDER ---- */
 function fmtViews(n) {
@@ -482,6 +454,7 @@ async function loadMovies() {
   renderGrid(movies);
   renderTop10();
   renderSeriesRow();
+  renderTicker();
   await applyFeatured();
 }
 
@@ -593,17 +566,14 @@ function renderContinueWatching(user) {
   }).join('');
 }
 
-// Ticker
-const tItems = [
-  'Хайрын Мэдрэмж — 41-р анги гарлаа',
-  'Шинэ: Галт Тэрэг 2 · 2024',
-  'Хятад цуврал 15 шинэ нэмэгдлээ',
-  'Хар Шөнийн Нууц — ★ 8.7 онооны шагнал',
-  '🔥 Топ 10 шинэчлэгдлээ',
-  'Монгол дуу оруулга: Тэнгэрийн Цэцэг',
-];
-const tHTML = tItems.map(t=>`<div class="ticker-item"><span class="dot"></span> <strong>${t}</strong></div>`).join('');
-document.getElementById('tickerInner').innerHTML = tHTML + tHTML;
+// Ticker — DB-аас шинэ кинонуудын нэрийг харуулна (loadMovies дараа дуудагдана)
+function renderTicker() {
+  const top = [...movies].sort((a,b) => new Date(b.added||0) - new Date(a.added||0)).slice(0, 8);
+  if (!top.length) { document.querySelector('.ticker')?.style.setProperty('display','none'); return; }
+  document.querySelector('.ticker')?.style.removeProperty('display');
+  const tHTML = top.map(m => `<div class="ticker-item"><span class="dot"></span> <strong>Шинэ: ${m.title}</strong> <span style="color:var(--cyan);font-size:.7rem;">★ ${m.rating||''}</span></div>`).join('');
+  document.getElementById('tickerInner').innerHTML = tHTML + tHTML;
+}
 
 /* ---- SCROLL ROW ---- */
 function scrollRow(id, dir) {
