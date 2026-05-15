@@ -190,16 +190,14 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
   <div class="player-with-sidebar">
     <div class="player-container" id="playerCont">
 
-      <!-- Bunny.net embed -->
-      <iframe
+      <!-- HLS video player -->
+      <video
         id="playerFrame"
-        src="about:blank"
-        style="width:100%;height:100%;border:none;display:none;"
-        allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;fullscreen"
-        allowfullscreen
-        referrerpolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms">
-      </iframe>
+        style="width:100%;height:100%;background:#000;display:none;object-fit:contain;"
+        controls
+        playsinline
+        preload="none">
+      </video>
       <!-- Thumbnail -->
       <div class="player-thumb" id="playerThumb" onclick="_authReady ? tryPlay() : void 0">
         <div class="player-thumb-icon">🎬</div>
@@ -402,6 +400,8 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 .choice-price{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;white-space:nowrap;flex-shrink:0;}
 </style>
 
+<!-- HLS.js -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -467,6 +467,52 @@ firebase.auth().onAuthStateChanged(async user => {
   _authReady = true;
   _maybeAutoPlay();
 });
+
+// ── Stream token (IDM хамгаалалт) ─────────────────────────────
+let _streamToken = '';
+let _hlsInstance = null;
+
+async function _getStreamToken() {
+  if (_streamToken) return _streamToken;
+  const user = firebase.auth().currentUser;
+  if (!user) return '';
+  try {
+    const r = await fetch('/api/stream/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid })
+    });
+    const d = await r.json();
+    _streamToken = d.token || '';
+  } catch(e) {}
+  return _streamToken;
+}
+
+async function _playWithHls(videoId) {
+  const video = document.getElementById('playerFrame');
+  if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
+  video.src = '';
+
+  const token = await _getStreamToken();
+  const src   = `/api/stream/${videoId}/playlist.m3u8`;
+
+  if (Hls.isSupported()) {
+    const hls = new Hls({
+      xhrSetup(xhr) {
+        if (token) xhr.setRequestHeader('x-stream-token', token);
+      }
+    });
+    hls.loadSource(src);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+    hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) console.warn('HLS error', d); });
+    _hlsInstance = hls;
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Safari native HLS
+    video.src = token ? `${src}?t=${encodeURIComponent(token)}` : src;
+    video.play().catch(() => {});
+  }
+}
 
 // Bunny embed — URL params-аас videoId унших, Library ID localStorage-аас
 const _urlParams  = new URLSearchParams(window.location.search);
@@ -710,17 +756,23 @@ async function _loadTrailerVideo() {
   _paywallShown = false;
   document.getElementById('playerThumb').style.display = 'none';
   document.getElementById('paywall').style.display     = 'none';
-  const fr = document.getElementById('playerFrame');
-  fr.style.display = 'block';
+  const video = document.getElementById('playerFrame');
+  video.style.display = 'block';
   const tb = document.getElementById('trailerBar');
   if (tb) tb.style.display = 'flex';
-  const url = await _getSignedBunnyUrl(_trailerVideoId, _libraryId);
-  // Force-reload: ижил src байвал браузер дахин ачаалдаггүй тул
-  if (fr.src === url) fr.src = '';
-  fr.src = url;
+
+  // Native video event-үүд — paywall trigger
+  video.ontimeupdate = function() {
+    if (!subscribed && !_movieFree && _trailerVideoId && this.duration > 0
+        && this.currentTime >= this.duration - 5) _showPaywall();
+  };
+  video.onended = function() {
+    if (!subscribed && !_movieFree && _trailerVideoId) _showPaywall();
+  };
+
+  await _playWithHls(_trailerVideoId);
 }
 
-// Bunny postMessage listener — trailer end + progress tracking
 let _lastProgressSave = 0;
 let _paywallShown = false;
 function _showPaywall() {
@@ -730,59 +782,33 @@ function _showPaywall() {
   if (tb) tb.style.display = 'none';
   document.getElementById('paywall').style.display = 'flex';
 }
-window.addEventListener('message', e => {
-  const d = e.data;
-  if (!d || typeof d !== 'object') {
-    if (!subscribed && !_movieFree && d === 'BunnyCDN.Ended' && _trailerVideoId) _showPaywall();
-    return;
-  }
-
-  const action = d.action || d.event || '';
-
-  // Trailer дуусах эсвэл сүүлийн 5 секундэд paywall
-  if (!subscribed && !_movieFree && _trailerVideoId) {
-    if (action === 'ended') { _showPaywall(); return; }
-    if (action === 'timeupdate' && d.duration > 0 && d.currentTime >= d.duration - 5) {
-      _showPaywall(); return;
-    }
-  }
-
-  // Subscribed хэрэглэгчийн progress хадгалах (30 секунд тутам)
-  if (subscribed && (action === 'timeupdate' || action === 'progress')) {
-    const now = Date.now();
-    if (now - _lastProgressSave < 30000) return;
-    _lastProgressSave = now;
-    const cur = d.currentTime || d.currenttime || 0;
-    const dur = d.duration || 1;
-    const pct = Math.min(99, Math.round((cur / dur) * 100));
-    _saveWatchHistory(pct);
-  }
-});
 
 
 function _loadVideo() {
-  // Бүх overlay нуух
   const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
-  hide('playerThumb');
-  hide('paywall');
-  hide('trailerBar');
+  hide('playerThumb'); hide('paywall'); hide('trailerBar');
 
-  const fr  = document.getElementById('playerFrame');
-  if (_libraryId && _videoId) {
-    fr.style.display = 'block';
-    _getSignedBunnyUrl(_videoId, _libraryId).then(url => { fr.src = url; });
-  } else {
-    fr.src = 'about:blank';
+  const video = document.getElementById('playerFrame');
+  if (!_videoId) {
     toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
+    return;
   }
+  video.style.display = 'block';
 
-  // Watch history-д анхны бичилт (progress=0)
+  // Progress хадгалах (30 секунд тутам)
+  video.ontimeupdate = function() {
+    if (!subscribed) return;
+    const now = Date.now();
+    if (now - _lastProgressSave < 30000) return;
+    _lastProgressSave = now;
+    const pct = this.duration > 0 ? Math.min(99, Math.round((this.currentTime / this.duration) * 100)) : 0;
+    _saveWatchHistory(pct);
+  };
+
+  _playWithHls(_videoId);
+
   _saveWatchHistory(0);
-
-  // Үзэлтийн тоо нэмэх
-  if (_movieId) {
-    fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(()=>{});
-  }
+  if (_movieId) fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(() => {});
 }
 
 function openChoiceModal() {
