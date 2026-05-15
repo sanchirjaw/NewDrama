@@ -696,9 +696,10 @@ select.form-input option{background:var(--dark);}
         <div style="display:flex;gap:.5rem;align-items:flex-start;">
           <div style="flex:1;">
             <input class="form-input" id="mThumb" placeholder="https://... эсвэл файл upload хийх">
-            <div style="margin-top:.4rem;display:flex;gap:.5rem;align-items:center;">
+            <div style="margin-top:.4rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
               <input type="file" id="mThumbFile" accept="image/*" style="display:none;" onchange="handleThumbSelect(this)">
               <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mThumbFile').click()">🖼 Зураг сонгох</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="autoThumbFromBunny()" title="Видео ID-аас Bunny thumbnail URL үүсгэх">🎞 Bunny-с авах</button>
               <span id="mThumbFileName" style="font-size:.73rem;color:var(--text-dim);">Файл сонгоогүй</span>
             </div>
           </div>
@@ -732,11 +733,22 @@ select.form-input option{background:var(--dark);}
       <button class="btn btn-ghost" onclick="closeMovieModal()">Болих</button>
       <button class="btn btn-ghost" onclick="saveMovie()" style="font-size:.78rem;color:var(--text-dim);">Видеогүй хадгалах</button>
       <button class="btn btn-primary" id="uploadBtn" onclick="uploadAndSave()">⬆️ Upload & Хадгалах</button>
+      <button class="btn btn-primary" id="queueBtn" onclick="queueAndUpload()" style="background:linear-gradient(135deg,#22c55e,#059669);" title="Файл, мэдээллийг хадгалаад Modal хаагдана — ар талд upload үргэлжилнэ">📥 Queue & Next</button>
     </div>
   </div>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Upload Queue Panel -->
+<div id="uploadQueuePanel" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;width:340px;background:var(--card);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+  <div style="padding:.65rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;">
+    <span style="font-weight:700;font-size:.82rem;flex:1;">⬆️ Upload Queue</span>
+    <span id="queueDoneCount" style="font-size:.72rem;color:var(--text-dim);"></span>
+    <button onclick="document.getElementById('uploadQueuePanel').style.display='none'" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;line-height:1;">✕</button>
+  </div>
+  <div id="queueItemsList" style="max-height:320px;overflow-y:auto;padding:.5rem;display:flex;flex-direction:column;gap:.4rem;"></div>
+</div>
 
 <script>
 /* ===== DATA ===== */
@@ -1645,6 +1657,209 @@ async function uploadVideoToBunny() {
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
     xhr.send(_selectedVideoFile);
   });
+}
+
+/* ===== AUTO THUMBNAIL FROM BUNNY ===== */
+function autoThumbFromBunny() {
+  const videoId = document.getElementById('mVideoId').value.trim();
+  if (!videoId) { toast('Эхлээд Видео ID оруулна уу', 'err'); return; }
+  const cfg = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+  if (!cfg.cdnHost) { toast('CDN Hostname тохируулна уу (Тохиргоо → Bunny)', 'err'); return; }
+  const host = cfg.cdnHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const url = `https://${host}/${videoId}/thumbnail.jpg`;
+  document.getElementById('mThumb').value = url;
+  const img = document.getElementById('mThumbPreview');
+  img.src = url; img.style.display = 'block';
+  document.getElementById('mThumbFileName').textContent = 'Bunny thumbnail';
+  toast('✓ Thumbnail URL бэлэн болголоо');
+}
+
+/* ===== UPLOAD QUEUE ===== */
+const _queue = [];
+
+function _resetMovieForm() {
+  const fields = { mTitle:'', mTitleEn:'', mRating:'', mDur:'', mVideoId:'', mTrailerVideoId:'', mDesc:'', mPreview:'' };
+  Object.entries(fields).forEach(([id, v]) => { document.getElementById(id).value = v; });
+  document.getElementById('mYear').value  = new Date().getFullYear();
+  document.getElementById('mPrice').value = _defPrice();
+  document.getElementById('mFree').checked = document.getElementById('mHot').checked = document.getElementById('mFeatured').checked = false;
+  document.getElementById('mThumb').value = '';
+  document.getElementById('mThumbPreview').style.display = 'none';
+  document.getElementById('mThumbFileName').textContent = 'Файл сонгоогүй';
+  document.getElementById('mVideoFileName').textContent = 'Файл сонгоогүй';
+  document.getElementById('mVideoFileName').style.color = '';
+  document.getElementById('mTrailerFileName').textContent = 'Файл сонгоогүй';
+  document.getElementById('mTrailerFileName').style.color = '';
+  document.getElementById('trailerUploadBtn').disabled = true;
+  document.getElementById('uploadProgressWrap').style.display = 'none';
+  document.getElementById('trailerProgressWrap').style.display = 'none';
+  const uploadBtn = document.getElementById('uploadBtn');
+  uploadBtn.disabled = false; uploadBtn.textContent = '⬆️ Upload & Хадгалах'; uploadBtn.style.background = '';
+  _selectedVideoFile = null; _selectedTrailerFile = null; editingMovieId = null;
+  document.getElementById('movieModalTitle').textContent = 'Кино Нэмэх';
+}
+
+function _captureFormData() {
+  const price = parseInt(document.getElementById('mPrice').value) || 0;
+  const previewVal = document.getElementById('mPreview').value;
+  return {
+    title:          document.getElementById('mTitle').value.trim(),
+    titleEn:        document.getElementById('mTitleEn').value,
+    genre:          document.getElementById('mGenre').value,
+    year:           document.getElementById('mYear').value,
+    rating:         document.getElementById('mRating').value || '—',
+    duration:       document.getElementById('mDur').value,
+    price, free:    document.getElementById('mFree').checked || price === 0,
+    hot:            document.getElementById('mHot').checked,
+    videoId:        document.getElementById('mVideoId').value,
+    trailerVideoId: document.getElementById('mTrailerVideoId').value || null,
+    desc:           document.getElementById('mDesc').value,
+    thumbnail:      document.getElementById('mThumb').value,
+    previewMinutes: previewVal !== '' ? parseInt(previewVal) : null,
+    views: 0,
+  };
+}
+
+async function queueAndUpload() {
+  const title = document.getElementById('mTitle').value.trim();
+  if (!title) { toast('Гарчиг оруулна уу', 'err'); return; }
+  const file = _selectedVideoFile;
+  const trailerFile = _selectedTrailerFile;
+  if (!file && !trailerFile) { toast('Ядаж нэг видео файл сонгоно уу', 'err'); return; }
+  const cfg = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+  if (!cfg.libraryId || !cfg.apiKey) { toast('⚙️ Bunny Library ID болон API Key тохируулна уу', 'err'); return; }
+
+  const item = {
+    id: Date.now(), title,
+    file, trailerFile,
+    movieData: _captureFormData(),
+    cfg: { ...cfg },
+    dbId: null,
+    state: 'uploading',
+    mainProgress: file ? 0 : null,
+    trailerProgress: trailerFile ? 0 : null,
+    error: null,
+  };
+  _queue.push(item);
+  _renderQueue();
+  closeMovieModal();
+  _resetMovieForm();
+  _runUpload(item);
+}
+
+async function _runUpload(item) {
+  try {
+    // 1. Create movie record immediately
+    const res = await fetch('/api/movies', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item.movieData),
+    });
+    const saved = await res.json();
+    item.dbId = saved._id;
+    moviesData.unshift(saved);
+    renderMovies(moviesData);
+
+    const updates = {};
+
+    // 2. Upload main video
+    if (item.file) {
+      const videoId = await _bunnyUpload(item.file, item.title, item.cfg, pct => {
+        item.mainProgress = pct; _renderQueue();
+      });
+      if (videoId) {
+        updates.videoId = videoId;
+        // Auto-thumbnail when none was provided
+        if (!item.movieData.thumbnail && item.cfg.cdnHost) {
+          const host = item.cfg.cdnHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+          updates.thumbnail = `https://${host}/${videoId}/thumbnail.jpg`;
+        }
+      }
+    }
+
+    // 3. Upload trailer (runs after main so the DB record exists)
+    if (item.trailerFile) {
+      const trailerVideoId = await _bunnyUpload(item.trailerFile, item.title + ' — Trailer', item.cfg, pct => {
+        item.trailerProgress = pct; _renderQueue();
+      });
+      if (trailerVideoId) updates.trailerVideoId = trailerVideoId;
+    }
+
+    // 4. Persist video IDs + auto-thumbnail back to DB
+    if (Object.keys(updates).length && item.dbId) {
+      await fetch(`/api/movies/${item.dbId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      const idx = moviesData.findIndex(x => String(x._id) === String(item.dbId));
+      if (idx > -1) Object.assign(moviesData[idx], updates);
+      renderMovies(moviesData);
+    }
+
+    item.state = 'done';
+    if (item.mainProgress    != null) item.mainProgress    = 100;
+    if (item.trailerProgress != null) item.trailerProgress = 100;
+    _renderQueue();
+    toast(`✓ "${item.title}" upload дууслаа`);
+
+    // Remove from queue after 10s
+    setTimeout(() => {
+      const i = _queue.indexOf(item);
+      if (i > -1) _queue.splice(i, 1);
+      _renderQueue();
+    }, 10000);
+  } catch(e) {
+    item.state = 'error'; item.error = e.message; _renderQueue();
+  }
+}
+
+function _bunnyUpload(file, title, cfg, onProgress) {
+  return new Promise(async resolve => {
+    try {
+      const r = await fetch('/api/bunny/create-video', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, libraryId: cfg.libraryId, apiKey: cfg.apiKey }),
+      });
+      const data = await r.json();
+      if (!data.guid) { resolve(null); return; }
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100)); };
+      xhr.onload  = () => resolve(xhr.status === 200 ? data.guid : null);
+      xhr.onerror = () => resolve(null);
+      xhr.open('PUT', `https://video.bunnycdn.com/library/${cfg.libraryId}/videos/${data.guid}`);
+      xhr.setRequestHeader('AccessKey', cfg.apiKey);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.send(file);
+    } catch(e) { resolve(null); }
+  });
+}
+
+function _renderQueue() {
+  const panel = document.getElementById('uploadQueuePanel');
+  const list  = document.getElementById('queueItemsList');
+  if (!_queue.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  const done = _queue.filter(x => x.state === 'done').length;
+  document.getElementById('queueDoneCount').textContent = `${done}/${_queue.length} дууссан`;
+  list.innerHTML = _queue.map(item => {
+    const icon = item.state === 'done' ? '✅' : item.state === 'error' ? '❌' : '⏫';
+    const bar = (pct, color) => `
+      <div style="display:flex;align-items:center;gap:.4rem;margin-top:.3rem;">
+        <span style="font-size:.68rem;color:var(--text-dim);min-width:2.8rem;">${pct}%</span>
+        <div style="flex:1;background:rgba(255,255,255,.06);border-radius:99px;height:4px;">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:99px;transition:width .25s;"></div>
+        </div>
+      </div>`;
+    return `<div style="background:var(--card2);border-radius:10px;padding:.55rem .75rem;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:.4rem;">
+        <span style="font-size:.9rem;">${icon}</span>
+        <span style="font-size:.79rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</span>
+        ${item.state==='error'?`<span style="font-size:.68rem;color:var(--red);">Алдаа</span>`:''}
+      </div>
+      ${item.mainProgress    != null ? bar(item.mainProgress,    'var(--grad)') : ''}
+      ${item.trailerProgress != null ? bar(item.trailerProgress, 'linear-gradient(90deg,#a855f7,#ec4899)') : ''}
+      ${item.error ? `<div style="font-size:.68rem;color:var(--red);margin-top:.3rem;">${item.error}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 /* ===== BUNNY ===== */
