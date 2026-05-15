@@ -17,6 +17,12 @@ const DB_NAME   = process.env.DB_NAME || 'newdrama';
 // Middleware — must come before routes
 app.use(cors());
 app.use(express.json());
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Static assets (css, js, images)
 app.use(express.static(path.join(__dirname)));
@@ -346,11 +352,15 @@ app.post('/api/bunny/signed-url', async (req, res) => {
     return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true` });
   }
 
-  // 2 цагийн хугацаатай signed URL үүсгэнэ
+  // Хэрэглэгчийн IP — proxy-гийн ард байвал X-Forwarded-For авна
+  const userIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+
+  // 2 цагийн хугацаатай, IP-д хөлдөөсөн signed URL үүсгэнэ
+  // IP зааж өгснөөр URL-г хуулаад өөр IP-с хэрэглэж чадахгүй болно
   const expiry = Math.floor(Date.now() / 1000) + 7200;
   const token  = crypto
     .createHash('sha256')
-    .update(tokenKey + videoId + expiry)
+    .update(tokenKey + videoId + expiry + userIp)
     .digest('hex');
 
   const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;

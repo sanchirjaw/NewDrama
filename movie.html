@@ -913,6 +913,22 @@ function shareIt() {
   else { navigator.clipboard?.writeText(location.href); toast('✓ Холбоос хуулагдлаа'); }
 }
 
+/* ── Download prevention ──────────────────────────────────────── */
+// Right-click
+document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+
+// Keyboard: Ctrl/Cmd + S U P J (save, view-source, print, devtools)
+// F12, Ctrl+Shift+I/J/C/K (DevTools), Ctrl+U (source)
+document.addEventListener('keydown', e => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (ctrl && ['s','u','p'].includes(e.key.toLowerCase())) { e.preventDefault(); return; }
+  if (ctrl && e.shiftKey && ['i','j','c','k'].includes(e.key.toLowerCase())) { e.preventDefault(); return; }
+  if (e.key === 'F12') { e.preventDefault(); return; }
+});
+
+// Drag prevention (prevent dragging iframe src into address bar)
+document.addEventListener('dragstart', e => e.preventDefault());
+
 function toast(msg, type='ok') {
   const t = document.createElement('div');
   t.className = `toast ${type}`; t.textContent = msg;
