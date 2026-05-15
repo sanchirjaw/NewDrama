@@ -459,38 +459,71 @@ const DECOY_M3U8 = '#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:1\n#EXT-X-M
 // m3u8 proxy — Firebase ID token шалгаж жинхэнэ эсвэл decoy playlist буцаана
 const FIREBASE_API_KEY = 'AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM';
 let _cdnHostCache = null;
+async function _getCdnHost() {
+  if (_cdnHostCache) return _cdnHostCache;
+  const s = await col('settings').findOne({ _id: 'config' });
+  _cdnHostCache = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return _cdnHostCache;
+}
+async function _bunnyFetch(path) {
+  return fetch(`https://${await _getCdnHost()}/${path}`, {
+    headers: { 'Referer': 'https://newdrama.mn/', 'User-Agent': 'Mozilla/5.0' }
+  });
+}
+
+// Master playlist — auth шалгана (subscribed) эсвэл free=1
 app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   res.setHeader('Content-Type', 'application/x-mpegURL');
   res.setHeader('Cache-Control', 'no-cache');
+  const isFree = req.query.free === '1';
   const idToken = req.headers['x-stream-token'] || req.query.t;
-  if (!idToken) return res.send(DECOY_M3U8);
-  try {
-    const fbRes = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }) }
-    );
-    if (!fbRes.ok) return res.send(DECOY_M3U8);
-    const fbData = await fbRes.json();
-    if (!fbData.users?.[0]) return res.send(DECOY_M3U8);
-  } catch { return res.send(DECOY_M3U8); }
-  if (!_cdnHostCache) {
-    const s = await col('settings').findOne({ _id: 'config' });
-    _cdnHostCache = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  if (!isFree) {
+    if (!idToken) return res.send(DECOY_M3U8);
+    try {
+      const fbRes = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }) }
+      );
+      if (!fbRes.ok) return res.send(DECOY_M3U8);
+      const fbData = await fbRes.json();
+      if (!fbData.users?.[0]) return res.send(DECOY_M3U8);
+    } catch { return res.send(DECOY_M3U8); }
   }
-  if (!_cdnHostCache) return res.status(500).end();
-  const videoId = req.params.videoId;
+
+  const cdnHost = await _getCdnHost();
+  if (!cdnHost) return res.status(500).end();
+  const { videoId } = req.params;
   try {
-    const m3u8Url = `https://${_cdnHostCache}/${videoId}/playlist.m3u8`;
-    const resp = await fetch(m3u8Url, {
-      headers: { 'Referer': 'https://newdrama.mn/', 'User-Agent': 'Mozilla/5.0' }
-    });
+    const resp = await _bunnyFetch(`${videoId}/playlist.m3u8`);
     if (!resp.ok) return res.status(resp.status).send(DECOY_M3U8);
     let content = await resp.text();
-    const cdnBase = `https://${_cdnHostCache}/${videoId}`;
-    content = content.replace(/^(?!#)(\S+\.m3u8.*)$/gm, line => `${cdnBase}/${line.trim()}`);
+    // Quality m3u8 URL-уудыг серверийн прокси руу чиглүүлэх
+    const suffix = isFree ? '?free=1' : '';
+    content = content.replace(/^(?!#)(\S+\.m3u8\S*)$/gm,
+      line => `/api/stream/${videoId}/${line.trim()}${suffix}`);
     res.send(content);
   } catch { res.send(DECOY_M3U8); }
+});
+
+// Quality sub-playlist — auth хэрэггүй (master-д аль хэдийн шалгасан)
+app.get('/api/stream/:videoId/:quality/video.m3u8', async (req, res) => {
+  res.setHeader('Content-Type', 'application/x-mpegURL');
+  res.setHeader('Cache-Control', 'no-cache');
+  const { videoId, quality } = req.params;
+  const cdnHost = await _getCdnHost();
+  if (!cdnHost) return res.status(500).end();
+  try {
+    const resp = await _bunnyFetch(`${videoId}/${quality}/video.m3u8`);
+    if (!resp.ok) return res.status(resp.status).end();
+    let content = await resp.text();
+    // Сегментийн URL-уудыг Bunny CDN руу шууд чиглүүлэх
+    const cdnBase = `https://${cdnHost}/${videoId}/${quality}`;
+    content = content.replace(/^(?!#)(\S+\.ts\S*)$/gm,
+      line => `${cdnBase}/${line.trim()}`);
+    res.send(content);
+  } catch { res.status(500).end(); }
 });
 
 /* ════════════════════════════════

@@ -507,10 +507,8 @@ async function _playWithHls(videoId, useProxy = false) {
       video.play().catch(() => {});
     }
   } else {
-    // Trailer / free — CDN шууд (proxy хэрэггүй)
-    const cdnHost = (_bunnyCfg.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-    src = cdnHost ? `https://${cdnHost}/${videoId}/playlist.m3u8` : '';
-    if (!src) { toast('CDN тохируулаагүй байна'); return; }
+    // Trailer / free — proxy-р дамжуулах (CDN direct 403 тул), auth шаардахгүй
+    src = `/api/stream/${videoId}/playlist.m3u8?free=1`;
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(src);
