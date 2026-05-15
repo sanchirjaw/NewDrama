@@ -1146,6 +1146,9 @@ async function uploadAndSave() {
     btn.textContent = '💾 Хадгалж байна...';
     // Modal хаахгүйгээр хадгална — үнэ/preview засах боломж үлдэнэ
     await saveMovie(true);
+    _selectedVideoFile = null;  // prevent Queue & Next from re-uploading the same file
+    document.getElementById('mVideoFileName').textContent = 'Файл сонгоогүй';
+    document.getElementById('mVideoFileName').style.color = '';
     btn.disabled = false;
     btn.textContent = '✓ Хадгалсан';
     btn.style.background = 'var(--success, #22c55e)';
@@ -1748,7 +1751,7 @@ async function queueAndUpload() {
     file, trailerFile,
     movieData: _captureFormData(),
     cfg: { ...cfg },
-    dbId: null,
+    dbId: editingMovieId || null,   // reuse existing DB record if already saved
     state: 'uploading',
     mainProgress: file ? 0 : null,
     trailerProgress: trailerFile ? 0 : null,
@@ -1763,14 +1766,24 @@ async function queueAndUpload() {
 
 async function _runUpload(item) {
   try {
-    // 1. Create movie record immediately
-    const res = await fetch('/api/movies', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item.movieData),
-    });
-    const saved = await res.json();
-    item.dbId = saved._id;
-    moviesData.unshift(saved);
+    // 1. Create or update movie record
+    if (item.dbId) {
+      // Already saved (e.g. via "Upload & Хадгалах") — just update metadata
+      await fetch(`/api/movies/${item.dbId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item.movieData),
+      });
+      const idx = moviesData.findIndex(x => String(x._id) === String(item.dbId));
+      if (idx > -1) Object.assign(moviesData[idx], item.movieData);
+    } else {
+      const res = await fetch('/api/movies', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item.movieData),
+      });
+      const saved = await res.json();
+      item.dbId = saved._id;
+      moviesData.unshift(saved);
+    }
     renderMovies(moviesData);
 
     const updates = {};
