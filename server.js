@@ -373,12 +373,6 @@ app.post('/api/bunny/delete-video', async (req, res) => {
   }
 });
 
-/* Temporary key-check endpoint — remove after debugging */
-app.get('/api/debug/bunny-key', (req, res) => {
-  const k = process.env.BUNNY_TOKEN_KEY || '';
-  res.json({ set: !!k, prefix: k.slice(0, 8) });
-});
-
 /* ════════════════════════════════
    BUNNY — Signed embed URL (IDM хориглох)
 ════════════════════════════════ */
