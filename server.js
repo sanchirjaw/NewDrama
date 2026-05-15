@@ -383,8 +383,8 @@ app.post('/api/bunny/signed-url', async (req, res) => {
   // Bunny Token Authentication Key — .env-д BUNNY_TOKEN_KEY=... гэж тавина
   const tokenKey = process.env.BUNNY_TOKEN_KEY;
   if (!tokenKey) {
-    // Token key тохируулаагүй → хамгаалалтгүй URL буцаана
-    return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true` });
+    console.warn('[signed-url] BUNNY_TOKEN_KEY тохируулаагүй — хамгаалалтгүй URL буцаана');
+    return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true`, hasToken: false });
   }
 
   // 4 цагийн хугацаатай token (IP хасагдсан — proxy/NAT-аас болж IP өөрчлөгдөхөд 403 гарахаас сэргийлнэ)
@@ -395,7 +395,8 @@ app.post('/api/bunny/signed-url', async (req, res) => {
     .digest('hex');
 
   const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
-  res.json({ url });
+  console.log(`[signed-url] token OK — videoId=${videoId} expires=${expiry}`);
+  res.json({ url, hasToken: true });
 });
 
 /* ════════════════════════════════
