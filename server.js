@@ -426,7 +426,7 @@ app.post('/api/bunny/delete-video', async (req, res) => {
 app.post('/api/bunny/signed-url', (req, res) => {
   const { videoId, libraryId } = req.body;
   if (!videoId || !libraryId) return res.status(400).json({ error: 'videoId, libraryId шаардлагатай' });
-  const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=1&responsive=true`;
+  const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=true&responsive=true`;
   res.json({ url });
 });
 

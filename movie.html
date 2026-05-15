@@ -475,7 +475,7 @@ let _bunnyCfg   = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
 let _libraryId  = _bunnyCfg.libraryId || '';
 function _getBunnyUrl() {
   if (!_libraryId || !_videoId) return '';
-  return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&muted=1&responsive=true`;
+  return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&muted=true&responsive=true`;
 }
 
 // Signed URL (BUNNY_TOKEN_KEY тохируулсан бол IDM-с хамгаална)
