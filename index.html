@@ -406,11 +406,21 @@ async function applyFeatured() {
   if (!m && movies.length) m = [...movies].sort((a,b)=>(b.views||0)-(a.views||0))[0];
   if (!m) return;
   const s = genreStyle[m.genre] || genreStyle['default'];
-  if (m.thumbnail) {
-    const bg = document.getElementById('featuredBg');
-    if (bg) { bg.innerHTML=''; bg.style.cssText='position:absolute;inset:0;background-image:url('+m.thumbnail+');background-size:cover;background-position:center;opacity:.18;font-size:0;'; }
-  } else {
-    document.getElementById('featuredBg').textContent = m.icon || '🎬';
+  const bg = document.getElementById('featuredBg');
+  if (bg) {
+    const thumbSrc  = m.thumbnail || (m.videoId ? `/api/thumb/${m.videoId}` : '');
+    const proxySrc  = m.videoId ? `/api/thumb/${m.videoId}` : '';
+    if (thumbSrc) {
+      const img = document.createElement('img');
+      img.src = thumbSrc;
+      if (proxySrc && thumbSrc !== proxySrc)
+        img.onerror = () => { img.onerror = null; img.src = proxySrc; };
+      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.22;';
+      bg.innerHTML = '';
+      bg.appendChild(img);
+    } else {
+      bg.textContent = m.icon || '🎬';
+    }
   }
   document.getElementById('featuredTitle').textContent     = m.title;
   document.getElementById('featuredRating').textContent    = m.rating || '—';
