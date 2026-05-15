@@ -1226,7 +1226,7 @@ async function deleteMovie(id) {
     const ids = [movie.videoId, movie.trailerVideoId].filter(Boolean);
     await Promise.all(ids.map(videoId =>
       fetch('/api/bunny/delete-video', {
-        method: 'DELETE',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoId, libraryId: cfg.libraryId, apiKey: cfg.apiKey }),
       }).catch(() => {})  // Bunny алдаа гарсан ч DB устгалт үргэлжилнэ

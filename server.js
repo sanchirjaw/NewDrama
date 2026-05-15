@@ -332,7 +332,7 @@ app.post('/api/bunny/create-video', async (req, res) => {
 /* ════════════════════════════════
    BUNNY — Видео устгах
 ════════════════════════════════ */
-app.delete('/api/bunny/delete-video', async (req, res) => {
+app.post('/api/bunny/delete-video', async (req, res) => {
   const { videoId, libraryId, apiKey } = req.body;
   if (!videoId || !libraryId || !apiKey)
     return res.status(400).json({ error: 'videoId, libraryId, apiKey шаардлагатай' });
