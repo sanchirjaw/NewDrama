@@ -346,11 +346,14 @@ app.post('/api/bunny/signed-url', async (req, res) => {
     return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true` });
   }
 
-  // 2 цагийн хугацаатай signed URL үүсгэнэ
+  // Хэрэглэгчийн IP авах — proxy ард байвал X-Forwarded-For ашиглана
+  const userIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+
+  // 2 цагийн хугацаатай, IP-д хөлдөөсөн token — IDM өөр IP-с ашиглаж чадахгүй
   const expiry = Math.floor(Date.now() / 1000) + 7200;
   const token  = crypto
     .createHash('sha256')
-    .update(tokenKey + videoId + expiry)
+    .update(tokenKey + videoId + expiry + userIp)
     .digest('hex');
 
   const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
