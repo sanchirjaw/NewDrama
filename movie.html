@@ -477,40 +477,51 @@ async function _getStreamToken() {
   const user = firebase.auth().currentUser;
   if (!user) return '';
   try {
-    const r = await fetch('/api/stream/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: user.uid })
-    });
-    const d = await r.json();
-    _streamToken = d.token || '';
+    _streamToken = await user.getIdToken();
+    setTimeout(() => { _streamToken = ''; }, 55 * 60 * 1000); // 55 мин дараа цэвэрлэх
   } catch(e) {}
   return _streamToken;
 }
 
-async function _playWithHls(videoId) {
+// useProxy=true → IDM хамгаалалттай прокси, false → CDN шууд (trailer/free)
+async function _playWithHls(videoId, useProxy = false) {
   const video = document.getElementById('playerFrame');
   if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
   video.src = '';
 
-  const token = await _getStreamToken();
-  const src   = `/api/stream/${videoId}/playlist.m3u8`;
-
-  if (Hls.isSupported()) {
-    const hls = new Hls({
-      xhrSetup(xhr) {
-        if (token) xhr.setRequestHeader('x-stream-token', token);
-      }
-    });
-    hls.loadSource(src);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-    hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) console.warn('HLS error', d); });
-    _hlsInstance = hls;
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    // Safari native HLS
-    video.src = token ? `${src}?t=${encodeURIComponent(token)}` : src;
-    video.play().catch(() => {});
+  let src;
+  if (useProxy) {
+    const token = await _getStreamToken();
+    src = `/api/stream/${videoId}/playlist.m3u8`;
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        xhrSetup(xhr) { if (token) xhr.setRequestHeader('x-stream-token', token); }
+      });
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) console.warn('HLS error', d); });
+      _hlsInstance = hls;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = token ? `${src}?t=${encodeURIComponent(token)}` : src;
+      video.play().catch(() => {});
+    }
+  } else {
+    // Trailer / free — CDN шууд (proxy хэрэггүй)
+    const cdnHost = (_bunnyCfg.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+    src = cdnHost ? `https://${cdnHost}/${videoId}/playlist.m3u8` : '';
+    if (!src) { toast('CDN тохируулаагүй байна'); return; }
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) console.warn('HLS error', d); });
+      _hlsInstance = hls;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+      video.play().catch(() => {});
+    }
   }
 }
 
@@ -745,7 +756,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function tryPlay() {
   if (!_authReady) return;
-  if (subscribed || _movieFree) { _loadVideo(); return; }
+  if (subscribed) { _loadVideo(true); return; }
+  if (_movieFree) { _loadVideo(false); return; }
   // Trailer байвал main player-т харуулна
   if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
   // Trailer байхгүй → шууд сонголтын modal нээнэ (paywall overlay харуулахгүй)
@@ -770,7 +782,7 @@ async function _loadTrailerVideo() {
     if (!subscribed && !_movieFree && _trailerVideoId) _showPaywall();
   };
 
-  await _playWithHls(_trailerVideoId);
+  await _playWithHls(_trailerVideoId, false); // trailer → CDN шууд
 }
 
 let _lastProgressSave = 0;
@@ -784,7 +796,7 @@ function _showPaywall() {
 }
 
 
-function _loadVideo() {
+function _loadVideo(useProxy = true) {
   const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
   hide('playerThumb'); hide('paywall'); hide('trailerBar');
 
@@ -805,7 +817,7 @@ function _loadVideo() {
     _saveWatchHistory(pct);
   };
 
-  _playWithHls(_videoId);
+  _playWithHls(_videoId, useProxy);
 
   _saveWatchHistory(0);
   if (_movieId) fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(() => {});

@@ -456,28 +456,24 @@ app.post('/api/bunny/signed-url', (req, res) => {
 ════════════════════════════════ */
 const DECOY_M3U8 = '#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-ENDLIST';
 
-// Stream token үүсгэх — auth хэрэглэгчид 4 цагийн token өгнө
-app.post('/api/stream/token', async (req, res) => {
-  const { uid } = req.body;
-  if (!uid) return res.status(400).json({ error: 'uid required' });
-  const user = await col('users').findOne({ uid });
-  if (!user) return res.status(401).json({ error: 'User not found' });
-  const token = crypto.randomBytes(24).toString('hex');
-  const expires = Date.now() + 4 * 3600 * 1000;
-  await col('streamTokens').insertOne({ token, uid, expires });
-  col('streamTokens').deleteMany({ expires: { $lt: Date.now() } }).catch(() => {});
-  res.json({ token });
-});
-
-// m3u8 proxy — token шалгаж жинхэнэ эсвэл decoy playlist буцаана
+// m3u8 proxy — Firebase ID token шалгаж жинхэнэ эсвэл decoy playlist буцаана
+const FIREBASE_API_KEY = 'AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM';
 let _cdnHostCache = null;
 app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   res.setHeader('Content-Type', 'application/x-mpegURL');
   res.setHeader('Cache-Control', 'no-cache');
-  const token = req.headers['x-stream-token'] || req.query.t;
-  if (!token) return res.send(DECOY_M3U8);
-  const tokenDoc = await col('streamTokens').findOne({ token, expires: { $gt: Date.now() } });
-  if (!tokenDoc) return res.send(DECOY_M3U8);
+  const idToken = req.headers['x-stream-token'] || req.query.t;
+  if (!idToken) return res.send(DECOY_M3U8);
+  try {
+    const fbRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }) }
+    );
+    if (!fbRes.ok) return res.send(DECOY_M3U8);
+    const fbData = await fbRes.json();
+    if (!fbData.users?.[0]) return res.send(DECOY_M3U8);
+  } catch { return res.send(DECOY_M3U8); }
   if (!_cdnHostCache) {
     const s = await col('settings').findOne({ _id: 'config' });
     _cdnHostCache = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -491,7 +487,6 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
     });
     if (!resp.ok) return res.status(resp.status).send(DECOY_M3U8);
     let content = await resp.text();
-    // Relative URL → absolute Bunny CDN URL болгон өөрчлөх
     const cdnBase = `https://${_cdnHostCache}/${videoId}`;
     content = content.replace(/^(?!#)(\S+\.m3u8.*)$/gm, line => `${cdnBase}/${line.trim()}`);
     res.send(content);
