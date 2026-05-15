@@ -475,10 +475,33 @@ async function _bunnyFetch(path) {
   const cdnHost = await _getCdnHost();
   const expiry = Math.floor(Date.now() / 1000) + 14400;
   const signed = _signCdnUrl(cdnHost, '/' + path, expiry);
-  return fetch(signed, {
-    headers: { 'Referer': 'https://iframe.mediadelivery.net/', 'User-Agent': 'Mozilla/5.0' }
-  });
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const r = await fetch(signed, {
+      signal: ctrl.signal,
+      headers: { 'Referer': 'https://iframe.mediadelivery.net/', 'User-Agent': 'Mozilla/5.0' }
+    });
+    clearTimeout(t);
+    return r;
+  } catch(e) {
+    clearTimeout(t);
+    throw e;
+  }
 }
+
+// Debug — Bunny CDN fetch тест
+app.get('/api/debug/stream/:videoId', async (req, res) => {
+  try {
+    const cdnHost = await _getCdnHost();
+    const path = `${req.params.videoId}/playlist.m3u8`;
+    const expiry = Math.floor(Date.now() / 1000) + 14400;
+    const signed = _signCdnUrl(cdnHost, '/' + path, expiry);
+    const resp = await _bunnyFetch(path);
+    const text = await resp.text();
+    res.json({ cdnHost, signed, status: resp.status, preview: text.slice(0, 300) });
+  } catch(e) { res.json({ error: e.message }); }
+});
 
 // Master playlist — auth шалгана (subscribed) эсвэл free=1
 app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
