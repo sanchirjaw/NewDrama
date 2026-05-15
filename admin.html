@@ -773,16 +773,7 @@ select.form-input option{background:var(--dark);}
 <script>
 /* ===== DATA ===== */
 const _defPrice = () => JSON.parse(localStorage.getItem('nd_prices')||'{}').movie || 3400;
-const moviesData = [
-  {id:1,title:'Сүүлчийн Мөрдөгч',genre:'Экшн',year:'2024',rating:'8.2',free:false,hot:true,views:48200,added:'2024-11-15',videoId:'abc-001',price:3400},
-  {id:2,title:'Цэцгийн Зам',genre:'Драм',year:'2024',rating:'9.1',free:false,hot:false,views:31500,added:'2024-10-22',videoId:'abc-002',price:3400},
-  {id:3,title:'Хөршийн Нууц',genre:'Комеди',year:'2023',rating:'7.8',free:true,hot:false,views:92100,added:'2024-09-10',videoId:'abc-003',price:0},
-  {id:4,title:'Харанхуйн Дуудлага',genre:'Аймшиг',year:'2024',rating:'8.5',free:false,hot:true,views:67400,added:'2024-11-28',videoId:'abc-004',price:3400},
-  {id:5,title:'Зүрхний Аялал',genre:'Романтик',year:'2024',rating:'8.0',free:false,hot:false,views:24800,added:'2024-10-05',videoId:'abc-005',price:3400},
-  {id:6,title:'Эзэн Хааны Сүлд',genre:'Түүхэн',year:'2023',rating:'9.0',free:false,hot:false,views:115000,added:'2024-08-18',videoId:'abc-006',price:4900},
-  {id:7,title:'Галт Тэрэг',genre:'Триллер',year:'2024',rating:'8.8',free:false,hot:false,views:53700,added:'2024-11-01',videoId:'abc-007',price:3400},
-  {id:8,title:'Тэнгэрийн Цэцэг',genre:'Анимэ',year:'2024',rating:'8.9',free:true,hot:false,views:88600,added:'2024-09-30',videoId:'abc-008',price:0},
-];
+const moviesData = [];
 
 const usersData = [
   {id:1,name:'Батбаяр О.',email:'bat@gmail.com',login:'Gmail',plan:'1 сарын',planKey:'monthly',joined:'2024-10-12',lastLogin:'2024-12-01',totalPaid:36000,status:'active'},
@@ -2068,11 +2059,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   try {
     const res = await fetch('/api/movies');
     const dbMovies = await res.json();
-    if(Array.isArray(dbMovies) && dbMovies.length > 0) {
+    if (Array.isArray(dbMovies)) {
       moviesData.length = 0;
       dbMovies.forEach(m => moviesData.push(m));
     }
-  } catch(e) { console.warn('API холбогдсонгүй, локал өгөгдөл ашиглана'); }
+  } catch(e) { console.warn('API холбогдсонгүй:', e.message); }
   renderMovies(moviesData);
   populateFeaturedSelect();
   populateHeroSelects();
