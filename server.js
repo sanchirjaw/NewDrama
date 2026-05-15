@@ -124,19 +124,19 @@ app.post('/api/admin/fix-trailer-ids', async (req, res) => {
 
   // 2. DB-н бүх кинонд тохирох trailer guid олж update
   const movies = await col('movies').find({}).toArray();
-  let fixed = 0, skipped = 0;
+  const fixedList = [], skippedList = [];
   for (const movie of movies) {
     const key = (movie.title || '').trim().toLowerCase();
     const correctId = trailerMap[key];
     if (correctId && movie.trailerVideoId !== correctId) {
       await col('movies').updateOne({ _id: movie._id }, { $set: { trailerVideoId: correctId } });
-      fixed++;
+      fixedList.push({ title: movie.title, old: movie.trailerVideoId || null, new: correctId });
     } else {
-      skipped++;
+      skippedList.push({ title: movie.title, reason: correctId ? 'already correct' : 'no trailer in Bunny' });
     }
   }
 
-  res.json({ ok: true, fixed, skipped, totalBunnyVideos: allVideos.length, trailerCount: Object.keys(trailerMap).length });
+  res.json({ ok: true, fixed: fixedList.length, skipped: skippedList.length, fixedList, skippedList, totalBunnyVideos: allVideos.length });
 });
 
 app.delete('/api/movies/:id', async (req, res) => {
