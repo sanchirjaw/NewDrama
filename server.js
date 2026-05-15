@@ -115,12 +115,21 @@ app.post('/api/admin/fix-trailer-ids', async (req, res) => {
     if (items.length < 100) break;
   }
 
-  // Trailer видеог нэрээр нь индекслэх: "КиноНэр — Trailer" эсвэл "КиноНэр_cut" → guid
-  const trailerMap = {};
+  // Trailer видеог нэрээр нь индекслэх — Finished (status=4) видеог давуу эрхтэй сонгоно
+  // Bunny status: 0=Queued,1=Processing,2=Encoding,3=Finished,4=ResolutionFinished,5=Failed
+  const trailerMap = {}; // key → { guid, status }
   for (const v of allVideos) {
     const title = v.title || '';
     const m = title.match(/^(.+?)\s*—\s*Trailer$/i) || title.match(/^(.+?)_cut$/i);
-    if (m) trailerMap[m[1].trim().toLowerCase()] = v.guid;
+    if (!m) continue;
+    const key = m[1].trim().toLowerCase();
+    const existing = trailerMap[key];
+    // Finished (3 эсвэл 4) байвал хадгалах; байхгүй эсвэл одоогийнх нь муу бол солих
+    const isFinished = v.status === 3 || v.status === 4;
+    const existingFinished = existing && (existing.status === 3 || existing.status === 4);
+    if (!existing || (isFinished && !existingFinished)) {
+      trailerMap[key] = { guid: v.guid, status: v.status };
+    }
   }
 
   // 2. DB-н бүх кинонд тохирох trailer guid олж update
@@ -128,12 +137,13 @@ app.post('/api/admin/fix-trailer-ids', async (req, res) => {
   const fixedList = [], skippedList = [];
   for (const movie of movies) {
     const key = (movie.title || '').trim().toLowerCase();
-    const correctId = trailerMap[key];
+    const trailer = trailerMap[key];
+    const correctId = trailer?.guid;
     if (correctId && movie.trailerVideoId !== correctId) {
       await col('movies').updateOne({ _id: movie._id }, { $set: { trailerVideoId: correctId } });
-      fixedList.push({ title: movie.title, old: movie.trailerVideoId || null, new: correctId });
+      fixedList.push({ title: movie.title, old: movie.trailerVideoId || null, new: correctId, status: trailer.status });
     } else {
-      skippedList.push({ title: movie.title, reason: correctId ? 'already correct' : 'no trailer in Bunny' });
+      skippedList.push({ title: movie.title, reason: correctId ? 'already correct' : 'no trailer in Bunny', status: trailer?.status });
     }
   }
 
