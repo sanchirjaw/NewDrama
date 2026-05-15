@@ -1166,19 +1166,6 @@ async function saveMovie(keepOpen = false) {
   renderMovies(moviesData);
   if(!keepOpen) closeMovieModal();
 }
-function quickPriceEdit(id) {
-  const m = moviesData.find(x=>x.id===id);
-  if(!m) return;
-  const cur = m.price ?? _defPrice();
-  const val = prompt(`"${m.title}"\nШинэ үнэ оруулна уу (₮):\n0 = Үнэгүй`, cur);
-  if(val === null) return;
-  const newPrice = parseInt(val);
-  if(isNaN(newPrice) || newPrice < 0) { toast('Буруу утга', 'err'); return; }
-  m.price = newPrice;
-  m.free  = newPrice === 0;
-  renderMovies(moviesData);
-  toast(`✓ "${m.title}" — ${newPrice===0?'Үнэгүй':newPrice.toLocaleString()+'₮'} болгогдлоо`);
-}
 
 async function deleteMovie(id) {
   if(!confirm('Кино устгах уу?')) return;
@@ -1186,11 +1173,6 @@ async function deleteMovie(id) {
   const i = moviesData.findIndex(x=>x._id===id||x.id===id);
   if(i>-1){moviesData.splice(i,1);renderMovies(moviesData);}
   toast('Кино устгагдлаа','err');
-}
-function deleteUser(id) {
-  if(!confirm('Хэрэглэгч устгах уу?')) return;
-  const i = usersData.findIndex(x=>x.id===id);
-  if(i>-1){usersData.splice(i,1);renderUsers(usersData);toast('Хэрэглэгч устгагдлаа','err');}
 }
 async function approvePayment(id) {
   if (!confirm('Энэ төлбөрийг баталгаажуулах уу? Хэрэглэгчид план идэвхжинэ.')) return;
@@ -1354,8 +1336,6 @@ function deleteExpense(idx) {
 }
 
 /* ===== TOP BUYERS ===== */
-function renderTopBuyers() { renderTopBuyersDB(); }
-
 function rewardUser(name) {
   toast(`🎁 ${name} — урамшуулал илгээгдлээ!`);
 }
@@ -1704,17 +1684,9 @@ async function savePrices() {
   const prices = { monthly:m, quarterly:q };
   localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
   await saveSettings({ prices });
-  plans.monthly.amount   = m;
-  plans.quarterly.amount = q;
   toast(`✓ Хадгалагдлаа — 1 сар: ${m.toLocaleString()}₮ / 3 сар: ${q.toLocaleString()}₮`);
 }
 
-async function saveDefaultPreview() {
-  const pre = parseInt(document.getElementById('previewMinutes').value);
-  const previewMinutes = isNaN(pre) ? 3 : Math.max(0, pre);
-  await saveSettings({ previewMinutes });
-  toast(`✓ Анхны preview: ${previewMinutes} минут хадгалагдлаа`);
-}
 
 async function loadPricesIntoInputs() {
   const settings = await loadSettings();

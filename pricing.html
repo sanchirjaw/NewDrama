@@ -528,9 +528,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // per-movie tier price
   const tierPrice = document.querySelector('.tier-price');
   if (tierPrice) tierPrice.textContent = `${plans.movie.amount.toLocaleString()}₮`;
-  // modal default
-  const modalAmt = document.getElementById('modalAmount');
-  if (modalAmt) modalAmt.textContent = `${plans.monthly.amount.toLocaleString()}₮ ${plans.monthly.label}`;
 });
 
 let _pollTimer = null;

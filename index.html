@@ -79,7 +79,6 @@
 
 /* ===== ROW SECTION ===== */
 .row-section { padding:0 0 3.5rem; }
-.row-section .container {}
 
 /* ===== TOP 10 CARDS ===== */
 .top10-card {
@@ -383,16 +382,20 @@ function movieCardHTML(m, cls='') {
   </a>`;
 }
 
+// Settings fetch — shared promise to avoid duplicate network requests
+let _settingsPromise = null;
+function fetchSettings() {
+  if (!_settingsPromise) _settingsPromise = fetch('/api/settings').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  return _settingsPromise;
+}
+
 // Featured banner — API settings → localStorage → хамгийн их үзэлттэй
 async function applyFeatured() {
   // API-аас featured ID авах
   let featuredId = null;
   try {
-    const sr = await fetch('/api/settings');
-    if (sr.ok) {
-      const s = await sr.json();
-      if (s.featuredId) featuredId = String(s.featuredId);
-    }
+    const s = await fetchSettings();
+    if (s.featuredId) featuredId = String(s.featuredId);
   } catch(e) {}
   if (!featuredId) {
     const f = JSON.parse(localStorage.getItem('nd_featured') || '{}');
@@ -422,13 +425,10 @@ async function applyFeatured() {
 (async function applyPrices() {
   let p = JSON.parse(localStorage.getItem('nd_prices') || '{}');
   try {
-    const res = await fetch('/api/settings');
-    if (res.ok) {
-      const settings = await res.json();
-      if (settings.prices) {
-        p = settings.prices;
-        localStorage.setItem('nd_prices', JSON.stringify(p));
-      }
+    const settings = await fetchSettings();
+    if (settings.prices) {
+      p = settings.prices;
+      localStorage.setItem('nd_prices', JSON.stringify(p));
     }
   } catch(e) {}
   const movie  = (p.movie    || 3400).toLocaleString();

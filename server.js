@@ -202,24 +202,21 @@ app.post('/api/byl/checkout', async (req, res) => {
     quarterly: { amount: 20000, name: '3 Сарын Багц',  days: 90 },
     movie:     { amount: 3400,  name: 'Дан Кино',      days: 2  },
   };
+  // Settings + movie price fetched in parallel
   try {
-    const s = await col('settings').findOne({ _id: 'config' });
+    const [s, movie] = await Promise.all([
+      col('settings').findOne({ _id: 'config' }),
+      plan === 'movie' && movieId ? col('movies').findOne({ _id: oid(movieId) }) : null,
+    ]);
     const pr = s?.prices || {};
     if (pr.monthly)   planCfg.monthly.amount   = pr.monthly;
     if (pr.quarterly) planCfg.quarterly.amount = pr.quarterly;
     if (pr.movie)     planCfg.movie.amount     = pr.movie;
+    if (movie?.price > 0) {
+      planCfg.movie.amount = movie.price;
+      planCfg.movie.name   = movie.title || 'Дан Кино';
+    }
   } catch (_) {}
-
-  // movie plan үед тухайн киноны үнийг DB-ээс авна
-  if (plan === 'movie' && movieId) {
-    try {
-      const movie = await col('movies').findOne({ _id: oid(movieId) });
-      if (movie?.price > 0) {
-        planCfg.movie.amount = movie.price;
-        planCfg.movie.name   = movie.title || 'Дан Кино';
-      }
-    } catch (_) {}
-  }
 
   const p = planCfg[plan];
   if (!p) return res.status(400).json({ error: 'Буруу план' });

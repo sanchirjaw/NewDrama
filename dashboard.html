@@ -620,7 +620,6 @@ function logout() {
     firebase.auth().signOut().then(() => { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); });
   } else { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
 }
-function cancelSub() { if(confirm('Багцаа цуцлахдаа итгэлтэй байна уу?')) toast('Багц цуцлагдлаа. Сарын эцэс хүртэл үзэх боломжтой.'); }
 function deleteAcc() { if(confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?')) { toast('Аккаунт устгагдлаа.','err'); setTimeout(()=>location.href='index.html',1300); } }
 
 function toast(msg, type='ok') {
@@ -807,7 +806,7 @@ firebase.auth().onAuthStateChanged(async user => {
     const msg  = plan === 'quarterly' ? '🎉 3 сарын багц идэвхжлээ!' :
                  plan === 'monthly'   ? '🎉 1 сарын багц идэвхжлээ!' :
                                         '🎉 Төлбөр амжилттай!';
-    showToast(msg);
+    toast(msg);
     history.replaceState({}, '', '/dashboard');
     const returnMovie = sessionStorage.getItem('nd_returnMovie');
     if (returnMovie) {
@@ -817,13 +816,6 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 });
 
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.3);color:#fff;padding:.875rem 1.5rem;border-radius:12px;z-index:9999;font-size:.9rem;';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-}
 </script>
 </body>
 </html>
