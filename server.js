@@ -467,7 +467,7 @@ async function _getCdnHost() {
 }
 async function _bunnyFetch(path) {
   return fetch(`https://${await _getCdnHost()}/${path}`, {
-    headers: { 'Referer': 'https://newdrama.mn/', 'User-Agent': 'Mozilla/5.0' }
+    headers: { 'Referer': 'https://iframe.mediadelivery.net/', 'User-Agent': 'Mozilla/5.0' }
   });
 }
 
