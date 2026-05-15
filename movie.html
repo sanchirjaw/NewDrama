@@ -235,7 +235,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
           <div class="info-row"><div class="info-row-lbl">Хэл</div><div class="info-row-val" id="sidebarLang">Монгол дуу оруулга</div></div>
         </div>
       </div>
-      <div class="buy-card">
+      <div class="buy-card" id="buyCard">
         <div class="buy-card-title">Үзэх сонголт</div>
         <div class="buy-opt" onclick="openChoiceModal()">
           <div><div class="buy-opt-name">📦 1 Сарын багц</div><div class="buy-opt-sub">Бүх кино хязгааргүй</div></div>
@@ -417,6 +417,7 @@ if (!firebase.apps.length) {
   });
 }
 let subscribed = false;
+let _movieFree = false;  // кино үнэгүй бол trailer/paywall хэрэггүй
 let currentUser = null;
 let _authReady        = false;  // auth + plan шалгалт дууссан
 let _movieDetailsReady = false; // loadMovieDetails дууссан
@@ -558,6 +559,13 @@ async function loadMovieDetails() {
     if (m.videoId && !_videoId) _videoId = m.videoId;
     if (m.trailerVideoId) _trailerVideoId = m.trailerVideoId;
 
+    // Үнэгүй кино: subscription шаардахгүй, trailer/paywall харуулахгүй
+    if (m.free || m.price === 0) {
+      _movieFree = true;
+      const bc = document.getElementById('buyCard');
+      if (bc) bc.style.display = 'none';
+    }
+
     const title  = m.title    || '';
     const desc   = m.desc     || m.description || '';
     const year   = m.year     || '';
@@ -691,7 +699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function tryPlay() {
   if (!_authReady) return;
-  if (subscribed) { _loadVideo(); return; }
+  if (subscribed || _movieFree) { _loadVideo(); return; }
   // Trailer байвал main player-т харуулна
   if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
   // Trailer байхгүй → шууд сонголтын modal нээнэ (paywall overlay харуулахгүй)
