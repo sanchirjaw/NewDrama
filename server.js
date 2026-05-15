@@ -94,6 +94,51 @@ app.put('/api/movies/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+/* ════════════════════════════════
+   ADMIN UTILITY — Trailer ID-г Bunny-с засах
+   Bunny library-н бүх видеог татаж, "— Trailer" нэртэй тохирохыг олж DB update хийнэ
+════════════════════════════════ */
+app.post('/api/admin/fix-trailer-ids', async (req, res) => {
+  const { libraryId, apiKey } = req.body;
+  if (!libraryId || !apiKey) return res.status(400).json({ error: 'libraryId, apiKey шаардлагатай' });
+
+  // 1. Bunny-с бүх видео жагсаалт татах (100 хуудас хүртэл)
+  let allVideos = [];
+  for (let page = 1; page <= 100; page++) {
+    const r = await fetch(
+      `https://video.bunnycdn.com/library/${libraryId}/videos?page=${page}&itemsPerPage=100&orderBy=date`,
+      { headers: { AccessKey: apiKey, Accept: 'application/json' } }
+    );
+    const data = await r.json();
+    const items = data.items || [];
+    allVideos = allVideos.concat(items);
+    if (items.length < 100) break;
+  }
+
+  // Trailer видеог нэрээр нь индекслэх: "КиноНэр — Trailer" → guid
+  const trailerMap = {};
+  for (const v of allVideos) {
+    const m = (v.title || '').match(/^(.+?)\s*—\s*Trailer$/i);
+    if (m) trailerMap[m[1].trim().toLowerCase()] = v.guid;
+  }
+
+  // 2. DB-н бүх кинонд тохирох trailer guid олж update
+  const movies = await col('movies').find({}).toArray();
+  let fixed = 0, skipped = 0;
+  for (const movie of movies) {
+    const key = (movie.title || '').trim().toLowerCase();
+    const correctId = trailerMap[key];
+    if (correctId && movie.trailerVideoId !== correctId) {
+      await col('movies').updateOne({ _id: movie._id }, { $set: { trailerVideoId: correctId } });
+      fixed++;
+    } else {
+      skipped++;
+    }
+  }
+
+  res.json({ ok: true, fixed, skipped, totalBunnyVideos: allVideos.length, trailerCount: Object.keys(trailerMap).length });
+});
+
 app.delete('/api/movies/:id', async (req, res) => {
   await col('movies').deleteOne({ _id: oid(req.params.id) });
   res.json({ ok: true });
