@@ -657,6 +657,10 @@ select.form-input option{background:var(--dark);}
         <div style="display:none;margin-top:.5rem;">
           <label class="form-label">Bunny.net Video ID</label>
           <input class="form-input" id="mVideoId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+          <div style="margin-top:.75rem;">
+            <label class="form-label">Эсвэл шууд Video URL <span style="color:var(--text-muted);font-weight:400;">(Bunny байхгүй үед)</span></label>
+            <input class="form-input" id="mVideoUrl" placeholder="https://cdn.example.com/movie.mp4  ·  .m3u8  ·  .webm">
+          </div>
           <div style="margin-top:.5rem;">
             <label class="form-label" style="margin-bottom:.3rem;">Видео файл upload хийх</label>
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
@@ -1092,7 +1096,8 @@ async function openMovieModal(id) {
   document.getElementById('mYear').value    = m?.year         || '2024';
   document.getElementById('mRating').value  = m?.rating       || '';
   document.getElementById('mDur').value     = m?.duration     || '';
-  document.getElementById('mVideoId').value = m?.videoId      || '';
+  document.getElementById('mVideoId').value  = m?.videoId   || '';
+  document.getElementById('mVideoUrl').value = m?.videoUrl  || '';
   document.getElementById('mPrice').value        = m?.price != null ? m.price : _defPrice();
   document.getElementById('mTrailerVideoId').value = m?.trailerVideoId || '';
   document.getElementById('mDesc').value    = m?.desc || m?.description || '';
@@ -1143,7 +1148,8 @@ async function saveMovie(keepOpen = false) {
     rating:         document.getElementById('mRating').value||'—',
     duration:       document.getElementById('mDur').value,
     hot:            document.getElementById('mHot').checked,
-    videoId:        document.getElementById('mVideoId').value,
+    videoId:        document.getElementById('mVideoId').value   || null,
+    videoUrl:       document.getElementById('mVideoUrl').value  || null,
     trailerVideoId: document.getElementById('mTrailerVideoId').value || null,
     desc:           document.getElementById('mDesc').value,
     thumbnail:      document.getElementById('mThumb').value,

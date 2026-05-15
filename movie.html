@@ -200,6 +200,17 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         referrerpolicy="no-referrer"
         sandbox="allow-scripts allow-same-origin allow-presentation allow-forms">
       </iframe>
+      <!-- Шууд URL-тай видео (mp4/m3u8) -->
+      <video
+        id="directPlayer"
+        style="width:100%;height:100%;display:none;background:#000;"
+        controls
+        controlsList="nodownload"
+        disablePictureInPicture
+        disableRemotePlayback
+        playsinline
+        preload="metadata">
+      </video>
       <!-- IDM татах хориглох overlay -->
       <div id="idmBlock" style="position:absolute;inset:0;z-index:4;pointer-events:none;user-select:none;" ondragstart="return false;"></div>
 
@@ -526,6 +537,7 @@ const planInfo = {
 })();
 
 let _trailerVideoId = '';
+let _videoUrl       = ''; // Шууд mp4/m3u8 URL (Bunny байхгүй үед)
 
 async function loadRemoteSettings() {
   try {
@@ -560,9 +572,10 @@ async function loadMovieDetails() {
     if (!res.ok) return;
     const m = await res.json();
 
-    // videoId + trailerVideoId авах
+    // videoId + videoUrl + trailerVideoId авах
     if (m.videoId && !_videoId) _videoId = m.videoId;
-    if (m.trailerVideoId) _trailerVideoId = m.trailerVideoId;
+    if (m.videoUrl)             _videoUrl = m.videoUrl;
+    if (m.trailerVideoId)       _trailerVideoId = m.trailerVideoId;
 
     const title  = m.title    || '';
     const desc   = m.desc     || m.description || '';
@@ -764,13 +777,28 @@ function _loadVideo() {
   hide('paywall');
   hide('trailerBar');
 
-  const fr  = document.getElementById('playerFrame') || document.getElementById('bunnyFrame');
-  if (_libraryId && _videoId) {
+  const fr  = document.getElementById('playerFrame');
+  const vd  = document.getElementById('directPlayer');
+
+  if (_videoUrl) {
+    // Шууд URL (mp4/m3u8) — HTML5 video player
+    fr.style.display = 'none';
+    fr.src = 'about:blank';
+    vd.style.display = 'block';
+    vd.src = _videoUrl;
+    vd.play().catch(() => {});
+    // timeupdate → watch history
+    vd.addEventListener('timeupdate', () => {
+      const pct = vd.duration ? Math.min(99, Math.round((vd.currentTime / vd.duration) * 100)) : 0;
+      _saveWatchHistory(pct);
+    }, { passive: true });
+  } else if (_libraryId && _videoId) {
+    // Bunny CDN iframe
+    vd.style.display = 'none';
     fr.style.display = 'block';
     _getSignedBunnyUrl(_videoId, _libraryId).then(url => { fr.src = url; });
   } else {
-    fr.src = 'about:blank';
-    toast('⚙️ Admin-аас Bunny Library ID тохируулна уу');
+    toast('⚙️ Admin-аас видео URL эсвэл Bunny тохируулна уу');
   }
 
   // Watch history-д анхны бичилт (progress=0)
