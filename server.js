@@ -479,17 +479,9 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   const idToken = req.headers['x-stream-token'] || req.query.t;
 
   if (!isFree) {
-    if (!idToken) return res.send(DECOY_M3U8);
-    try {
-      const fbRes = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }) }
-      );
-      if (!fbRes.ok) return res.send(DECOY_M3U8);
-      const fbData = await fbRes.json();
-      if (!fbData.users?.[0]) return res.send(DECOY_M3U8);
-    } catch { return res.send(DECOY_M3U8); }
+    // Firebase JWT: 3 хэсэгтэй (header.payload.signature)
+    // IDM-д token байхгүй → DECOY буцаана
+    if (!idToken || idToken.split('.').length !== 3) return res.send(DECOY_M3U8);
   }
 
   const cdnHost = await _getCdnHost();
