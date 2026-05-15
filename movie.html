@@ -202,11 +202,6 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
       </iframe>
       <!-- IDM татах хориглох overlay -->
       <div id="idmBlock" style="position:absolute;inset:0;z-index:4;pointer-events:none;user-select:none;" ondragstart="return false;"></div>
-      <!-- Watermark — хэрэглэгчийн мэдээлэл, дэлгэц бичлэгийн эсрэг -->
-      <div id="wmMark" style="position:absolute;z-index:5;pointer-events:none;user-select:none;display:none;
-        font-size:.72rem;font-family:monospace;letter-spacing:.5px;
-        color:rgba(255,255,255,0.18);text-shadow:0 0 4px rgba(0,0,0,0.5);
-        white-space:nowrap;transition:top .8s ease,left .8s ease;"></div>
 
 
       <!-- Thumbnail -->
@@ -443,7 +438,6 @@ function _maybeAutoPlay() {
 
 firebase.auth().onAuthStateChanged(async user => {
   currentUser = user;
-  if (user) _startWatermark(user);
   // Nav auth button шинэчлэх
   const navBtn = document.getElementById('navAuthBtn');
   if (navBtn) {
@@ -919,33 +913,6 @@ function shareIt() {
   else { navigator.clipboard?.writeText(location.href); toast('✓ Холбоос хуулагдлаа'); }
 }
 
-/* ── Watermark — хэрэглэгчийн нэр/email хөдөлдөг байдлаар ── */
-function _startWatermark(user) {
-  const wm = document.getElementById('wmMark');
-  if (!wm || !user) return;
-  const label = user.email || user.displayName || user.uid.slice(0, 12);
-  wm.textContent = label;
-  wm.style.display = 'block';
-
-  function _moveWm() {
-    const cont = document.getElementById('playerCont');
-    if (!cont) return;
-    const cw = cont.clientWidth  || 640;
-    const ch = cont.clientHeight || 360;
-    const tw = wm.offsetWidth    || 180;
-    const th = wm.offsetHeight   || 14;
-    wm.style.left = Math.floor(Math.random() * Math.max(0, cw - tw - 16)) + 'px';
-    wm.style.top  = Math.floor(Math.random() * Math.max(0, ch - th - 10)) + 'px';
-  }
-
-  _moveWm();
-  setInterval(() => {
-    const fr = document.getElementById('playerFrame');
-    const playing = fr && fr.style.display !== 'none' && fr.src !== 'about:blank';
-    wm.style.opacity = playing ? '1' : '0';
-    if (playing) _moveWm();
-  }, 6000);
-}
 
 function toast(msg, type='ok') {
   const t = document.createElement('div');
