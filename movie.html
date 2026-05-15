@@ -757,7 +757,7 @@ function tryPlay() {
   if (subscribed) { _loadVideo(true); return; }
   if (_movieFree) { _loadVideo(false); return; }
   // Trailer байвал main player-т харуулна
-  if (_trailerVideoId && _libraryId) { _loadTrailerVideo(); return; }
+  if (_trailerVideoId) { _loadTrailerVideo(); return; }
   // Trailer байхгүй → шууд сонголтын modal нээнэ (paywall overlay харуулахгүй)
   openChoiceModal();
 }
