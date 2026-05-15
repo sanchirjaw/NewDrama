@@ -465,8 +465,17 @@ async function _getCdnHost() {
   _cdnHostCache = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   return _cdnHostCache;
 }
+function _signCdnUrl(cdnHost, urlPath, expiry) {
+  const key = process.env.BUNNY_TOKEN_KEY;
+  if (!key) return `https://${cdnHost}${urlPath}`;
+  const token = crypto.createHash('sha256').update(key + urlPath + expiry).digest('hex');
+  return `https://${cdnHost}${urlPath}?token=${token}&expires=${expiry}`;
+}
 async function _bunnyFetch(path) {
-  return fetch(`https://${await _getCdnHost()}/${path}`, {
+  const cdnHost = await _getCdnHost();
+  const expiry = Math.floor(Date.now() / 1000) + 14400;
+  const signed = _signCdnUrl(cdnHost, '/' + path, expiry);
+  return fetch(signed, {
     headers: { 'Referer': 'https://iframe.mediadelivery.net/', 'User-Agent': 'Mozilla/5.0' }
   });
 }
@@ -510,10 +519,12 @@ app.get('/api/stream/:videoId/:quality/video.m3u8', async (req, res) => {
     const resp = await _bunnyFetch(`${videoId}/${quality}/video.m3u8`);
     if (!resp.ok) return res.status(resp.status).end();
     let content = await resp.text();
-    // Сегментийн URL-уудыг Bunny CDN руу шууд чиглүүлэх
-    const cdnBase = `https://${cdnHost}/${videoId}/${quality}`;
-    content = content.replace(/^(?!#)(\S+\.ts\S*)$/gm,
-      line => `${cdnBase}/${line.trim()}`);
+    // Сегментийн URL-уудыг гарын үсэглэж Bunny CDN руу чиглүүлэх
+    const expiry = Math.floor(Date.now() / 1000) + 14400;
+    content = content.replace(/^(?!#)(\S+\.ts\S*)$/gm, line => {
+      const segPath = `/${videoId}/${quality}/${line.trim()}`;
+      return _signCdnUrl(cdnHost, segPath, expiry);
+    });
     res.send(content);
   } catch { res.status(500).end(); }
 });
