@@ -740,25 +740,6 @@ select.form-input option{background:var(--dark);}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- Quick Edit Mini-Modal (appears after each upload finishes) -->
-<div id="quickEditModal" style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;width:380px;background:var(--card);border:1px solid rgba(0,229,255,0.35);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.65);padding:1rem 1.25rem;">
-  <div style="font-size:.68rem;color:var(--cyan);font-weight:700;letter-spacing:2px;margin-bottom:.25rem;">✅ UPLOAD ДУУСАВ</div>
-  <div id="qeTitle" style="font-weight:700;font-size:.92rem;margin-bottom:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
-  <div style="display:flex;gap:.4rem;margin-bottom:.7rem;">
-    <select id="qeGenre" style="flex:1.6;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:.38rem .5rem;font-size:.78rem;font-family:'Outfit',sans-serif;outline:none;">
-      <option>Экшн</option><option>Драм</option><option>Комеди</option>
-      <option>Аймшиг</option><option>Романтик</option><option>Триллер</option>
-      <option>Анимэ</option><option>Түүхэн</option><option>Баримтат</option>
-    </select>
-    <input id="qeYear"  type="number" placeholder="Жил"  style="width:68px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:.38rem .45rem;font-size:.78rem;font-family:'Outfit',sans-serif;outline:none;">
-    <input id="qePrice" type="number" placeholder="Үнэ ₮" style="width:82px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:.38rem .45rem;font-size:.78rem;font-family:'Outfit',sans-serif;outline:none;">
-  </div>
-  <div style="display:flex;align-items:center;gap:.5rem;">
-    <span id="qePending" style="flex:1;font-size:.68rem;color:var(--text-muted);"></span>
-    <button onclick="_qeSkip()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:.38rem .9rem;font-size:.78rem;cursor:pointer;font-family:'Outfit',sans-serif;">Алгасах</button>
-    <button onclick="_qeSave()" style="background:var(--grad);border:none;color:#07070e;border-radius:8px;padding:.38rem 1.1rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">✓ Хадгалах</button>
-  </div>
-</div>
 
 <!-- Upload Queue Panel -->
 <div id="uploadQueuePanel" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;width:340px;background:var(--card);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.6);">
@@ -1861,7 +1842,12 @@ async function _runUpload(item) {
     if (item.mainProgress    != null) item.mainProgress    = 100;
     if (item.trailerProgress != null) item.trailerProgress = 100;
     _renderQueue();
-    _enqueueQuickEdit(item);  // show genre/year/price mini-modal
+    toast(`✓ "${item.title}" upload дууслаа`);
+    setTimeout(() => {
+      const i = _queue.indexOf(item);
+      if (i > -1) _queue.splice(i, 1);
+      _renderQueue();
+    }, 8000);
   } catch(e) {
     item.state = 'error'; item.error = e.message; _renderQueue();
   }
@@ -1888,62 +1874,6 @@ function _bunnyUpload(file, title, cfg, onProgress) {
   });
 }
 
-/* ===== QUICK EDIT AFTER UPLOAD ===== */
-const _qeQueue = [];
-let _qeCurrent = null;
-
-function _enqueueQuickEdit(item) {
-  _qeQueue.push(item);
-  if (!_qeCurrent) _showNextQE();
-}
-
-function _showNextQE() {
-  if (!_qeQueue.length) {
-    _qeCurrent = null;
-    document.getElementById('quickEditModal').style.display = 'none';
-    // Remove done items from progress queue
-    for (let i = _queue.length - 1; i >= 0; i--) {
-      if (_queue[i].state === 'done') _queue.splice(i, 1);
-    }
-    _renderQueue();
-    return;
-  }
-  _qeCurrent = _qeQueue[0];
-  const item = _qeCurrent;
-  document.getElementById('qeTitle').textContent   = item.title;
-  document.getElementById('qeGenre').value          = item.movieData.genre || 'Экшн';
-  document.getElementById('qeYear').value           = item.movieData.year  || new Date().getFullYear();
-  document.getElementById('qePrice').value          = item.movieData.price != null ? item.movieData.price : '';
-  const rem = _qeQueue.length - 1;
-  document.getElementById('qePending').textContent  = rem > 0 ? `+ ${rem} дараалж байна` : '';
-  document.getElementById('quickEditModal').style.display = 'block';
-}
-
-async function _qeSave() {
-  const item = _qeCurrent;
-  if (!item?.dbId) { _qeSkip(); return; }
-  const genre = document.getElementById('qeGenre').value;
-  const year  = document.getElementById('qeYear').value;
-  const price = parseInt(document.getElementById('qePrice').value) || 0;
-  const updates = { genre, year, price, free: price === 0 };
-  try {
-    await fetch(`/api/movies/${item.dbId}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
-    const idx = moviesData.findIndex(x => String(x._id) === String(item.dbId));
-    if (idx > -1) Object.assign(moviesData[idx], updates);
-    renderMovies(moviesData);
-    toast(`✓ "${item.title}" хадгалагдлаа`);
-  } catch(e) { toast('Хадгалах алдаа: ' + e.message, 'err'); }
-  _qeSkip();
-}
-
-function _qeSkip() {
-  _qeQueue.shift();
-  _qeCurrent = null;
-  _showNextQE();
-}
 
 function _renderQueue() {
   const panel = document.getElementById('uploadQueuePanel');
