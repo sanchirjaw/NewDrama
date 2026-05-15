@@ -595,8 +595,7 @@ async function loadMovieDetails() {
 
     // Thumbnail — player thumb + sidebar poster
     // m.thumbnail эсвэл Bunny CDN автомат thumbnail ашиглана
-    const _thumb = m.thumbnail ||
-      (_bunnyCfg.cdnHost && _videoId ? `https://${_bunnyCfg.cdnHost}/${_videoId}/thumbnail.jpg` : '');
+    const _thumb = m.thumbnail || (_videoId ? `/api/thumb/${_videoId}` : '');
     if (_thumb) {
       const playerThumb = document.getElementById('playerThumb');
       if (playerThumb) {
@@ -647,7 +646,7 @@ async function loadMovieDetails() {
     _currentMovie = {
       id:          _movieId,
       title:       m.title || '',
-      poster:      m.thumbnail || (_bunnyCfg.cdnHost && _videoId ? `https://${_bunnyCfg.cdnHost}/${_videoId}/thumbnail.jpg` : ''),
+      poster:      m.thumbnail || (_videoId ? `/api/thumb/${_videoId}` : ''),
       year:        m.year  || '',
       genre:       m.genre || '',
       durationMin: parseInt(m.duration) || 90,

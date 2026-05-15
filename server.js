@@ -311,6 +311,31 @@ app.post('/api/byl/webhook', async (req, res) => {
 });
 
 /* ════════════════════════════════
+   BUNNY — Thumbnail proxy
+   Pull zone нь referrer/token security-тай үед
+   сервер дундуур дамжуулж браузерт өгнө
+════════════════════════════════ */
+let _thumbHost = null;  // in-memory cache for cdnHost
+app.get('/api/thumb/:videoId', async (req, res) => {
+  try {
+    if (!_thumbHost) {
+      const s = await col('settings').findOne({ _id: 'config' });
+      _thumbHost = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+    }
+    if (!_thumbHost) return res.status(404).end();
+    const r = await fetch(
+      `https://${_thumbHost}/${req.params.videoId}/thumbnail.jpg`,
+      { headers: { 'Referer': 'https://newdrama.mn/', 'User-Agent': 'Mozilla/5.0' } }
+    );
+    if (!r.ok) return res.status(r.status).end();
+    const buf = await r.arrayBuffer();
+    res.set('Content-Type', r.headers.get('content-type') || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(Buffer.from(buf));
+  } catch(e) { res.status(500).end(); }
+});
+
+/* ════════════════════════════════
    BUNNY — Video entry үүсгэх
 ════════════════════════════════ */
 app.post('/api/bunny/create-video', async (req, res) => {
