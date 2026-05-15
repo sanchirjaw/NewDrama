@@ -491,11 +491,10 @@ async function _getSignedBunnyUrl(videoId, libId) {
       body:    JSON.stringify({ videoId, libraryId: libId }),
     });
     const data = await res.json();
-    console.log('[Bunny] signed-url:', { hasToken: data.hasToken, url: data.url });
     const url = data.url || _getBunnyUrl();
-    _signedUrlCache[videoId] = { url, expires: Date.now() + 13500000 }; // 3ц45м (token 4ц)
+    _signedUrlCache[videoId] = { url, expires: Date.now() + 7200000 }; // 2ц кэш
     return url;
-  } catch(e) { console.error('[Bunny] signed-url error:', e); return _getBunnyUrl(); }
+  } catch(e) { return _getBunnyUrl(); }
 }
 
 const _pp = JSON.parse(localStorage.getItem('nd_prices') || '{}');

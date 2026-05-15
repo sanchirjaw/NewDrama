@@ -374,29 +374,14 @@ app.post('/api/bunny/delete-video', async (req, res) => {
 });
 
 /* ════════════════════════════════
-   BUNNY — Signed embed URL (IDM хориглох)
+   BUNNY — Embed URL
+   Хамгаалалт: Bunny Security → Allowed domains (newdrama.mn)
 ════════════════════════════════ */
-app.post('/api/bunny/signed-url', async (req, res) => {
+app.post('/api/bunny/signed-url', (req, res) => {
   const { videoId, libraryId } = req.body;
   if (!videoId || !libraryId) return res.status(400).json({ error: 'videoId, libraryId шаардлагатай' });
-
-  // Bunny Token Authentication Key — .env-д BUNNY_TOKEN_KEY=... гэж тавина
-  const tokenKey = process.env.BUNNY_TOKEN_KEY;
-  if (!tokenKey) {
-    console.warn('[signed-url] BUNNY_TOKEN_KEY тохируулаагүй — хамгаалалтгүй URL буцаана');
-    return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true`, hasToken: false });
-  }
-
-  // 4 цагийн хугацаатай token (IP хасагдсан — proxy/NAT-аас болж IP өөрчлөгдөхөд 403 гарахаас сэргийлнэ)
-  const expiry = Math.floor(Date.now() / 1000) + 14400;
-  const token  = crypto
-    .createHash('sha256')
-    .update(tokenKey + videoId + expiry)
-    .digest('hex');
-
-  const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
-  console.log(`[signed-url] token OK — videoId=${videoId} expires=${expiry}`);
-  res.json({ url, hasToken: true });
+  const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true`;
+  res.json({ url });
 });
 
 /* ════════════════════════════════
