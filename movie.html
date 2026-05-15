@@ -495,7 +495,10 @@ async function _playWithHls(videoId, useProxy = false) {
     src = `/api/stream/${videoId}/playlist.m3u8`;
     if (Hls.isSupported()) {
       const hls = new Hls({
-        xhrSetup(xhr) { if (token) xhr.setRequestHeader('x-stream-token', token); }
+        xhrSetup(xhr, url) {
+          // Зөвхөн манай серверт header нэмнэ (Bunny CDN-д биш → CORS preflight алдаагүй)
+          if (token && !url.startsWith('http')) xhr.setRequestHeader('x-stream-token', token);
+        }
       });
       hls.loadSource(src);
       hls.attachMedia(video);
