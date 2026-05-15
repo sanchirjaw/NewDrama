@@ -1104,7 +1104,8 @@ async function openMovieModal(id) {
   uploadBtn.disabled = false; uploadBtn.textContent = '⬆️ Upload & Хадгалах'; uploadBtn.style.background = '';
   const queueBtn = document.getElementById('queueBtn');
   queueBtn.disabled = false; queueBtn.textContent = '📥 Queue & Next'; queueBtn.style.background = '';
-  document.getElementById('saveEditsBtn').style.display = 'none';
+  // Засах үед "💾 Засвар хадгалах" товч шууд харагдана; шинэ кинод нуугдана
+  document.getElementById('saveEditsBtn').style.display = id ? '' : 'none';
 
   // Form утгуудыг кинонд тохируулна
   document.getElementById('mTitle').value   = m?.title        || '';
