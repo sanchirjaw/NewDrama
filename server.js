@@ -330,6 +330,25 @@ app.post('/api/bunny/create-video', async (req, res) => {
 });
 
 /* ════════════════════════════════
+   BUNNY — Видео устгах
+════════════════════════════════ */
+app.delete('/api/bunny/delete-video', async (req, res) => {
+  const { videoId, libraryId, apiKey } = req.body;
+  if (!videoId || !libraryId || !apiKey)
+    return res.status(400).json({ error: 'videoId, libraryId, apiKey шаардлагатай' });
+  try {
+    const r = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`, {
+      method: 'DELETE',
+      headers: { 'AccessKey': apiKey, 'Accept': 'application/json' },
+    });
+    const data = await r.json().catch(() => ({}));
+    res.json({ ok: true, bunny: data });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ════════════════════════════════
    BUNNY — Signed embed URL (IDM хориглох)
 ════════════════════════════════ */
 app.post('/api/bunny/signed-url', async (req, res) => {

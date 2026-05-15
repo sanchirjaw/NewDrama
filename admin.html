@@ -1217,11 +1217,26 @@ async function saveMovie(keepOpen = false) {
 }
 
 async function deleteMovie(id) {
-  if(!confirm('Кино устгах уу?')) return;
-  await fetch(`/api/movies/${id}`, { method:'DELETE' });
-  const i = moviesData.findIndex(x=>x._id===id||x.id===id);
-  if(i>-1){moviesData.splice(i,1);renderMovies(moviesData);}
-  toast('Кино устгагдлаа','err');
+  if (!confirm('Кино устгах уу?\nBunny дээрх видео болон trailer ч хамт устгагдана.')) return;
+  const movie = moviesData.find(x => String(x._id || x.id) === String(id));
+  const cfg   = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
+
+  // Bunny-аас видео + trailer устгах (DB-ийн устгалтыг хүлээхгүй зэрэг явуулна)
+  if (cfg.libraryId && cfg.apiKey && movie) {
+    const ids = [movie.videoId, movie.trailerVideoId].filter(Boolean);
+    await Promise.all(ids.map(videoId =>
+      fetch('/api/bunny/delete-video', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId, libraryId: cfg.libraryId, apiKey: cfg.apiKey }),
+      }).catch(() => {})  // Bunny алдаа гарсан ч DB устгалт үргэлжилнэ
+    ));
+  }
+
+  await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+  const i = moviesData.findIndex(x => x._id === id || x.id === id);
+  if (i > -1) { moviesData.splice(i, 1); renderMovies(moviesData); }
+  toast('Кино устгагдлаа', 'err');
 }
 async function approvePayment(id) {
   if (!confirm('Энэ төлбөрийг баталгаажуулах уу? Хэрэглэгчид план идэвхжинэ.')) return;
