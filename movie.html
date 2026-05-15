@@ -492,7 +492,7 @@ async function _getSignedBunnyUrl(videoId, libId) {
     });
     const data = await res.json();
     const url = data.url || _getBunnyUrl();
-    _signedUrlCache[videoId] = { url, expires: Date.now() + 6900000 }; // 1ц55м
+    _signedUrlCache[videoId] = { url, expires: Date.now() + 13500000 }; // 3ц45м (token 4ц)
     return url;
   } catch(_) { return _getBunnyUrl(); }
 }
@@ -705,7 +705,10 @@ async function _loadTrailerVideo() {
   fr.style.display = 'block';
   const tb = document.getElementById('trailerBar');
   if (tb) tb.style.display = 'flex';
-  fr.src = await _getSignedBunnyUrl(_trailerVideoId, _libraryId);
+  const url = await _getSignedBunnyUrl(_trailerVideoId, _libraryId);
+  // Force-reload: ижил src байвал браузер дахин ачаалдаггүй тул
+  if (fr.src === url) fr.src = '';
+  fr.src = url;
 }
 
 // Bunny postMessage listener — trailer end + progress tracking

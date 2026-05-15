@@ -387,14 +387,11 @@ app.post('/api/bunny/signed-url', async (req, res) => {
     return res.json({ url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true` });
   }
 
-  // Хэрэглэгчийн IP авах — proxy ард байвал X-Forwarded-For ашиглана
-  const userIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
-
-  // 2 цагийн хугацаатай, IP-д хөлдөөсөн token — IDM өөр IP-с ашиглаж чадахгүй
-  const expiry = Math.floor(Date.now() / 1000) + 7200;
+  // 4 цагийн хугацаатай token (IP хасагдсан — proxy/NAT-аас болж IP өөрчлөгдөхөд 403 гарахаас сэргийлнэ)
+  const expiry = Math.floor(Date.now() / 1000) + 14400;
   const token  = crypto
     .createHash('sha256')
-    .update(tokenKey + videoId + expiry + userIp)
+    .update(tokenKey + videoId + expiry)
     .digest('hex');
 
   const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
