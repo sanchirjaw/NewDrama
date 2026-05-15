@@ -115,10 +115,11 @@ app.post('/api/admin/fix-trailer-ids', async (req, res) => {
     if (items.length < 100) break;
   }
 
-  // Trailer видеог нэрээр нь индекслэх: "КиноНэр — Trailer" → guid
+  // Trailer видеог нэрээр нь индекслэх: "КиноНэр — Trailer" эсвэл "КиноНэр_cut" → guid
   const trailerMap = {};
   for (const v of allVideos) {
-    const m = (v.title || '').match(/^(.+?)\s*—\s*Trailer$/i);
+    const title = v.title || '';
+    const m = title.match(/^(.+?)\s*—\s*Trailer$/i) || title.match(/^(.+?)_cut$/i);
     if (m) trailerMap[m[1].trim().toLowerCase()] = v.guid;
   }
 
