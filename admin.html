@@ -732,6 +732,7 @@ select.form-input option{background:var(--dark);}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMovieModal()">Болих</button>
       <button class="btn btn-ghost" onclick="saveMovie()" style="font-size:.78rem;color:var(--text-dim);">Видеогүй хадгалах</button>
+      <button class="btn btn-primary" id="saveEditsBtn" onclick="saveMovie(true)" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);">💾 Засвар хадгалах</button>
       <button class="btn btn-primary" id="uploadBtn" onclick="uploadAndSave()">⬆️ Upload & Хадгалах</button>
       <button class="btn btn-primary" id="queueBtn" onclick="queueAndUpload()" style="background:linear-gradient(135deg,#22c55e,#059669);" title="Файл, мэдээллийг хадгалаад Modal хаагдана — ар талд upload үргэлжилнэ">📥 Queue & Next</button>
     </div>
@@ -1103,6 +1104,7 @@ async function openMovieModal(id) {
   uploadBtn.disabled = false; uploadBtn.textContent = '⬆️ Upload & Хадгалах'; uploadBtn.style.background = '';
   const queueBtn = document.getElementById('queueBtn');
   queueBtn.disabled = false; queueBtn.textContent = '📥 Queue & Next'; queueBtn.style.background = '';
+  document.getElementById('saveEditsBtn').style.display = 'none';
 
   // Form утгуудыг кинонд тохируулна
   document.getElementById('mTitle').value   = m?.title        || '';
@@ -1144,7 +1146,8 @@ async function uploadAndSave() {
     btn.disabled = false;
     btn.textContent = '✓ Хадгалсан';
     btn.style.background = 'var(--success, #22c55e)';
-    toast('✓ Upload & хадгалагдлаа! Үнэ, preview засаад дахин хадгалж болно.');
+    document.getElementById('saveEditsBtn').style.display = '';  // show save-edits button
+    toast('✓ Upload дууслаа! Засвар хийгээд 💾 Засвар хадгалах дарна уу.');
   } else {
     btn.disabled = false;
     btn.textContent = '⬆️ Upload & Хадгалах';
