@@ -476,7 +476,7 @@ let _bunnyCfg   = JSON.parse(localStorage.getItem('nd_bunny') || '{}');
 let _libraryId  = _bunnyCfg.libraryId || '';
 function _getBunnyUrl() {
   if (!_libraryId || !_videoId) return '';
-  return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&muted=true&responsive=true`;
+  return `https://iframe.mediadelivery.net/embed/${_libraryId}/${_videoId}?autoplay=true&responsive=true`;
 }
 
 // Signed URL (BUNNY_TOKEN_KEY тохируулсан бол IDM-с хамгаална)
@@ -707,6 +707,7 @@ function tryPlay() {
 }
 
 async function _loadTrailerVideo() {
+  _paywallShown = false;
   document.getElementById('playerThumb').style.display = 'none';
   document.getElementById('paywall').style.display     = 'none';
   const fr = document.getElementById('playerFrame');
@@ -721,26 +722,29 @@ async function _loadTrailerVideo() {
 
 // Bunny postMessage listener — trailer end + progress tracking
 let _lastProgressSave = 0;
+let _paywallShown = false;
+function _showPaywall() {
+  if (_paywallShown) return;
+  _paywallShown = true;
+  const tb = document.getElementById('trailerBar');
+  if (tb) tb.style.display = 'none';
+  document.getElementById('paywall').style.display = 'flex';
+}
 window.addEventListener('message', e => {
   const d = e.data;
   if (!d || typeof d !== 'object') {
-    // String event
-    if (!subscribed && d === 'BunnyCDN.Ended' && _trailerVideoId) {
-      const tb = document.getElementById('trailerBar');
-      if (tb) tb.style.display = 'none';
-      document.getElementById('paywall').style.display = 'flex';
-    }
+    if (!subscribed && !_movieFree && d === 'BunnyCDN.Ended' && _trailerVideoId) _showPaywall();
     return;
   }
 
   const action = d.action || d.event || '';
 
-  // Trailer дуусахад paywall
-  if (!subscribed && action === 'ended' && _trailerVideoId) {
-    const tb = document.getElementById('trailerBar');
-    if (tb) tb.style.display = 'none';
-    document.getElementById('paywall').style.display = 'flex';
-    return;
+  // Trailer дуусах эсвэл сүүлийн 5 секундэд paywall
+  if (!subscribed && !_movieFree && _trailerVideoId) {
+    if (action === 'ended') { _showPaywall(); return; }
+    if (action === 'timeupdate' && d.duration > 0 && d.currentTime >= d.duration - 5) {
+      _showPaywall(); return;
+    }
   }
 
   // Subscribed хэрэглэгчийн progress хадгалах (30 секунд тутам)

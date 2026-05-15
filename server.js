@@ -439,13 +439,13 @@ app.post('/api/bunny/signed-url', (req, res) => {
 
   const tokenKey = process.env.BUNNY_TOKEN_KEY;
   if (!tokenKey) {
-    const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=true&responsive=true`;
+    const url = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&responsive=true`;
     return res.json({ url });
   }
 
   const expiry = Math.floor(Date.now() / 1000) + 14400;
   const token  = crypto.createHash('sha256').update(tokenKey + videoId + expiry).digest('hex');
-  const url    = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&muted=true&responsive=true`;
+  const url    = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiry}&autoplay=true&responsive=true`;
   res.json({ url });
 });
 
