@@ -1099,9 +1099,23 @@ async function openMovieModal(id) {
     } catch(_) {}
   }
   document.getElementById('movieModalTitle').textContent = id ? 'Кино Засах' : 'Кино Нэмэх';
+
+  // UI state бүрэн reset
+  _selectedVideoFile = null; _selectedTrailerFile = null;
+  document.getElementById('mVideoFileName').textContent  = 'Файл сонгоогүй'; document.getElementById('mVideoFileName').style.color  = '';
+  document.getElementById('mTrailerFileName').textContent= 'Файл сонгоогүй'; document.getElementById('mTrailerFileName').style.color = '';
+  document.getElementById('trailerUploadBtn').disabled = true;
+  document.getElementById('uploadProgressWrap').style.display  = 'none';
+  document.getElementById('trailerProgressWrap').style.display = 'none';
+  const uploadBtn = document.getElementById('uploadBtn');
+  uploadBtn.disabled = false; uploadBtn.textContent = '⬆️ Upload & Хадгалах'; uploadBtn.style.background = '';
+  const queueBtn = document.getElementById('queueBtn');
+  queueBtn.disabled = false; queueBtn.textContent = '📥 Queue & Next'; queueBtn.style.background = '';
+
+  // Form утгуудыг кинонд тохируулна
   document.getElementById('mTitle').value   = m?.title        || '';
   document.getElementById('mTitleEn').value = m?.titleEn      || '';
-  document.getElementById('mYear').value    = m?.year         || '2024';
+  document.getElementById('mYear').value    = m?.year         || new Date().getFullYear();
   document.getElementById('mRating').value  = m?.rating       || '';
   document.getElementById('mDur').value     = m?.duration     || '';
   document.getElementById('mVideoId').value = m?.videoId      || '';
@@ -1114,8 +1128,8 @@ async function openMovieModal(id) {
   const prevImg = document.getElementById('mThumbPreview');
   if (m?.thumbnail) { prevImg.src = m.thumbnail; prevImg.style.display = 'block'; }
   else { prevImg.style.display = 'none'; }
-  document.getElementById('mFree').checked     = m?.free  || false;
-  document.getElementById('mHot').checked      = m?.hot   || false;
+  document.getElementById('mFree').checked     = m?.free     || false;
+  document.getElementById('mHot').checked      = m?.hot      || false;
   document.getElementById('mFeatured').checked = m?.featured || false;
   if (m?.genre) document.getElementById('mGenre').value = m.genre;
   document.getElementById('movieModal').classList.add('show');
