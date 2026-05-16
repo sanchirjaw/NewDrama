@@ -949,20 +949,24 @@ function renderTopViews() {
 }
 
 function renderTopPurchased() {
-  // Count single-movie purchases from paymentsData
+  const tbody = document.getElementById('topPurchasedBody');
+  // DB-ийн бодит дан кино худалдалтаас тоолно
+  const paid = dbPayments.filter(p => p.plan === 'movie' && p.status === 'paid');
+  if (!paid.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);font-size:.78rem;padding:1.5rem 0;">Өгөгдөл байхгүй</td></tr>`;
+    return;
+  }
   const counts = {};
-  paymentsData.filter(p=>p.plan==='Дан кино'&&p.status==='success').forEach(p=>{
-    counts[p.user] = (counts[p.user]||0) + 1;
+  paid.forEach(p => {
+    const key = p.movieId || p.movieTitle || '—';
+    if (!counts[key]) {
+      const m = moviesData.find(x => String(x._id||x.id) === String(p.movieId));
+      counts[key] = { title: p.movieTitle || m?.title || '—', price: m?.price || p.amount || 0, count: 0 };
+    }
+    counts[key].count++;
   });
-  // Map movie purchases by title (simulate with moviesData)
-  const moviePurchases = moviesData.filter(m=>!m.free).map(m=>({
-    title: m.title,
-    genre: m.genre,
-    price: m.price||3400,
-    count: Math.floor((m.views||0) * 0.03 + Math.random()*5) // simulated purchase count
-  })).sort((a,b)=>b.count-a.count).slice(0,5);
-
-  document.getElementById('topPurchasedBody').innerHTML = moviePurchases.map((m,i)=>`
+  const ranked = Object.values(counts).sort((a,b) => b.count - a.count).slice(0, 5);
+  tbody.innerHTML = ranked.map((m, i) => `
     <tr>
       <td><span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${i===0?'var(--amber)':i===1?'var(--text-dim)':i===2?'#cd7f32':'var(--text-muted)'};">${i+1}</span></td>
       <td><div style="font-weight:600;font-size:.84rem;">${m.title}<div style="font-size:.7rem;color:var(--text-dim);">${m.price.toLocaleString()}₮ / кино</div></div></td>
@@ -972,15 +976,8 @@ function renderTopPurchased() {
 }
 
 function renderRecentPayments() {
-  document.getElementById('recentPaymentsBody').innerHTML = paymentsData.slice(0,5).map(p=>`
-    <tr>
-      <td style="font-weight:600;">${p.user}</td>
-      <td><span class="badge-pill ${p.plan==='1 сарын'?'pill-monthly':p.plan==='3 сарын'?'pill-quarterly':'pill-movie'}">${p.plan}</span></td>
-      <td style="font-weight:700;">${p.amount.toLocaleString()}₮</td>
-      <td style="color:var(--text-dim);font-size:.78rem;">${p.method}</td>
-      <td style="color:var(--text-dim);font-size:.78rem;">${p.date}</td>
-      <td><span class="badge-pill ${p.status==='success'?'pill-active':'pill-pending'}">${p.status==='success'?'✓ Амжилттай':'⏳ Хүлээгдэж буй'}</span></td>
-    </tr>`).join('');
+  // refreshAllData дотроос дуудагддаг тул dbPayments-г ашиглана
+  // (хоосон бол хуудас хоосон харагдана — demo fallback байхгүй)
 }
 
 /* ===== DASHBOARD REFRESH ===== */
