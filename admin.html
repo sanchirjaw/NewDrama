@@ -286,11 +286,11 @@ select.form-input option{background:var(--dark);}
           <div class="chart-label">Хэрэглэгч</div>
           <div class="chart-title">Багцын төрөл</div>
           <div class="donut-wrap">
-            <div class="donut" style="background:conic-gradient(var(--cyan) 0% 52%,var(--purple) 52% 85%,var(--amber) 85% 100%);"></div>
+            <div class="donut" id="planDonut" style="background:conic-gradient(rgba(255,255,255,0.06) 0% 100%);"></div>
             <div class="donut-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>1 сарын багц<span class="legend-val">623</span></div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>3 сарын багц<span class="legend-val">397</span></div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Дан кино<span class="legend-val">184</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>1 сарын багц<span class="legend-val" id="donutMonthly">0</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>3 сарын багц<span class="legend-val" id="donutQuarterly">0</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Дан кино<span class="legend-val" id="donutMovie">0</span></div>
             </div>
           </div>
         </div>
@@ -975,9 +975,30 @@ function renderTopPurchased() {
     </tr>`).join('');
 }
 
-function renderRecentPayments() {
-  // refreshAllData дотроос дуудагддаг тул dbPayments-г ашиглана
-  // (хоосон бол хуудас хоосон харагдана — demo fallback байхгүй)
+function renderRecentPayments() { /* refreshAllData handles recent payments via dbPayments */ }
+
+function renderPlanDonut() {
+  const paid = dbPayments.filter(p => p.status === 'paid');
+  const monthly   = paid.filter(p => p.plan === 'monthly').length;
+  const quarterly = paid.filter(p => p.plan === 'quarterly').length;
+  const movie     = paid.filter(p => p.plan === 'movie').length;
+  const total = monthly + quarterly + movie || 1;
+  const mPct = (monthly   / total) * 100;
+  const qPct = (quarterly / total) * 100;
+  const aPct = (movie     / total) * 100;
+  const donut = document.getElementById('planDonut');
+  if (donut) {
+    if (!monthly && !quarterly && !movie) {
+      donut.style.background = 'conic-gradient(rgba(255,255,255,0.06) 0% 100%)';
+    } else {
+      donut.style.background =
+        `conic-gradient(var(--cyan) 0% ${mPct}%, var(--purple) ${mPct}% ${mPct+qPct}%, var(--amber) ${mPct+qPct}% 100%)`;
+    }
+  }
+  const el = id => document.getElementById(id);
+  if (el('donutMonthly'))   el('donutMonthly').textContent   = monthly;
+  if (el('donutQuarterly')) el('donutQuarterly').textContent = quarterly;
+  if (el('donutMovie'))     el('donutMovie').textContent     = movie;
 }
 
 /* ===== DASHBOARD REFRESH ===== */
@@ -2140,6 +2161,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await loadTop3();
   renderTopViews();
   renderTopPurchased();
+  renderPlanDonut();
   renderFinanceMeter();
   // Хэрэглэгч + Төлбөр — API-аас татаж stat + table-ийг шинэчлэх
   await refreshAllData();
