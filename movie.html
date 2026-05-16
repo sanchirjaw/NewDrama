@@ -481,10 +481,17 @@ async function _getStreamToken() {
 }
 
 // useProxy=true → IDM хамгаалалттай прокси, false → CDN шууд (trailer/free)
-async function _playWithHls(videoId, useProxy = false) {
+async function _playWithHls(videoId, useProxy = false, onFatalError = null) {
   const video = document.getElementById('playerFrame');
   if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
   video.src = '';
+
+  const _onErr = (_, d) => {
+    if (!d.fatal) return;
+    console.warn('HLS error', d);
+    if (onFatalError) onFatalError(d);
+    else toast('⚠️ ' + d.type + ': ' + d.details);
+  };
 
   let src;
   if (useProxy) {
@@ -493,28 +500,26 @@ async function _playWithHls(videoId, useProxy = false) {
     if (Hls.isSupported()) {
       const hls = new Hls({
         xhrSetup(xhr, url) {
-          // Зөвхөн /api/stream/ request-д header нэмнэ (Bunny CDN-д биш → CORS preflight алдаагүй)
           if (token && url.includes('/api/stream/')) xhr.setRequestHeader('x-stream-token', token);
         }
       });
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { console.warn('HLS error', d); toast('⚠️ ' + d.type + ': ' + d.details); } });
+      hls.on(Hls.Events.ERROR, _onErr);
       _hlsInstance = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = token ? `${src}?t=${encodeURIComponent(token)}` : src;
       video.play().catch(() => {});
     }
   } else {
-    // Trailer / free — proxy-р дамжуулах (CDN direct 403 тул), auth шаардахгүй
     src = `/api/stream/${videoId}/playlist.m3u8?free=1`;
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { console.warn('HLS error', d); toast('⚠️ ' + d.type + ': ' + d.details); } });
+      hls.on(Hls.Events.ERROR, _onErr);
       _hlsInstance = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
@@ -780,7 +785,11 @@ async function _loadTrailerVideo() {
     if (!subscribed && !_movieFree && _trailerVideoId) _showPaywall();
   };
 
-  await _playWithHls(_trailerVideoId, false); // trailer → CDN шууд
+  await _playWithHls(_trailerVideoId, false, () => {
+    // Trailer load алдаа → paywall шууд харуулна (error toast биш)
+    document.getElementById('trailerBar').style.display = 'none';
+    _showPaywall();
+  });
 }
 
 let _lastProgressSave = 0;

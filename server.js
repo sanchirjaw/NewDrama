@@ -538,7 +538,7 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   const { videoId } = req.params;
   try {
     const resp = await _bunnyFetch(`${videoId}/playlist.m3u8`);
-    if (!resp.ok) return res.status(resp.status).send(DECOY_M3U8);
+    if (!resp.ok) return res.send(DECOY_M3U8); // 200 + empty playlist → HLS fires error event, client shows paywall
     let content = await resp.text();
     // Quality m3u8 URL-уудыг серверийн прокси руу чиглүүлэх
     const suffix = isFree ? '?free=1' : '';
