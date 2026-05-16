@@ -22,60 +22,11 @@
 .ticker-item .dot { width:4px; height:4px; border-radius:50%; background:var(--cyan); opacity:0.5; }
 .ticker-item strong { color:var(--text); font-weight:600; }
 
-/* ===== FEATURED BANNER ===== */
-.featured-banner {
-  position:relative; border-radius:var(--radius-xl); overflow:hidden;
-  min-height:420px; display:flex; align-items:flex-end;
-  background:linear-gradient(160deg, #1e0b3d, #0c1a2e, #0c0c14);
-  border:1px solid var(--border);
-  box-shadow:var(--shadow-lg);
-  margin-bottom:4rem;
+/* ===== FEATURED 3 EMPTY STATE ===== */
+.featured3-empty {
+  grid-column:1/-1; text-align:center;
+  color:var(--text-muted); font-size:.85rem; padding:4rem 0;
 }
-.featured-banner-bg {
-  position:absolute; inset:0; font-size:12rem;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0.06; pointer-events:none;
-}
-.featured-banner-grad {
-  position:absolute; inset:0;
-  background:linear-gradient(to right, rgba(7,7,14,0.98) 0%, rgba(7,7,14,0.7) 50%, rgba(7,7,14,0.2) 100%);
-}
-.featured-banner-info {
-  position:relative; z-index:1; padding:3rem;
-  max-width:600px;
-}
-.featured-banner-badge {
-  display:inline-flex; align-items:center; gap:0.5rem;
-  padding:0.3rem 0.9rem; border-radius:99px;
-  background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.2);
-  font-size:0.65rem; font-weight:700; letter-spacing:3px;
-  text-transform:uppercase; color:var(--cyan); margin-bottom:1.25rem;
-}
-.featured-banner-title {
-  font-family:'Bebas Neue', sans-serif;
-  font-size:clamp(2.5rem, 5vw, 4rem); letter-spacing:4px;
-  color:#fff; margin-bottom:0.75rem; line-height:1;
-}
-.featured-banner-meta {
-  display:flex; gap:1.25rem; flex-wrap:wrap;
-  color:var(--text-dim); font-size:0.82rem; margin-bottom:1.25rem;
-}
-.featured-banner-meta span { display:flex; align-items:center; gap:0.4rem; }
-.featured-banner-desc {
-  color:var(--text-dim); font-size:0.9rem; line-height:1.7;
-  margin-bottom:2rem; max-width:480px; font-weight:300;
-}
-.featured-banner-actions { display:flex; gap:0.875rem; flex-wrap:wrap; }
-.featured-banner-rating {
-  position:absolute; right:3rem; bottom:3rem; z-index:1;
-  text-align:center;
-}
-.featured-banner-rating .r-num {
-  font-family:'Bebas Neue', sans-serif; font-size:3.5rem; line-height:1;
-  background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-}
-.featured-banner-rating .r-stars { color:var(--cyan); font-size:0.85rem; }
-.featured-banner-rating .r-count { font-size:0.7rem; color:var(--text-dim); margin-top:0.2rem; }
 
 /* ===== ROW SECTION ===== */
 .row-section { padding:0 0 3.5rem; }
@@ -200,11 +151,8 @@
 .promo-strip-price span { font-family:'Outfit', sans-serif; font-size:0.88rem; color:var(--text-dim); -webkit-text-fill-color:var(--text-dim); }
 
 @media (max-width:900px) {
-  .featured-banner { min-height:auto; }
-  .featured-banner-rating { display:none; }
-  .featured-banner-info { padding:2rem 1.5rem; }
-  .promo-strip { padding:2rem; }
-  .promo-strip { flex-direction:column; text-align:center; }
+  .top3-grid { grid-template-columns:1fr!important; }
+  .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
 }
 </style>
 </head>
@@ -245,24 +193,8 @@
     </div>
   </div>
 
-  <div class="featured-banner" id="featuredBanner">
-    <div class="featured-banner-bg" id="featuredBg">🎬</div>
-    <div class="featured-banner-grad"></div>
-    <div class="featured-banner-info">
-      <div class="featured-banner-badge">✦ Шинэ &nbsp;·&nbsp; HD</div>
-      <h2 class="featured-banner-title" id="featuredTitle"></h2>
-      <div class="featured-banner-meta" id="featuredMeta"></div>
-      <p class="featured-banner-desc" id="featuredDesc">Нүүр хуудсын онцлох кино. Admin-аас солих боломжтой.</p>
-      <div class="featured-banner-actions">
-        <a href="movie.html" class="btn-primary" id="featuredLink">▶&nbsp; Үзэх</a>
-        <button class="btn-secondary" onclick="wishToast()">♡&nbsp; Хадгалах</button>
-      </div>
-    </div>
-    <div class="featured-banner-rating">
-      <div class="r-num" id="featuredRating">—</div>
-      <div class="r-stars" id="featuredStars">★★★★☆</div>
-      <div class="r-count">үнэлгээ</div>
-    </div>
+  <div class="top3-grid" id="featured3Grid" style="margin-bottom:4rem;">
+    <div class="featured3-empty">Admin-аас 3 кино сонгоно уу</div>
   </div>
 
   <!-- Categories -->
@@ -286,19 +218,6 @@
       </div>
     </div>
     <div class="row-scroll" id="top10Row"></div>
-  </div>
-</section>
-
-<!-- ШИЛДЭГ 3 -->
-<section class="row-section" id="top3Section" style="display:none;">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <div class="section-label">✦ Энэ 7 хоногийн шилдэг</div>
-        <h2 class="section-title">Шилдэг 3 Кино</h2>
-      </div>
-    </div>
-    <div class="top3-grid" id="top3Grid"></div>
   </div>
 </section>
 
@@ -515,7 +434,6 @@ async function loadMovies() {
   renderTop10();
   renderSeriesRow();
   renderTicker();
-  await applyFeatured();
   await renderTop3();
 }
 
@@ -569,15 +487,17 @@ document.getElementById('searchInput').addEventListener('input', function(){
 
 // Top 10 — renderTop10() функцаар зурна (loadMovies дотор дуудагдана)
 
-// Шилдэг 3 — settings.featured3 массиваас 3 кино poster карт харуулна
+// Featured 3 — settings.featured3-аас 3 онцлох кино poster карт харуулна
 async function renderTop3() {
-  const el  = document.getElementById('top3Grid');
-  const sec = document.getElementById('top3Section');
-  if (!el || !sec) return;
+  const el = document.getElementById('featured3Grid');
+  if (!el) return;
   const settings = await fetchSettings();
   const ids = settings.featured3;
-  if (!Array.isArray(ids) || !ids.some(Boolean)) { sec.style.display = 'none'; return; }
-  const cards = ids.map((id, i) => {
+  if (!Array.isArray(ids) || !ids.some(Boolean)) {
+    el.innerHTML = '<div class="featured3-empty">Admin-аас 3 кино сонгоно уу</div>';
+    return;
+  }
+  const cards = ids.map(id => {
     if (!id) return '';
     const m = movies.find(x => String(x._id || x.id) === String(id));
     if (!m) return '';
@@ -588,8 +508,8 @@ async function renderTop3() {
         ${thumb ? `<img src="${thumb}" alt="${m.title}" onerror="this.onerror=null;this.src='/api/thumb/${m.videoId||''}'">` : ''}
       </div>
       <div class="top3-card-grad"></div>
-      <div class="top3-num">${i + 1}</div>
       <div class="top3-info">
+        <div style="display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .75rem;border-radius:99px;background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.25);font-size:.6rem;font-weight:700;letter-spacing:2px;color:var(--cyan);margin-bottom:.6rem;">✦ ОНЦЛОХ</div>
         <div class="top3-title">${m.title}</div>
         <div class="top3-meta">
           <span>🎬 ${m.year || ''}</span>
@@ -600,9 +520,9 @@ async function renderTop3() {
       </div>
     </a>`;
   }).filter(Boolean);
-  if (!cards.length) { sec.style.display = 'none'; return; }
-  el.innerHTML = cards.join('');
-  sec.style.display = '';
+  el.innerHTML = cards.length
+    ? cards.join('')
+    : '<div class="featured3-empty">Admin-аас 3 кино сонгоно уу</div>';
 }
 
 // Series row
