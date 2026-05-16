@@ -1202,7 +1202,7 @@ async function saveMovie(keepOpen = false) {
   const title = document.getElementById('mTitle').value.trim();
   if(!title){toast('Гарчиг оруулна уу','err');return;}
   const price   = parseInt(document.getElementById('mPrice').value)||0;
-  const isFree  = document.getElementById('mFree').checked || price===0;
+  const isFree  = document.getElementById('mFree').checked;
   const previewVal = document.getElementById('mPreview').value;
   const movieObj = {
     title, price, free:isFree,
@@ -1854,7 +1854,7 @@ function _captureFormData() {
     year:           document.getElementById('mYear').value,
     rating:         document.getElementById('mRating').value || '—',
     duration:       document.getElementById('mDur').value,
-    price, free:    document.getElementById('mFree').checked || price === 0,
+    price, free:    document.getElementById('mFree').checked,
     hot:            document.getElementById('mHot').checked,
     videoId:        document.getElementById('mVideoId').value,
     trailerVideoId: document.getElementById('mTrailerVideoId').value || null,
