@@ -594,8 +594,12 @@ app.get('/api/stream/:videoId/:quality/:segment', async (req, res) => {
 });
 
 /* ════════════════════════════════
-   PAYMENTS — Manual approve
+   PAYMENTS — Manual approve / clear
 ════════════════════════════════ */
+app.delete('/api/payments', async (req, res) => {
+  await col('payments').deleteMany({});
+  res.json({ ok: true });
+});
 app.post('/api/payments/:id/approve', async (req, res) => {
   try {
     const payment = await col('payments').findOne({ _id: oid(req.params.id) });

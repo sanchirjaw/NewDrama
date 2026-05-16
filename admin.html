@@ -469,6 +469,7 @@ select.form-input option{background:var(--dark);}
               <option value="pending">Хүлээгдэж буй</option>
             </select>
             <button class="btn btn-ghost btn-sm">📥 Экспорт</button>
+            <button class="btn btn-danger btn-sm" onclick="clearPayments()">🗑 Цэвэрлэх</button>
           </div>
         </div>
         <table>
@@ -1261,6 +1262,17 @@ async function deleteMovie(id) {
   if (i > -1) { moviesData.splice(i, 1); renderMovies(moviesData); }
   toast('Кино устгагдлаа', 'err');
 }
+async function clearPayments() {
+  if (!confirm('Бүх төлбөрийн түүхийг устгах уу?\nЭнэ үйлдлийг буцаах боломжгүй.')) return;
+  try {
+    await fetch('/api/payments', { method: 'DELETE' });
+    dbPayments.length = 0;
+    renderPaymentsDB();
+    renderFinanceMeter();
+    toast('✓ Төлбөрийн түүх цэвэрлэгдлээ');
+  } catch(e) { toast('Алдаа: ' + e.message, 'err'); }
+}
+
 async function approvePayment(id) {
   if (!confirm('Энэ төлбөрийг баталгаажуулах уу? Хэрэглэгчид план идэвхжинэ.')) return;
   try {
