@@ -473,7 +473,9 @@ async function _getCdnCfg() {
 }
 function _signCdnUrl(cdnHost, urlPath, expiry, key) {
   if (!key) return `https://${cdnHost}${urlPath}`;
-  const token = crypto.createHash('sha256').update(key + urlPath + expiry).digest('hex');
+  // Bunny CDN token auth: SHA256(key + expiry + path) → base64url
+  const raw = crypto.createHash('sha256').update(key + expiry + urlPath).digest('base64');
+  const token = raw.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   return `https://${cdnHost}${urlPath}?token=${token}&expires=${expiry}`;
 }
 async function _bunnyFetch(path) {
