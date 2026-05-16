@@ -22,6 +22,13 @@
 .ticker-item .dot { width:4px; height:4px; border-radius:50%; background:var(--cyan); opacity:0.5; }
 .ticker-item strong { color:var(--text); font-weight:600; }
 
+/* ===== MOVIE GRID ===== */
+#movieGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(185px,1fr));
+  gap:1.25rem;
+}
+
 /* ===== FEATURED 3 EMPTY STATE ===== */
 .featured3-empty {
   grid-column:1/-1; text-align:center;
@@ -151,17 +158,33 @@
 .promo-strip-price span { font-family:'Outfit', sans-serif; font-size:0.88rem; color:var(--text-dim); -webkit-text-fill-color:var(--text-dim); }
 
 @media (max-width:900px) {
+  /* Featured 3 — хэвтээ scroll */
   #featured3Grid {
     display:flex; flex-direction:row;
     overflow-x:auto; scroll-snap-type:x mandatory;
     -webkit-overflow-scrolling:touch;
     max-width:100%; gap:1rem; padding-bottom:.5rem;
   }
-  #featured3Grid .top3-card {
-    flex:0 0 62vw; max-width:220px;
+  #featured3Grid .top3-card { flex:0 0 62vw; max-width:220px; scroll-snap-align:start; }
+  #featured3Grid .featured3-empty { flex:0 0 100%; }
+
+  /* Movie grid — жижиг карт, хэвтээ scroll */
+  #movieGrid {
+    display:flex; flex-direction:row;
+    overflow-x:auto; scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    gap:.75rem; padding-bottom:.5rem;
+  }
+  #movieGrid .movie-card {
+    flex:0 0 32vw; max-width:140px; min-width:105px;
     scroll-snap-align:start;
   }
-  #featured3Grid .featured3-empty { flex:0 0 100%; }
+  #movieGrid .movie-card-info {
+    padding:.5rem .4rem;
+  }
+  #movieGrid .movie-card-title { font-size:.72rem; }
+  #movieGrid .movie-card-meta  { font-size:.62rem; }
+
   .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
 }
 </style>
@@ -211,7 +234,7 @@
   <div class="pills" id="catPills" style="margin-bottom:2rem;"></div>
 
   <!-- Movie grid -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:1.25rem;" id="movieGrid"></div>
+  <div id="movieGrid"></div>
 </section>
 
 <!-- TOP 10 -->
