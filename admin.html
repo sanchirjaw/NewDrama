@@ -337,7 +337,7 @@ select.form-input option{background:var(--dark);}
             <!-- Revenue vs Expense meter -->
             <div style="margin-bottom:1.25rem;">
               <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:.4rem;">
-                <span>Орлого</span><span id="meterRevLabel" style="color:var(--green);font-weight:700;">18,420,000₮</span>
+                <span>Орлого</span><span id="meterRevLabel" style="color:var(--green);font-weight:700;">0₮</span>
               </div>
               <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
                 <div id="meterRevBar" style="height:100%;width:100%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:99px;transition:width .6s;"></div>
@@ -355,7 +355,7 @@ select.form-input option{background:var(--dark);}
             <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:1rem;display:flex;justify-content:space-between;align-items:center;">
               <div>
                 <div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:.2rem;">Цэвэр ашиг</div>
-                <div id="netProfit" style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);">18,420,000₮</div>
+                <div id="netProfit" style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);">0₮</div>
               </div>
               <div style="text-align:right;">
                 <div style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:.2rem;">Ашгийн хувь</div>
@@ -448,15 +448,15 @@ select.form-input option{background:var(--dark);}
       <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
         <div class="stat-card c-green" style="padding:1rem 1.25rem;">
           <div class="stat-label">Энэ сар</div>
-          <div class="stat-value c-green" style="font-size:1.6rem;">18,420,000₮</div>
+          <div class="stat-value c-green" style="font-size:1.6rem;" id="payStatMonth">0₮</div>
         </div>
         <div class="stat-card c-amber" style="padding:1rem 1.25rem;">
           <div class="stat-label">Хүлээгдэж буй</div>
-          <div class="stat-value c-amber" style="font-size:1.6rem;">2</div>
+          <div class="stat-value c-amber" style="font-size:1.6rem;" id="payStatPending">0</div>
         </div>
         <div class="stat-card c-cyan" style="padding:1rem 1.25rem;">
           <div class="stat-label">Нийт гүйлгээ</div>
-          <div class="stat-value c-cyan" style="font-size:1.6rem;">1,847</div>
+          <div class="stat-value c-cyan" style="font-size:1.6rem;" id="payStatTotal">0</div>
         </div>
       </div>
       <div class="table-wrap">
@@ -801,20 +801,11 @@ select.form-input option{background:var(--dark);}
 const _defPrice = () => JSON.parse(localStorage.getItem('nd_prices')||'{}').movie || 3400;
 const moviesData = [];
 
-const usersData = [
-  {id:1,name:'Батбаяр О.',email:'bat@gmail.com',login:'Gmail',plan:'1 сарын',planKey:'monthly',joined:'2024-10-12',lastLogin:'2024-12-01',totalPaid:36000,status:'active'},
-  {id:2,name:'Номин Э.',email:'nomin@gmail.com',login:'Facebook',plan:'3 сарын',planKey:'quarterly',joined:'2024-09-05',lastLogin:'2024-12-02',totalPaid:60000,status:'active'},
-  {id:3,name:'Болд Г.',email:'bold@gmail.com',login:'Gmail',plan:'—',planKey:'',joined:'2024-11-20',lastLogin:'2024-11-30',totalPaid:9800,status:'expired'},
-  {id:4,name:'Сарнай Б.',email:'sarnai@gmail.com',login:'Gmail',plan:'1 сарын',planKey:'monthly',joined:'2024-08-14',lastLogin:'2024-12-01',totalPaid:84000,status:'active'},
-  {id:5,name:'Ганзориг Т.',email:'ganzo@gmail.com',login:'Facebook',plan:'3 сарын',planKey:'quarterly',joined:'2024-07-22',lastLogin:'2024-11-28',totalPaid:120000,status:'active'},
-  {id:6,name:'Мөнхзул Д.',email:'munkh@gmail.com',login:'Gmail',plan:'—',planKey:'',joined:'2024-12-01',lastLogin:'2024-12-01',totalPaid:0,status:'expired'},
-];
+const usersData = [];
 
 const paymentsData = [];
 
-const revenueMonths = [
-  {m:'7-р',v:9.2},{m:'8-р',v:11.4},{m:'9-р',v:13.1},{m:'10-р',v:14.8},{m:'11-р',v:16.5},{m:'12-р',v:18.4}
-];
+const revenueMonths = [];
 
 /* ── Live DB state ── */
 let dbUsers = [];
@@ -835,6 +826,10 @@ function showPanel(id, el) {
 
 /* ===== RENDER REVENUE CHART ===== */
 function renderChart() {
+  if (!revenueMonths.length) {
+    document.getElementById('revenueChart').innerHTML = '<div style="color:var(--text-muted);font-size:.78rem;text-align:center;padding:2rem 0;width:100%;">Өгөгдөл байхгүй</div>';
+    return;
+  }
   const max = Math.max(...revenueMonths.map(r=>r.v));
   document.getElementById('revenueChart').innerHTML = revenueMonths.map((r,i)=>`
     <div class="bar-wrap">
@@ -1032,7 +1027,7 @@ function refreshDashboard() {
     : usersData.filter(u => u.status === 'active').length;
   const revenue = paidPay.length
     ? paidPay.reduce((s, p) => s + (p.amount||0), 0)
-    : (dbPayments.length ? 0 : 18420000);
+    : 0;
   const movieCount = moviesData.length;
 
   document.getElementById('statTotalUsers').textContent = totalUsers;
@@ -1083,6 +1078,17 @@ function updateBadges() {
 }
 
 function renderPaymentsDB() {
+  // Payments panel stat cards
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const monthRev = dbPayments.filter(p => p.status === 'paid' && (p.date||'').startsWith(thisMonth))
+    .reduce((s, p) => s + (p.amount||0), 0);
+  const pending = dbPayments.filter(p => p.status === 'pending').length;
+  const el = id => document.getElementById(id);
+  if (el('payStatMonth'))   el('payStatMonth').textContent   = monthRev.toLocaleString() + '₮';
+  if (el('payStatPending')) el('payStatPending').textContent = pending;
+  if (el('payStatTotal'))   el('payStatTotal').textContent   = dbPayments.length;
+
   const src = dbPayments.length ? dbPayments.map(p => {
     const u = dbUsers.find(x => x.uid === p.uid);
     return {
@@ -1350,7 +1356,7 @@ function topbarAction() { openMovieModal(); }
 
 /* ===== FINANCE ===== */
 const EXPENSE_KEY = 'nd_expenses';
-const REVENUE = 18420000;
+const REVENUE = 0;
 
 function getExpenses() {
   return JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]');
