@@ -538,24 +538,48 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   } catch { res.send(DECOY_M3U8); }
 });
 
-// Quality sub-playlist — auth хэрэггүй (master-д аль хэдийн шалгасан)
+// Quality sub-playlist — сегментийн URL-ыг манай серверийн proxy руу чиглүүлэх (CORS алдаагүй)
 app.get('/api/stream/:videoId/:quality/video.m3u8', async (req, res) => {
   res.setHeader('Content-Type', 'application/x-mpegURL');
   res.setHeader('Cache-Control', 'no-cache');
   const { videoId, quality } = req.params;
-  const { host: cdnHost, key } = await _getCdnCfg();
+  const { host: cdnHost } = await _getCdnCfg();
   if (!cdnHost) return res.status(500).end();
   try {
     const resp = await _bunnyFetch(`${videoId}/${quality}/video.m3u8`);
     if (!resp.ok) return res.status(resp.status).end();
     let content = await resp.text();
-    // Сегментийн URL-уудыг гарын үсэглэж Bunny CDN руу чиглүүлэх
-    const expiry = Math.floor(Date.now() / 1000) + 14400;
+    // Сегментийг серверээр дамжуулах → browser CDN-д шууд хандахгүй → CORS алдаагүй
     content = content.replace(/^(?!#)(\S+\.ts\S*)$/gm, line => {
-      const segPath = `/${videoId}/${quality}/${line.trim()}`;
-      return _signCdnUrl(cdnHost, segPath, expiry, key);
+      const seg = line.trim().split('?')[0]; // query param хасах
+      return `/api/stream/${videoId}/${quality}/${seg}`;
     });
     res.send(content);
+  } catch { res.status(500).end(); }
+});
+
+// Segment proxy — Bunny CDN-с татаж browser-д өгнө (same-origin → CORS алдаагүй)
+app.get('/api/stream/:videoId/:quality/:segment', async (req, res) => {
+  const { videoId, quality, segment } = req.params;
+  if (!segment.endsWith('.ts')) return res.status(400).end();
+  const { host: cdnHost, key } = await _getCdnCfg();
+  if (!cdnHost) return res.status(500).end();
+  const segPath = `/${videoId}/${quality}/${segment}`;
+  const expiry = Math.floor(Date.now() / 1000) + 14400;
+  const signedUrl = _signCdnUrl(cdnHost, segPath, expiry, key);
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 9000);
+    const r = await fetch(signedUrl, {
+      signal: ctrl.signal,
+      headers: { 'Referer': 'https://iframe.mediadelivery.net/', 'User-Agent': 'Mozilla/5.0' }
+    });
+    clearTimeout(t);
+    if (!r.ok) return res.status(r.status).end();
+    res.setHeader('Content-Type', 'video/mp2t');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    const buf = await r.arrayBuffer();
+    res.end(Buffer.from(buf));
   } catch { res.status(500).end(); }
 });
 
