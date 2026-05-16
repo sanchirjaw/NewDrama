@@ -168,22 +168,16 @@
   #featured3Grid .top3-card { flex:0 0 62vw; max-width:220px; scroll-snap-align:start; }
   #featured3Grid .featured3-empty { flex:0 0 100%; }
 
-  /* Movie grid — жижиг карт, хэвтээ scroll */
+  /* Movie grid — 4 баганат vertical grid */
   #movieGrid {
-    display:flex; flex-direction:row;
-    overflow-x:auto; scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch;
-    gap:.75rem; padding-bottom:.5rem;
+    display:grid !important;
+    grid-template-columns:repeat(4,1fr);
+    gap:.5rem;
   }
-  #movieGrid .movie-card {
-    flex:0 0 32vw; max-width:140px; min-width:105px;
-    scroll-snap-align:start;
-  }
-  #movieGrid .movie-card-info {
-    padding:.5rem .4rem;
-  }
-  #movieGrid .movie-card-title { font-size:.72rem; }
-  #movieGrid .movie-card-meta  { font-size:.62rem; }
+  #movieGrid .movie-card-info { padding:.35rem .3rem; }
+  #movieGrid .movie-card-title { font-size:.65rem; line-height:1.2; }
+  #movieGrid .movie-card-meta  { font-size:.58rem; gap:.3rem; }
+  #movieGrid .movie-card-rating { display:none; }
 
   .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
 }

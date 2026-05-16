@@ -328,7 +328,12 @@ nav.scrolled { background:rgba(7,7,14,0.95); }
 /* =============================================
    PILL CATEGORIES
 ============================================= */
-.pills { display:flex; gap:0.6rem; flex-wrap:wrap; }
+.pills {
+  display:flex; gap:0.6rem; flex-wrap:nowrap;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none; padding-bottom:2px;
+}
+.pills::-webkit-scrollbar { display:none; }
 .pill {
   padding:0.42rem 1.15rem; border-radius:99px;
   border:1px solid var(--border); background:var(--card);
