@@ -189,6 +189,16 @@ app.post('/api/users/sync', async (req, res) => {
   res.json({ ok: true });
 });
 
+// Admin эрх олгох / хасах
+app.put('/api/users/:uid/role', async (req, res) => {
+  const { isAdmin } = req.body;
+  await col('users').updateOne(
+    { uid: req.params.uid },
+    { $set: { isAdmin: !!isAdmin } }
+  );
+  res.json({ ok: true });
+});
+
 /* ════════════════════════════════
    PAYMENTS
 ════════════════════════════════ */

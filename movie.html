@@ -459,7 +459,7 @@ firebase.auth().onAuthStateChanged(async user => {
     const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
     const active = expiry ? expiry > new Date() : false;
     if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
-    if (plan === 'movie' && active) subscribed = true;
+    if (data.isAdmin) subscribed = true;
   } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
   _authReady = true;
   _maybeAutoPlay();
@@ -879,14 +879,15 @@ async function _checkAndPlay(uid) {
     const movieAccess = Array.isArray(me.purchasedMovies)
       ? me.purchasedMovies.some(pm => pm.movieId === _movieId && new Date(pm.expiry) > new Date())
       : false;
-    if (movieAccess || (expiry && expiry > new Date())) {
+    const subActive = !!(expiry && expiry > new Date());
+    if (movieAccess || subActive) {
       if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
       _payPollUid = null;
-      subscribed = true;
+      if (subActive) subscribed = true;
       document.getElementById('choiceModal')?.classList.remove('show');
       document.getElementById('qpayModal')?.classList.remove('show');
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
-      _loadVideo();
+      _loadVideo(true);
       return true;
     }
   } catch (_) {}
