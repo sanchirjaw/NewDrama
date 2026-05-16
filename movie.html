@@ -496,8 +496,8 @@ async function _playWithHls(videoId, useProxy = false) {
     if (Hls.isSupported()) {
       const hls = new Hls({
         xhrSetup(xhr, url) {
-          // Зөвхөн манай серверт header нэмнэ (Bunny CDN-д биш → CORS preflight алдаагүй)
-          if (token && !url.startsWith('http')) xhr.setRequestHeader('x-stream-token', token);
+          // Зөвхөн /api/stream/ request-д header нэмнэ (Bunny CDN-д биш → CORS preflight алдаагүй)
+          if (token && url.includes('/api/stream/')) xhr.setRequestHeader('x-stream-token', token);
         }
       });
       hls.loadSource(src);
