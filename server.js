@@ -219,6 +219,9 @@ app.put('/api/settings', async (req, res) => {
     { $set: update },
     { upsert: true }
   );
+  // CDN config cache цэвэрлэх (шинэ key шууд хүчин төгөлдөр болно)
+  _cdnCfgCache = null;
+  if (typeof _thumbHost !== 'undefined') _thumbHost = null;
   res.json({ ok: true });
 });
 
@@ -458,23 +461,25 @@ const DECOY_M3U8 = '#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:1\n#EXT-X-M
 
 // m3u8 proxy — Firebase ID token шалгаж жинхэнэ эсвэл decoy playlist буцаана
 const FIREBASE_API_KEY = 'AIzaSyA_1-nW3tAA6G-VIe68lSWsQXmRjzvZxDM';
-let _cdnHostCache = null;
-async function _getCdnHost() {
-  if (_cdnHostCache) return _cdnHostCache;
+let _cdnCfgCache = null;
+async function _getCdnCfg() {
+  if (_cdnCfgCache) return _cdnCfgCache;
   const s = await col('settings').findOne({ _id: 'config' });
-  _cdnHostCache = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return _cdnHostCache;
+  const host = (s?.bunny?.cdnHost || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  // cdnTokenKey: MongoDB-д хадгална (env var байхгүй тохиолдолд)
+  const key = s?.bunny?.cdnTokenKey || process.env.BUNNY_TOKEN_KEY || '';
+  _cdnCfgCache = { host, key };
+  return _cdnCfgCache;
 }
-function _signCdnUrl(cdnHost, urlPath, expiry) {
-  const key = process.env.BUNNY_TOKEN_KEY;
+function _signCdnUrl(cdnHost, urlPath, expiry, key) {
   if (!key) return `https://${cdnHost}${urlPath}`;
   const token = crypto.createHash('sha256').update(key + urlPath + expiry).digest('hex');
   return `https://${cdnHost}${urlPath}?token=${token}&expires=${expiry}`;
 }
 async function _bunnyFetch(path) {
-  const cdnHost = await _getCdnHost();
+  const { host: cdnHost, key } = await _getCdnCfg();
   const expiry = Math.floor(Date.now() / 1000) + 14400;
-  const signed = _signCdnUrl(cdnHost, '/' + path, expiry);
+  const signed = _signCdnUrl(cdnHost, '/' + path, expiry, key);
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 6000);
   try {
@@ -493,13 +498,13 @@ async function _bunnyFetch(path) {
 // Debug — Bunny CDN fetch тест
 app.get('/api/debug/stream/:videoId', async (req, res) => {
   try {
-    const cdnHost = await _getCdnHost();
+    const { host: cdnHost, key } = await _getCdnCfg();
     const path = `${req.params.videoId}/playlist.m3u8`;
     const expiry = Math.floor(Date.now() / 1000) + 14400;
-    const signed = _signCdnUrl(cdnHost, '/' + path, expiry);
+    const signed = _signCdnUrl(cdnHost, '/' + path, expiry, key);
     const resp = await _bunnyFetch(path);
     const text = await resp.text();
-    res.json({ cdnHost, signed, status: resp.status, preview: text.slice(0, 300) });
+    res.json({ cdnHost, hasKey: !!key, signed, status: resp.status, preview: text.slice(0, 300) });
   } catch(e) { res.json({ error: e.message }); }
 });
 
@@ -516,7 +521,7 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
     if (!idToken || idToken.split('.').length !== 3) return res.send(DECOY_M3U8);
   }
 
-  const cdnHost = await _getCdnHost();
+  const { host: cdnHost } = await _getCdnCfg();
   if (!cdnHost) return res.status(500).end();
   const { videoId } = req.params;
   try {
@@ -536,7 +541,7 @@ app.get('/api/stream/:videoId/:quality/video.m3u8', async (req, res) => {
   res.setHeader('Content-Type', 'application/x-mpegURL');
   res.setHeader('Cache-Control', 'no-cache');
   const { videoId, quality } = req.params;
-  const cdnHost = await _getCdnHost();
+  const { host: cdnHost, key } = await _getCdnCfg();
   if (!cdnHost) return res.status(500).end();
   try {
     const resp = await _bunnyFetch(`${videoId}/${quality}/video.m3u8`);
@@ -546,7 +551,7 @@ app.get('/api/stream/:videoId/:quality/video.m3u8', async (req, res) => {
     const expiry = Math.floor(Date.now() / 1000) + 14400;
     content = content.replace(/^(?!#)(\S+\.ts\S*)$/gm, line => {
       const segPath = `/${videoId}/${quality}/${line.trim()}`;
-      return _signCdnUrl(cdnHost, segPath, expiry);
+      return _signCdnUrl(cdnHost, segPath, expiry, key);
     });
     res.send(content);
   } catch { res.status(500).end(); }

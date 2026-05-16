@@ -515,6 +515,7 @@ select.form-input option{background:var(--dark);}
             <div class="form-group"><label class="form-label">Library ID</label><input class="form-input" type="text" id="bunnyLibraryId" placeholder="123456"></div>
             <div class="form-group"><label class="form-label">API Key</label><input class="form-input" type="password" id="bunnyApiKey" placeholder="••••••••••••"></div>
             <div class="form-group"><label class="form-label">CDN Hostname</label><input class="form-input" type="text" id="bunnyCdnHost" placeholder="vz-xxxxxx.b-cdn.net"></div>
+            <div class="form-group"><label class="form-label">CDN Token Key <span style="color:var(--text-dim);font-weight:400;">(Token Auth)</span></label><input class="form-input" type="password" id="bunnyCdnTokenKey" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
           </div>
           <div id="bunnyStatus" style="font-size:.72rem;color:var(--text-muted);margin-top:.6rem;"></div>
           <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="saveBunnySettings()">💾 Хадгалах</button>
@@ -1912,9 +1913,10 @@ function _renderQueue() {
 const BUNNY_KEY = 'nd_bunny';
 async function saveBunnySettings() {
   const cfg = {
-    libraryId: document.getElementById('bunnyLibraryId').value.trim(),
-    apiKey:    document.getElementById('bunnyApiKey').value.trim(),
-    cdnHost:   document.getElementById('bunnyCdnHost').value.trim(),
+    libraryId:    document.getElementById('bunnyLibraryId').value.trim(),
+    apiKey:       document.getElementById('bunnyApiKey').value.trim(),
+    cdnHost:      document.getElementById('bunnyCdnHost').value.trim(),
+    cdnTokenKey:  document.getElementById('bunnyCdnTokenKey').value.trim(),
   };
   localStorage.setItem(BUNNY_KEY, JSON.stringify(cfg));
   await saveSettings({ bunny: cfg });
@@ -1926,9 +1928,10 @@ async function loadBunnySettings() {
   const settings = await loadSettings();
   const cfg = settings.bunny || JSON.parse(localStorage.getItem(BUNNY_KEY) || '{}');
   if (settings.bunny) localStorage.setItem(BUNNY_KEY, JSON.stringify(cfg));
-  if (cfg.libraryId) document.getElementById('bunnyLibraryId').value = cfg.libraryId;
-  if (cfg.apiKey)    document.getElementById('bunnyApiKey').value    = cfg.apiKey;
-  if (cfg.cdnHost)   document.getElementById('bunnyCdnHost').value   = cfg.cdnHost;
+  if (cfg.libraryId)   document.getElementById('bunnyLibraryId').value   = cfg.libraryId;
+  if (cfg.apiKey)      document.getElementById('bunnyApiKey').value       = cfg.apiKey;
+  if (cfg.cdnHost)     document.getElementById('bunnyCdnHost').value      = cfg.cdnHost;
+  if (cfg.cdnTokenKey) document.getElementById('bunnyCdnTokenKey').value  = cfg.cdnTokenKey;
   const st = document.getElementById('bunnyStatus');
   if (st && cfg.libraryId) st.textContent = `✓ Library ID: ${cfg.libraryId}`;
 }
