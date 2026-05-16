@@ -538,6 +538,48 @@ select.form-input option{background:var(--dark);}
           </div>
         </div>
         <div class="settings-card" style="grid-column:1/-1;">
+          <div class="settings-title">🏆 Энэ 7 Хоногийн Шилдэг 3 Кино</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:.75rem;">
+            <!-- Шилдэг 1 -->
+            <div>
+              <div style="font-size:.75rem;font-weight:700;color:var(--cyan);margin-bottom:.6rem;">🥇 1-р шилдэг</div>
+              <select class="form-input" id="top3Sel0" onchange="onTop3Select(0,this)">
+                <option value="">— Сонгох —</option>
+              </select>
+              <div id="top3Prev0" style="display:none;margin-top:.6rem;padding:.6rem .75rem;background:var(--card2);border-radius:var(--radius);border:1px solid var(--border);font-size:.78rem;">
+                <div style="font-size:1.4rem;text-align:center;margin-bottom:.3rem;" id="top3PrevThumb0">🎬</div>
+                <div style="font-weight:700;text-align:center;" id="top3PrevTitle0"></div>
+                <div style="color:var(--text-dim);font-size:.7rem;text-align:center;margin-top:.2rem;" id="top3PrevMeta0"></div>
+              </div>
+            </div>
+            <!-- Шилдэг 2 -->
+            <div>
+              <div style="font-size:.75rem;font-weight:700;color:var(--purple);margin-bottom:.6rem;">🥈 2-р шилдэг</div>
+              <select class="form-input" id="top3Sel1" onchange="onTop3Select(1,this)">
+                <option value="">— Сонгох —</option>
+              </select>
+              <div id="top3Prev1" style="display:none;margin-top:.6rem;padding:.6rem .75rem;background:var(--card2);border-radius:var(--radius);border:1px solid var(--border);font-size:.78rem;">
+                <div style="font-size:1.4rem;text-align:center;margin-bottom:.3rem;" id="top3PrevThumb1">🎬</div>
+                <div style="font-weight:700;text-align:center;" id="top3PrevTitle1"></div>
+                <div style="color:var(--text-dim);font-size:.7rem;text-align:center;margin-top:.2rem;" id="top3PrevMeta1"></div>
+              </div>
+            </div>
+            <!-- Шилдэг 3 -->
+            <div>
+              <div style="font-size:.75rem;font-weight:700;color:var(--amber);margin-bottom:.6rem;">🥉 3-р шилдэг</div>
+              <select class="form-input" id="top3Sel2" onchange="onTop3Select(2,this)">
+                <option value="">— Сонгох —</option>
+              </select>
+              <div id="top3Prev2" style="display:none;margin-top:.6rem;padding:.6rem .75rem;background:var(--card2);border-radius:var(--radius);border:1px solid var(--border);font-size:.78rem;">
+                <div style="font-size:1.4rem;text-align:center;margin-bottom:.3rem;" id="top3PrevThumb2">🎬</div>
+                <div style="font-weight:700;text-align:center;" id="top3PrevTitle2"></div>
+                <div style="color:var(--text-dim);font-size:.7rem;text-align:center;margin-top:.2rem;" id="top3PrevMeta2"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:1.25rem;" onclick="saveTop3()">💾 Шилдэг 3 хадгалах</button>
+        </div>
+        <div class="settings-card" style="grid-column:1/-1;">
           <div class="settings-title">🎬 Нүүр хуудасны Hero карт</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
             <div>
@@ -1412,6 +1454,71 @@ function saveFeatured() {
   toast(_featuredId ? '✓ Онцлох кино хадгалагдлаа' : '✓ Авто горим (хамгийн их үзэлттэй)');
 }
 
+/* ===== ШИЛДЭГ 3 ===== */
+const _top3Ids = ['', '', ''];
+
+function populateTop3Selects() {
+  for (let i = 0; i < 3; i++) {
+    const sel = document.getElementById(`top3Sel${i}`);
+    if (!sel) continue;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Сонгох —</option>';
+    moviesData.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m._id || m.id;
+      opt.textContent = `${m.icon || '🎬'} ${m.title} (${m.year || ''})`;
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  }
+}
+
+function onTop3Select(idx, sel) {
+  _top3Ids[idx] = sel.value;
+  const m = moviesData.find(x => String(x._id || x.id) === String(sel.value));
+  const prev = document.getElementById(`top3Prev${idx}`);
+  if (m) {
+    prev.style.display = 'block';
+    const thumb = m.thumbnail || (m.videoId ? `/api/thumb/${m.videoId}` : '');
+    const thumbEl = document.getElementById(`top3PrevThumb${idx}`);
+    if (thumb) {
+      thumbEl.innerHTML = `<img src="${thumb}" alt="${m.title}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;" onerror="this.outerHTML='🎬'">`;
+    } else {
+      thumbEl.textContent = m.icon || '🎬';
+    }
+    document.getElementById(`top3PrevTitle${idx}`).textContent = m.title;
+    document.getElementById(`top3PrevMeta${idx}`).textContent  = `★ ${m.rating || '—'} · ${m.year || ''} · ${m.genre || ''}`;
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+async function saveTop3() {
+  if (!_top3Ids.some(Boolean)) { toast('Дор хаяж нэг кино сонгоно уу', 'err'); return; }
+  try {
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured3: _top3Ids })
+    });
+    toast('✓ Шилдэг 3 кино хадгалагдлаа');
+  } catch(e) { toast('Алдаа: ' + e.message, 'err'); }
+}
+
+async function loadTop3() {
+  try {
+    const s = await loadSettings();
+    const ids = s.featured3;
+    if (!Array.isArray(ids)) return;
+    for (let i = 0; i < 3; i++) {
+      if (!ids[i]) continue;
+      _top3Ids[i] = String(ids[i]);
+      const sel = document.getElementById(`top3Sel${i}`);
+      if (sel) { sel.value = _top3Ids[i]; onTop3Select(i, sel); }
+    }
+  } catch(e) {}
+}
+
 /* ===== HERO CARDS ===== */
 let _heroMain = null, _heroSide = null;
 
@@ -2003,8 +2110,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   } catch(e) { console.warn('API холбогдсонгүй:', e.message); }
   renderMovies(moviesData);
   populateFeaturedSelect();
+  populateTop3Selects();
   populateHeroSelects();
   loadHeroCards();
+  await loadTop3();
   renderTopViews();
   renderTopPurchased();
   renderFinanceMeter();

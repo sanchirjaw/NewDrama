@@ -80,6 +80,47 @@
 /* ===== ROW SECTION ===== */
 .row-section { padding:0 0 3.5rem; }
 
+/* ===== ШИЛДЭГ 3 CARDS ===== */
+.top3-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem;
+}
+@media(max-width:700px){ .top3-grid { grid-template-columns:1fr; } }
+.top3-card {
+  position:relative; border-radius:var(--radius-xl); overflow:hidden;
+  aspect-ratio:2/3; display:flex; align-items:flex-end;
+  text-decoration:none; border:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  transition:transform 0.35s, box-shadow 0.35s;
+}
+.top3-card:hover { transform:translateY(-8px); box-shadow:0 32px 64px rgba(0,0,0,0.6),0 0 40px rgba(0,229,255,0.12); }
+.top3-card-bg { position:absolute; inset:0; }
+.top3-card-bg img { width:100%; height:100%; object-fit:cover; }
+.top3-card-grad {
+  position:absolute; inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,0.93) 0%,rgba(0,0,0,0.45) 55%,rgba(0,0,0,0.08) 100%);
+}
+.top3-num {
+  position:absolute; top:1rem; left:1rem; z-index:2;
+  font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:1px;
+  background:var(--grad); color:#07070e;
+  width:2.1rem; height:2.1rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 14px rgba(0,229,255,0.45);
+}
+.top3-info { position:relative; z-index:2; padding:1.5rem 1.25rem; width:100%; }
+.top3-title {
+  font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px;
+  color:#fff; margin-bottom:0.4rem; line-height:1.1;
+}
+.top3-meta { font-size:0.72rem; color:var(--text-dim); margin-bottom:0.875rem; display:flex; gap:0.75rem; flex-wrap:wrap; }
+.top3-btn {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.45rem 1.1rem; border-radius:99px;
+  background:var(--grad); color:#07070e;
+  font-size:0.75rem; font-weight:700; transition:box-shadow 0.2s;
+}
+.top3-card:hover .top3-btn { box-shadow:0 4px 18px rgba(0,229,255,0.4); }
+
 /* ===== TOP 10 CARDS ===== */
 .top10-card {
   position:relative; flex-shrink:0; cursor:pointer;
@@ -245,6 +286,19 @@
       </div>
     </div>
     <div class="row-scroll" id="top10Row"></div>
+  </div>
+</section>
+
+<!-- ШИЛДЭГ 3 -->
+<section class="row-section" id="top3Section" style="display:none;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-label">✦ Энэ 7 хоногийн шилдэг</div>
+        <h2 class="section-title">Шилдэг 3 Кино</h2>
+      </div>
+    </div>
+    <div class="top3-grid" id="top3Grid"></div>
   </div>
 </section>
 
@@ -462,6 +516,7 @@ async function loadMovies() {
   renderSeriesRow();
   renderTicker();
   await applyFeatured();
+  await renderTop3();
 }
 
 // Grid
@@ -513,6 +568,42 @@ document.getElementById('searchInput').addEventListener('input', function(){
 });
 
 // Top 10 — renderTop10() функцаар зурна (loadMovies дотор дуудагдана)
+
+// Шилдэг 3 — settings.featured3 массиваас 3 кино poster карт харуулна
+async function renderTop3() {
+  const el  = document.getElementById('top3Grid');
+  const sec = document.getElementById('top3Section');
+  if (!el || !sec) return;
+  const settings = await fetchSettings();
+  const ids = settings.featured3;
+  if (!Array.isArray(ids) || !ids.some(Boolean)) { sec.style.display = 'none'; return; }
+  const cards = ids.map((id, i) => {
+    if (!id) return '';
+    const m = movies.find(x => String(x._id || x.id) === String(id));
+    if (!m) return '';
+    const s = genreStyle[m.genre] || genreStyle['default'];
+    const thumb = m.thumbnail || (m.videoId ? `/api/thumb/${m.videoId}` : '');
+    return `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="top3-card">
+      <div class="top3-card-bg" style="background:${s.bg};">
+        ${thumb ? `<img src="${thumb}" alt="${m.title}" onerror="this.onerror=null;this.src='/api/thumb/${m.videoId||''}'">` : ''}
+      </div>
+      <div class="top3-card-grad"></div>
+      <div class="top3-num">${i + 1}</div>
+      <div class="top3-info">
+        <div class="top3-title">${m.title}</div>
+        <div class="top3-meta">
+          <span>🎬 ${m.year || ''}</span>
+          <span>🎭 ${m.genre || ''}</span>
+          <span style="color:${s.accent};">★ ${m.rating || ''}</span>
+        </div>
+        <span class="top3-btn">▶ Үзэх</span>
+      </div>
+    </a>`;
+  }).filter(Boolean);
+  if (!cards.length) { sec.style.display = 'none'; return; }
+  el.innerHTML = cards.join('');
+  sec.style.display = '';
+}
 
 // Series row
 // Шинэ Цувралууд — movies-аас нэмэгдсэн огноогоор буурахаар (шинэ нь урд)
