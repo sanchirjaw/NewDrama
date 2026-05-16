@@ -22,11 +22,40 @@
 .ticker-item .dot { width:4px; height:4px; border-radius:50%; background:var(--cyan); opacity:0.5; }
 .ticker-item strong { color:var(--text); font-weight:600; }
 
-/* ===== MOVIE GRID ===== */
-#movieGrid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(185px,1fr));
-  gap:1.25rem;
+/* ===== GENRE ROW SECTIONS ===== */
+.genre-row-section { margin-bottom:2.25rem; }
+.genre-row-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:.75rem;
+}
+.genre-row-title {
+  font-size:1rem; font-weight:700; color:#fff; letter-spacing:.3px;
+}
+.genre-see-all {
+  background:none; border:none; color:var(--cyan);
+  font-size:.82rem; cursor:pointer; padding:.2rem 0;
+  opacity:.85; transition:opacity .2s;
+}
+.genre-see-all:hover { opacity:1; }
+.genre-row-cards {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem;
+}
+
+/* ===== FULL GRID VIEW ===== */
+.full-grid-head {
+  display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem;
+}
+.back-btn {
+  background:rgba(255,255,255,.06); border:1px solid var(--border);
+  color:var(--text-dim); padding:.35rem .9rem; border-radius:99px;
+  cursor:pointer; font-size:.8rem; transition:background .2s;
+}
+.back-btn:hover { background:rgba(255,255,255,.1); }
+.full-grid-title {
+  font-size:1.1rem; font-weight:700; color:#fff;
+}
+.full-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem;
 }
 
 /* ===== FEATURED 3 EMPTY STATE ===== */
@@ -168,22 +197,20 @@
   #featured3Grid .top3-card { flex:0 0 62vw; max-width:220px; scroll-snap-align:start; }
   #featured3Grid .featured3-empty { flex:0 0 100%; }
 
-  /* Movie grid — жижиг карт, хэвтээ scroll */
-  #movieGrid {
-    display:flex; flex-direction:row;
-    overflow-x:auto; scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch;
-    gap:.75rem; padding-bottom:.5rem;
+  /* Genre rows + full grid — mobile 3 баганатай */
+  .genre-row-cards,
+  .full-grid {
+    grid-template-columns:repeat(3,1fr);
+    gap:.45rem;
   }
-  #movieGrid .movie-card {
-    flex:0 0 32vw; max-width:140px; min-width:105px;
-    scroll-snap-align:start;
-  }
-  #movieGrid .movie-card-info {
-    padding:.5rem .4rem;
-  }
-  #movieGrid .movie-card-title { font-size:.72rem; }
-  #movieGrid .movie-card-meta  { font-size:.62rem; }
+  .genre-row-cards .movie-card-info,
+  .full-grid .movie-card-info { padding:.35rem .3rem; }
+  .genre-row-cards .movie-card-title,
+  .full-grid .movie-card-title { font-size:.65rem; line-height:1.2; }
+  .genre-row-cards .movie-card-meta,
+  .full-grid .movie-card-meta  { font-size:.58rem; gap:.25rem; }
+  .genre-row-cards .movie-card-rating,
+  .full-grid .movie-card-rating { display:none; }
 
   .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
 }
@@ -230,11 +257,17 @@
     <div class="featured3-empty">Admin-аас 3 кино сонгоно уу</div>
   </div>
 
-  <!-- Categories -->
-  <div class="pills" id="catPills" style="margin-bottom:2rem;"></div>
+  <!-- Search result / full genre grid -->
+  <div id="fullGridSection" style="display:none;margin-bottom:1rem;">
+    <div class="full-grid-head">
+      <button class="back-btn" onclick="backToGenres()">← Буцах</button>
+      <span class="full-grid-title" id="fullGridTitle"></span>
+    </div>
+    <div class="full-grid" id="fullGridContent"></div>
+  </div>
 
-  <!-- Movie grid -->
-  <div id="movieGrid"></div>
+  <!-- Genre rows -->
+  <div id="genreSections"></div>
 </section>
 
 <!-- TOP 10 -->
@@ -463,11 +496,63 @@ async function loadMovies() {
       dbMovies.forEach(m => movies.push(m));
     }
   } catch(e) { /* API байхгүй бол локал movies массив ашиглана */ }
-  renderGrid(movies);
+  renderGenreSections();
   renderTop10();
   renderSeriesRow();
   renderTicker();
   await renderTop3();
+}
+
+// ===== GENRE SECTIONS =====
+const GENRE_ORDER = ['Экшн','Драм','Романтик','Комеди','Аймшиг','Триллер','Түүхэн','Анимэ','Баримтат'];
+
+function renderGenreSections() {
+  const container = document.getElementById('genreSections');
+  if (!container) return;
+
+  // "Бүгд" section first
+  let html = _genreRowHTML('Бүгд', movies.slice(0,3));
+
+  // Each genre in order, then any leftover genres
+  const seen = new Set(['Бүгд']);
+  const order = [...GENRE_ORDER, ...[...new Set(movies.map(m=>m.genre).filter(Boolean))].filter(g=>!GENRE_ORDER.includes(g))];
+  order.forEach(genre => {
+    if (seen.has(genre)) return;
+    seen.add(genre);
+    const list = movies.filter(m => m.genre === genre);
+    if (!list.length) return;
+    html += _genreRowHTML(genre, list.slice(0,3));
+  });
+
+  container.innerHTML = html;
+}
+
+function _genreRowHTML(genre, cards) {
+  return `<div class="genre-row-section">
+    <div class="genre-row-head">
+      <span class="genre-row-title">${genre}</span>
+      <button class="genre-see-all" onclick="showFullGrid('${genre}')">бүгд →</button>
+    </div>
+    <div class="genre-row-cards">
+      ${cards.map(m=>movieCardHTML(m)).join('')}
+    </div>
+  </div>`;
+}
+
+function showFullGrid(genre) {
+  const list = genre === 'Бүгд' ? movies : movies.filter(m => m.genre === genre);
+  document.getElementById('fullGridTitle').textContent = genre;
+  document.getElementById('fullGridContent').innerHTML = list.length
+    ? list.map(m=>movieCardHTML(m)).join('')
+    : '<p style="color:var(--text-dim);grid-column:1/-1;padding:2rem 0;">Кино олдсонгүй.</p>';
+  document.getElementById('genreSections').style.display = 'none';
+  document.getElementById('fullGridSection').style.display = 'block';
+  window.scrollTo({top: document.getElementById('movies').offsetTop - 80, behavior:'smooth'});
+}
+
+function backToGenres() {
+  document.getElementById('fullGridSection').style.display = 'none';
+  document.getElementById('genreSections').style.display = 'block';
 }
 
 // Grid
@@ -488,34 +573,22 @@ function renderTop10() {
   });
 }
 
-// Category pills
-const pillsEl = document.getElementById('catPills');
-cats.forEach((c,i) => {
-  const b = document.createElement('button');
-  b.className = 'pill' + (i===0?' active':'');
-  b.textContent = c;
-  b.onclick = () => {
-    pillsEl.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-    b.classList.add('active');
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = c==='Бүгд' ? movies : movies.filter(m=>m.genre===c);
-    renderGrid(filtered, q);
-  };
-  pillsEl.appendChild(b);
-});
-
-function renderGrid(list, q='') {
-  const out = q ? list.filter(m=>m.title.toLowerCase().includes(q)||m.genre.toLowerCase().includes(q)) : list;
-  document.getElementById('movieGrid').innerHTML = out.length
-    ? out.map(m=>movieCardHTML(m)).join('')
-    : `<p style="color:var(--text-dim);grid-column:1/-1;padding:2rem 0;">Хайлт олдсонгүй.</p>`;
-}
-
-// Search
+// Search — хайлтын үед full grid харуулна
 document.getElementById('searchInput').addEventListener('input', function(){
-  const active = pillsEl.querySelector('.pill.active')?.textContent;
-  const base = (!active||active==='Бүгд') ? movies : movies.filter(m=>m.genre===active);
-  renderGrid(base, this.value.toLowerCase());
+  const q = this.value.toLowerCase().trim();
+  if (!q) {
+    backToGenres();
+    return;
+  }
+  const results = movies.filter(m =>
+    m.title.toLowerCase().includes(q) || (m.genre||'').toLowerCase().includes(q)
+  );
+  document.getElementById('fullGridTitle').textContent = '🔍 ' + this.value;
+  document.getElementById('fullGridContent').innerHTML = results.length
+    ? results.map(m=>movieCardHTML(m)).join('')
+    : '<p style="color:var(--text-dim);grid-column:1/-1;padding:2rem 0;">Хайлт олдсонгүй.</p>';
+  document.getElementById('genreSections').style.display = 'none';
+  document.getElementById('fullGridSection').style.display = 'block';
 });
 
 // Top 10 — renderTop10() функцаар зурна (loadMovies дотор дуудагдана)
