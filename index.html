@@ -151,7 +151,17 @@
 .promo-strip-price span { font-family:'Outfit', sans-serif; font-size:0.88rem; color:var(--text-dim); -webkit-text-fill-color:var(--text-dim); }
 
 @media (max-width:900px) {
-  .top3-grid { grid-template-columns:1fr!important; }
+  #featured3Grid {
+    display:flex; flex-direction:row;
+    overflow-x:auto; scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%; gap:1rem; padding-bottom:.5rem;
+  }
+  #featured3Grid .top3-card {
+    flex:0 0 62vw; max-width:220px;
+    scroll-snap-align:start;
+  }
+  #featured3Grid .featured3-empty { flex:0 0 100%; }
   .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
 }
 </style>
