@@ -11,7 +11,30 @@
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(dir /b)",
+      "Bash(node -e \"require\\('./server.js'\\)\")",
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(curl -s http://localhost:5000/api/movies)",
+      "Bash(kill %1)",
+      "Bash(curl -s https://newdrama-production.up.railway.app/api/movies)",
+      "Bash(curl -s https://newdrama-production.up.railway.app/api/settings)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://newdrama-production.up.railway.app/login)",
+      "Bash(curl -s https://newdrama-production.up.railway.app/)",
+      "Bash(curl -s -o /dev/null -w \"login: %{http_code}\\\\n\" https://newdrama-production.up.railway.app/login)",
+      "Bash(curl -s -o /dev/null -w \"admin: %{http_code}\\\\n\" https://newdrama-production.up.railway.app/admin)",
+      "Bash(curl -s -o /dev/null -w \"movie: %{http_code}\\\\n\" https://newdrama-production.up.railway.app/movie)",
+      "WebSearch",
+      "WebFetch(domain:docs.byl.mn)",
+      "WebFetch(domain:byl.mn)",
+      "Bash(del byl.env)",
+      "Bash(Get-Content \"D:\\\\web\\\\drama\\\\dashboard.html\")",
+      "Bash(Select-String \"welcomeName|qsWatched|cwRow|histList|payTbody|settingFirstName|navAvatarTop\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/dashboard)",
+      "PowerShell(Get-Process -Name \"node\",\"nodemon\" -ErrorAction SilentlyContinue)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5000/dashboard\" -UseBasicParsing -TimeoutSec 5; Write-Output \"Status: $\\($r.StatusCode\\)\" } catch { Write-Output \"Error: $_\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:5000/dashboard\" -UseBasicParsing; if \\($r.Content -match \"welcomeName\"\\) { \"✅ welcomeName олдлоо\" } else { \"❌ welcomeName олдсонгүй\" }; if \\($r.Content -match \"cwRow\"\\) { \"✅ cwRow олдлоо\" } else { \"❌ cwRow олдсонгүй\" }; if \\($r.Content -match \"payTbody\"\\) { \"✅ payTbody олдлоо\" } else { \"❌ payTbody олдсонгүй\" })"
     ]
   }
 }
