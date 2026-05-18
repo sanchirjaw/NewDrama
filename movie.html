@@ -344,28 +344,11 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
     </div>
 
     <div class="dtab-panel" id="dp-cast">
-      <div class="cast-label">Гол дүрүүд</div>
-      <div class="cast-row">
-        <div class="cast-person"><div class="cast-av">👨</div><div class="cast-name">Ли Жун-ги</div></div>
-        <div class="cast-person"><div class="cast-av">👩</div><div class="cast-name">Сон Хе-гё</div></div>
-        <div class="cast-person"><div class="cast-av">👨‍🦳</div><div class="cast-name">Чои Мин-сик</div></div>
-        <div class="cast-person"><div class="cast-av">👩‍🦱</div><div class="cast-name">Пак Бо-янг</div></div>
-        <div class="cast-person"><div class="cast-av">🧔</div><div class="cast-name">Ким У-бин</div></div>
-      </div>
-      <div class="cast-label">Ажилтнууд</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.85rem;">
-        <div><span style="color:var(--text-dim);">Найруулагч: </span>Пак Жун-хо</div>
-        <div><span style="color:var(--text-dim);">Зохиолч: </span>Ли Сан-ил</div>
-        <div><span style="color:var(--text-dim);">Дуу: </span>Чон Жэ-иль</div>
-        <div><span style="color:var(--text-dim);">Оператор: </span>Ким Хён-сок</div>
-      </div>
+      <p style="color:var(--text-dim);font-size:.88rem;">Дүрүүдийн мэдээлэл байхгүй байна.</p>
     </div>
 
     <div class="dtab-panel" id="dp-related">
-      <a href="movie.html" class="related-item"><div class="related-thumb">🎬</div><div><div class="related-title">Сүүлчийн Мөрдөгч</div><div class="related-meta">2024 · Экшн · ★ 8.2</div></div></a>
-      <a href="movie.html" class="related-item"><div class="related-thumb">🔥</div><div><div class="related-title">Галт Тэрэг</div><div class="related-meta">2024 · Триллер · ★ 8.8</div></div></a>
-      <a href="movie.html" class="related-item"><div class="related-thumb">👻</div><div><div class="related-title">Харанхуйн Дуудлага</div><div class="related-meta">2024 · Аймшиг · ★ 8.5</div></div></a>
-      <a href="movie.html" class="related-item"><div class="related-thumb">⚔️</div><div><div class="related-title">Эзэн Хааны Сүлд</div><div class="related-meta">2023 · Түүхэн · ★ 9.0</div></div></a>
+      <p style="color:var(--text-dim);font-size:.88rem;" id="relatedEmpty">Ачаалж байна...</p>
     </div>
   </div>
 </div>
@@ -792,6 +775,10 @@ async function loadMovieDetails() {
     setEl('detailLang',   lang);
     setEl('detailAdded',  m.added ? m.added.slice(0,10) : '—');
 
+    // Ижил төрлийн кинонуудыг DB-ээс ачаалах
+    if (genre) _loadRelated(genre, _movieId);
+    else document.getElementById('relatedEmpty').textContent = 'Мэдээлэл байхгүй.';
+
     // Watch history-д хадгалах мэдээлэл
     _currentMovie = {
       id:          _movieId,
@@ -843,6 +830,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (mpm) mpm.textContent = planInfo.monthly.amount;
   if (mpv) mpv.textContent = planInfo.movie.amount;
 });
+
+async function _loadRelated(genre, currentId) {
+  const el = document.getElementById('dp-related');
+  if (!el) return;
+  try {
+    const all = await fetch('/api/movies').then(r => r.json());
+    const related = all.filter(m => m.genre === genre && String(m._id || m.id) !== String(currentId));
+    if (!related.length) {
+      el.innerHTML = '<p style="color:var(--text-dim);font-size:.88rem;">Ижил төрлийн кино олдсонгүй.</p>';
+      return;
+    }
+    el.innerHTML = related.slice(0, 8).map(m => {
+      const thumb = m.thumbnail || (m.videoId ? `/api/thumb/${m.videoId}` : '');
+      const thumbHtml = thumb
+        ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none'">`
+        : '🎬';
+      return `<a href="movie.html?vid=${m.videoId||''}&id=${m._id||m.id||''}" class="related-item">
+        <div class="related-thumb">${thumbHtml}</div>
+        <div>
+          <div class="related-title">${m.title}</div>
+          <div class="related-meta">${m.year||''} · ${m.genre||''} · ★ ${m.rating||''}</div>
+        </div>
+      </a>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<p style="color:var(--text-dim);font-size:.88rem;">Мэдээлэл ачаалахад алдаа гарлаа.</p>';
+  }
+}
 
 function tryPlay() {
   if (!_authReady) return;
