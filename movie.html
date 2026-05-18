@@ -869,13 +869,27 @@ async function _loadTrailerVideo() {
         && this.currentTime >= this.duration - 5) _showPaywall();
   };
   video.onended = function() {
-    if (!subscribed && !_movieFree && _trailerVideoId) _showPaywall();
+    if (!subscribed && !_movieFree && _trailerVideoId) {
+      // currentTime=0 → DECOY хоосон playlist (видео байхгүй) → modal нээх
+      if (this.currentTime < 2) {
+        document.getElementById('trailerBar').style.display = 'none';
+        document.getElementById('playerThumb').style.display = 'flex';
+        openChoiceModal();
+      } else {
+        _showPaywall();
+      }
+    }
   };
 
   await _playWithHls(_trailerVideoId, false, () => {
-    // Trailer load алдаа → paywall шууд харуулна (error toast биш)
+    // Trailer load алдаа → видео огт тоглоогүй бол modal нээх, тоглосон бол paywall
     document.getElementById('trailerBar').style.display = 'none';
-    _showPaywall();
+    if (video.currentTime < 2) {
+      document.getElementById('playerThumb').style.display = 'flex';
+      openChoiceModal();
+    } else {
+      _showPaywall();
+    }
   });
 }
 
