@@ -227,7 +227,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 
 
 <!-- MOBILE: кино нэр + мэдээлэл (плеерийн дээр) -->
-<div class="mobile-movie-head">
+<div class="mobile-movie-head" style="opacity:0;transition:opacity .3s;">
   <div class="mobile-genre-tag" id="mobileGenreTag">...</div>
   <div class="mobile-movie-title" id="mobileTitle">—</div>
   <div class="mobile-movie-meta">
@@ -304,7 +304,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 </div>
 
 <!-- MOBILE: үзэх сонголт (плеерийн доор) -->
-<div class="mobile-action-bar" id="mobileActionBar">
+<div class="mobile-action-bar" id="mobileActionBar" style="opacity:0;transition:opacity .3s;">
   <button class="btn-primary" onclick="openChoiceModal()">▶ Бүтэн үзэх</button>
   <div class="mobile-price-row">
     <div class="mobile-price-opt" onclick="openChoiceModal()">
@@ -319,7 +319,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 </div>
 
 <!-- DETAILS -->
-<div style="background:var(--darker);">
+<div style="background:var(--darker);opacity:0;transition:opacity .3s;" id="detailsWrap">
   <div class="details-wrap">
     <div class="dtabs">
       <button class="dtab active" onclick="switchDTab('desc',this)">Тайлбар</button>
@@ -790,6 +790,13 @@ async function loadMovieDetails() {
     };
 
   } catch(e) { console.warn('Movie details алдаа:', e.message); }
+
+  // Өгөгдөл ирсний дараа харуулна
+  document.querySelector('.mobile-movie-head').style.opacity = '1';
+  const dw = document.getElementById('detailsWrap');
+  if (dw) dw.style.opacity = '1';
+  const mab = document.getElementById('mobileActionBar');
+  if (mab && mab.style.display !== 'none') mab.style.opacity = '1';
 }
 
 // Watch history localStorage-д хадгалах
