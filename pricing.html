@@ -544,7 +544,8 @@ async function startPayment(planKey, btn) {
   }
   // Popup блок гарахгүйн тулд fetch-ийн ӨМНӨ шинэ таб нээнэ
   const bylTab = window.open('', '_blank');
-  if (bylTab) bylTab.document.write('<html><body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:1rem;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div><p style="color:rgba(255,255,255,0.5);font-size:.9rem;">Холбогдож байна...</p><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
+  if (bylTab) bylTab.document.write('<html><body style="background:#07070e;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:1rem;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid rgba(0,229,255,0.2);border-top-color:#00e5ff;animation:spin 1s linear infinite;"></div><p style="color:rgba(255,255,255,0.5);font-size:.9rem;">Холбогдож байна...</p><style>@keyframes spin{to{transform:rotate(360deg);}}</style><script src="assets/open-in-browser.js"></script>
+</body></html>');
 
   // Modal нээж spinner харуулах
   document.getElementById('bylModal').classList.add('show');
@@ -641,5 +642,6 @@ document.querySelectorAll('.plan, .tier-card, .per-movie, .payments').forEach(el
   io.observe(el);
 });
 </script>
+<script src="assets/open-in-browser.js"></script>
 </body>
 </html>
