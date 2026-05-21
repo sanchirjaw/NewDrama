@@ -295,7 +295,13 @@ firebase.auth().onAuthStateChanged(user => {
         Gmail-ээр бүртгүүлэх
       </button>
 
-      <div class="divider"><span>эсвэл имэйлээр</span></div>
+      <div class="divider"><span>эсвэл</span></div>
+
+      <!-- Email / Phone toggle -->
+      <div style="display:flex;gap:.5rem;background:rgba(255,255,255,0.05);border-radius:10px;padding:.3rem;margin-bottom:1.25rem;">
+        <button id="regTabEmail" onclick="switchRegType('email')" style="flex:1;padding:.5rem;border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:var(--grad);color:#07070e;">📧 Имэйл</button>
+        <button id="regTabPhone" onclick="switchRegType('phone')" style="flex:1;padding:.5rem;border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-dim);">📱 Утас</button>
+      </div>
 
       <form onsubmit="emailAuth(event,'register')">
         <div class="form-row">
@@ -308,9 +314,18 @@ firebase.auth().onAuthStateChanged(user => {
             <input type="text" class="form-input" placeholder="Баатар" required>
           </div>
         </div>
-        <div class="form-group">
+        <!-- Email field -->
+        <div class="form-group" id="regEmailWrap">
           <label class="form-label">Имэйл хаяг</label>
-          <input type="email" class="form-input" placeholder="example@gmail.com" required>
+          <input type="email" class="form-input" id="regEmail" placeholder="example@gmail.com">
+        </div>
+        <!-- Phone field -->
+        <div class="form-group" id="regPhoneWrap" style="display:none;">
+          <label class="form-label">Утасны дугаар</label>
+          <div style="display:flex;gap:.5rem;">
+            <span style="display:flex;align-items:center;padding:0 .875rem;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:var(--text-dim);font-size:.88rem;white-space:nowrap;">🇲🇳 +976</span>
+            <input type="tel" class="form-input" id="regPhone" placeholder="9900 0000" maxlength="8" style="flex:1;">
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Нууц үг</label>
@@ -333,6 +348,18 @@ firebase.auth().onAuthStateChanged(user => {
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
+function switchRegType(type) {
+  const isEmail = type === 'email';
+  document.getElementById('regEmailWrap').style.display = isEmail ? 'block' : 'none';
+  document.getElementById('regPhoneWrap').style.display = isEmail ? 'none' : 'block';
+  document.getElementById('regEmail').required = isEmail;
+  document.getElementById('regPhone').required = !isEmail;
+  const on  = 'background:var(--grad);color:#07070e;';
+  const off = 'background:transparent;color:var(--text-dim);';
+  document.getElementById('regTabEmail').style.cssText += isEmail ? on : off;
+  document.getElementById('regTabPhone').style.cssText += isEmail ? off : on;
+}
+
 function switchTab(tab) {
   document.getElementById('tabLogin').classList.toggle('active', tab==='login');
   document.getElementById('tabRegister').classList.toggle('active', tab==='register');
@@ -371,10 +398,15 @@ async function socialAuth(provider) {
 
 function emailAuth(e, type) {
   e.preventDefault();
-  if(type==='login') {
+  if (type === 'login') {
     toast('Нэвтэрч байна...');
     setTimeout(() => window.location.href = 'dashboard.html', 900);
   } else {
+    const phone = document.getElementById('regPhone')?.value?.trim();
+    const email = document.getElementById('regEmail')?.value?.trim();
+    if (phone && !/^\d{8}$/.test(phone)) {
+      toast('Утасны дугаар 8 оронтой байна', 'err'); return;
+    }
     toast('✓ Бүртгэл амжилттай!');
     setTimeout(() => window.location.href = 'pricing.html', 1100);
   }
