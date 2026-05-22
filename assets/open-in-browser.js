@@ -1,76 +1,71 @@
-// Detect in-app browser and prompt user to open in real browser
+// Force-open in real browser when loaded inside an in-app browser
 (function () {
   const ua = navigator.userAgent || '';
   const isInApp =
     /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|Twitter|TikTok|LinkedInApp|Pinterest/i.test(ua) ||
     (/iPhone|iPad/.test(ua) && !ua.includes('Safari')) ||
-    (ua.includes('Android') && ua.includes('wv')) || // Android WebView
-    ua.includes('GSA/'); // Google Search App
+    (ua.includes('Android') && ua.includes('wv')) ||
+    ua.includes('GSA/');
 
   if (!isInApp) return;
 
-  // Already shown this session
-  if (sessionStorage.getItem('ob_shown')) return;
-  sessionStorage.setItem('ob_shown', '1');
-
   const url = location.href;
-
-  // Android: Intent URL → Chrome
-  function openAndroid() {
-    location.href = 'intent://' + url.replace(/^https?:\/\//, '') +
-      '#Intent;scheme=https;package=com.android.chrome;end';
-  }
-
-  // iOS: try x-safari trick
-  function openIOS() {
-    location.href = url.replace(/^https?:\/\//, 'googlechrome://');
-    setTimeout(() => {
-      location.href = url.replace(/^https?:\/\//, 'x-safari-https://');
-    }, 300);
-  }
-
   const isAndroid = /Android/.test(ua);
   const isIOS = /iPhone|iPad|iPod/.test(ua);
 
-  // Build banner
-  const banner = document.createElement('div');
-  banner.id = 'ob-banner';
-  banner.innerHTML = `
-    <div style="
-      position:fixed;bottom:0;left:0;right:0;z-index:99999;
-      background:linear-gradient(135deg,rgba(0,229,255,0.12),rgba(168,85,247,0.12));
-      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-      border-top:1px solid rgba(0,229,255,0.25);
-      padding:1rem 1.25rem;
-      display:flex;align-items:center;gap:.875rem;
-      font-family:'Outfit',sans-serif;
-    ">
-      <div style="flex:1;">
-        <div style="font-size:.8rem;font-weight:700;color:#fff;margin-bottom:.15rem;">Бүтэн хувилбараар үзэх</div>
-        <div style="font-size:.7rem;color:rgba(255,255,255,0.5);">Chrome / Safari дээр нээнэ үү</div>
-      </div>
-      <button id="ob-open" style="
-        background:linear-gradient(135deg,#00e5ff,#a855f7);
-        border:none;border-radius:99px;
-        padding:.55rem 1.25rem;
-        font-size:.8rem;font-weight:700;color:#07070e;
-        cursor:pointer;white-space:nowrap;flex-shrink:0;
-      ">🌐 Browser-т нээх</button>
-      <button id="ob-close" style="
-        background:none;border:none;color:rgba(255,255,255,0.4);
-        font-size:1.2rem;cursor:pointer;padding:.25rem;flex-shrink:0;
-      ">✕</button>
+  // Android: intent:// redirects automatically — no user gesture needed
+  if (isAndroid) {
+    location.replace(
+      'intent://' + url.replace(/^https?:\/\//, '') +
+      '#Intent;scheme=https;action=android.intent.action.VIEW;end'
+    );
+    return;
+  }
+
+  // iOS / other: needs user gesture — show full-screen blocker
+  if (sessionStorage.getItem('ob_shown')) return;
+  sessionStorage.setItem('ob_shown', '1');
+
+  function doOpen() {
+    // Try Chrome first, fall back to Safari
+    location.href = url.replace(/^https?:\/\//, 'googlechrome://');
+    setTimeout(() => {
+      location.href = url.replace(/^https?:\/\//, 'x-safari-https://');
+    }, 400);
+  }
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = [
+    'position:fixed','inset:0','z-index:2147483647',
+    'background:#07070e',
+    'display:flex','flex-direction:column',
+    'align-items:center','justify-content:center',
+    'gap:1.5rem','padding:2rem',
+    'font-family:Outfit,sans-serif','text-align:center',
+    'cursor:pointer'
+  ].join(';');
+
+  overlay.innerHTML = `
+    <div style="font-size:3.5rem;">🌐</div>
+    <div style="font-size:1.25rem;font-weight:800;color:#fff;line-height:1.4;">
+      Safari / Chrome дээр нээнэ үү
+    </div>
+    <div style="font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;max-width:280px;">
+      Энэ контентыг бүтэн үзэхийн тулд<br>жинхэнэ хөтөч дээр нээх шаардлагатай.
+    </div>
+    <button style="
+      background:linear-gradient(135deg,#00e5ff,#a855f7);
+      border:none;border-radius:99px;
+      padding:.85rem 2.5rem;
+      font-size:1rem;font-weight:800;color:#07070e;
+      letter-spacing:.5px;cursor:pointer;
+      box-shadow:0 0 40px rgba(0,229,255,.35);
+    ">Safari-д нээх</button>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.25);">
+      newdrama.mn
     </div>
   `;
-  document.body.appendChild(banner);
 
-  document.getElementById('ob-open').onclick = function () {
-    if (isAndroid) openAndroid();
-    else if (isIOS) openIOS();
-    else window.open(url, '_blank');
-  };
-
-  document.getElementById('ob-close').onclick = function () {
-    banner.remove();
-  };
+  overlay.onclick = doOpen;
+  document.body.appendChild(overlay);
 })();
