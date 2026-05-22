@@ -364,6 +364,20 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 </footer>
 
 <!-- Choice Modal -->
+<!-- Register nudge modal (бүртгүүлээгүй хэрэглэгч) -->
+<div class="modal-ov" id="registerModal" onclick="if(event.target===this)closeRegisterModal()">
+  <div class="modal-bx" style="max-width:400px;text-align:center;">
+    <button class="modal-x" onclick="closeRegisterModal()">✕</button>
+    <div style="font-size:3rem;margin-bottom:1rem;">🎬</div>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:#fff;margin-bottom:.6rem;">Үзэхийн тулд нэвтэрнэ үү</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.6;margin-bottom:1.75rem;">Та бүртгүүлээд төлбөрөө төлөөд үзнүү.<br>Сарын багц — <strong style="color:var(--cyan);">12,000₮</strong> · Нэг кино — <strong style="color:var(--cyan);">3,400₮</strong></p>
+    <div style="display:flex;flex-direction:column;gap:.75rem;">
+      <a href="login.html?r=register" class="btn-primary" style="justify-content:center;padding:.85rem;font-size:.95rem;border-radius:12px;text-decoration:none;">✨ Бүртгүүлэх</a>
+      <a href="login.html" style="display:block;padding:.75rem;border:1px solid var(--border);border-radius:12px;color:var(--text-dim);font-size:.88rem;text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(0,229,255,.3)'" onmouseout="this.style.borderColor='var(--border)'">Нэвтрэх</a>
+    </div>
+  </div>
+</div>
+
 <div class="modal-ov" id="choiceModal" onclick="if(event.target===this)closeChoiceModal()">
   <div class="modal-bx" style="max-width:480px;">
     <button class="modal-x" onclick="closeChoiceModal()">✕</button>
@@ -870,6 +884,8 @@ function tryPlay() {
   if (!_authReady) return;
   if (subscribed) { _loadVideo(true); return; }
   if (_movieFree) { _loadVideo(false); return; }
+  // Нэвтрээгүй хэрэглэгч → бүртгүүлэх санал
+  if (!currentUser) { openRegisterModal(); return; }
   // Trailer байвал main player-т харуулна
   if (_trailerVideoId) { _loadTrailerVideo(); return; }
   // Trailer байхгүй → шууд сонголтын modal нээнэ (paywall overlay харуулахгүй)
@@ -953,7 +969,13 @@ function _loadVideo(useProxy = true) {
   if (_movieId) fetch(`/api/movies/${_movieId}/view`, { method: 'POST' }).catch(() => {});
 }
 
+function openRegisterModal() {
+  document.getElementById('registerModal').classList.add('show');
+}
+function closeRegisterModal() { document.getElementById('registerModal').classList.remove('show'); }
+
 function openChoiceModal() {
+  if (!currentUser) { openRegisterModal(); return; }
   document.getElementById('choiceModal').classList.add('show');
   document.getElementById('qpayModal').classList.remove('show');
 }

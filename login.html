@@ -348,6 +348,11 @@ firebase.auth().onAuthStateChanged(user => {
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
+// URL-д ?r=register байвал бүртгүүлэх tab нээнэ
+if (new URLSearchParams(location.search).get('r') === 'register') {
+  document.addEventListener('DOMContentLoaded', () => switchTab('register'));
+}
+
 function switchRegType(type) {
   const isEmail = type === 'email';
   document.getElementById('regEmailWrap').style.display = isEmail ? 'block' : 'none';
