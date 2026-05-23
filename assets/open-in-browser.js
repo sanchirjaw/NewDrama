@@ -1,4 +1,4 @@
-// Force-open in real browser when loaded inside an in-app browser
+// Open in real browser when inside an in-app browser
 (function () {
   const ua = navigator.userAgent || '';
   const isInApp =
@@ -9,12 +9,12 @@
 
   if (!isInApp) return;
 
-  const url = location.href;
+  const ua_lower = ua.toLowerCase();
   const isAndroid = /Android/.test(ua);
-  const isFB = /FBAN|FBAV/i.test(ua);
-  const isIG = /Instagram/i.test(ua);
+  const isIOS     = /iPhone|iPad|iPod/.test(ua);
+  const url       = location.href;
 
-  // ── Android: intent:// → Chrome (automatic, no gesture needed) ──
+  // ── Android: intent:// → Chrome (no gesture needed) ──────────
   if (isAndroid) {
     location.replace(
       'intent://' + url.replace(/^https?:\/\//, '') +
@@ -23,69 +23,35 @@
     return;
   }
 
-  // ── iOS: full-screen blocker ──
-  if (sessionStorage.getItem('ob_shown')) return;
-  sessionStorage.setItem('ob_shown', '1');
+  // ── iOS: show one-tap hint banner (can't force Safari via JS) ─
+  if (!isIOS) return;
+  if (sessionStorage.getItem('ob_ios')) return;
+  sessionStorage.setItem('ob_ios', '1');
 
-  // Determine which app and show matching instruction
-  let appHint = '';
-  if (isFB)      appHint = '📌 Facebook → доод баруун буланд <b>···</b> → <b>"Safari дээр нээх"</b>';
-  else if (isIG) appHint = '📌 Instagram → доод баруун буланд <b>⋯</b> → <b>"Safari дээр нээх"</b>';
-  else           appHint = '📌 Доод баруун буланд <b>···</b> → <b>"Safari дээр нээх"</b>';
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = [
-    'position:fixed','inset:0','z-index:2147483647',
-    'background:#07070e',
-    'display:flex','flex-direction:column',
-    'align-items:center','justify-content:center',
-    'gap:1.25rem','padding:2rem',
-    'font-family:Outfit,sans-serif','text-align:center'
+  const banner = document.createElement('div');
+  banner.style.cssText = [
+    'position:fixed','bottom:0','left:0','right:0','z-index:2147483647',
+    'background:rgba(10,10,20,.97)',
+    'border-top:1px solid rgba(0,229,255,.25)',
+    'padding:1rem 1.25rem',
+    'display:flex','align-items:center','gap:.75rem',
+    'font-family:Outfit,sans-serif',
+    'backdrop-filter:blur(20px)','-webkit-backdrop-filter:blur(20px)'
   ].join(';');
 
-  overlay.innerHTML = `
-    <div style="font-size:3rem;">🌐</div>
-    <div style="font-size:1.2rem;font-weight:800;color:#fff;line-height:1.4;">
-      Safari дээр нээнэ үү
+  banner.innerHTML = `
+    <div style="flex:1;line-height:1.5;">
+      <div style="font-size:.82rem;font-weight:700;color:#fff;">Safari дээр нээнэ үү</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.45);">Доод баруун <b style="color:rgba(255,255,255,.7);">···</b> → <b style="color:rgba(255,255,255,.7);">Safari дээр нээх</b></div>
     </div>
-    <div style="font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.8;max-width:300px;">
-      ${appHint}
-    </div>
-    <div style="width:100%;max-width:320px;height:1px;background:rgba(255,255,255,.08);"></div>
-    <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Эсвэл холбоосыг хуулж Safari-д буулгана уу</div>
-    <button id="ob-copy" style="
-      background:linear-gradient(135deg,#00e5ff,#a855f7);
-      border:none;border-radius:99px;
-      padding:.8rem 2rem;
-      font-size:.95rem;font-weight:800;color:#07070e;
-      letter-spacing:.3px;cursor:pointer;
-      box-shadow:0 0 32px rgba(0,229,255,.3);
-      min-width:200px;
-    ">🔗 Холбоос хуулах</button>
-    <div id="ob-copied" style="font-size:.8rem;color:#00e5ff;display:none;">✓ Хуулагдлаа — Safari нээгээд буулгана уу</div>
-    <div style="font-size:.7rem;color:rgba(255,255,255,.18);margin-top:.5rem;">newdrama.mn</div>
+    <button id="ob-close" style="
+      background:none;border:none;
+      color:rgba(255,255,255,.35);
+      font-size:1.3rem;cursor:pointer;
+      padding:.25rem .5rem;flex-shrink:0;
+    ">✕</button>
   `;
 
-  document.body.appendChild(overlay);
-
-  document.getElementById('ob-copy').onclick = function () {
-    navigator.clipboard.writeText(url).then(() => {
-      this.textContent = '✓ Хуулагдлаа';
-      this.style.background = 'rgba(0,229,255,.15)';
-      this.style.color = '#00e5ff';
-      this.style.border = '1px solid rgba(0,229,255,.4)';
-      document.getElementById('ob-copied').style.display = 'block';
-    }).catch(() => {
-      // Fallback for older iOS
-      const ta = document.createElement('textarea');
-      ta.value = url;
-      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      try { document.execCommand('copy'); } catch(e) {}
-      ta.remove();
-      this.textContent = '✓ Хуулагдлаа';
-      document.getElementById('ob-copied').style.display = 'block';
-    });
-  };
+  document.body.appendChild(banner);
+  document.getElementById('ob-close').onclick = () => banner.remove();
 })();
