@@ -268,7 +268,7 @@ firebase.auth().onAuthStateChanged(user => {
       <form onsubmit="emailAuth(event,'login')">
         <div class="form-group">
           <label class="form-label">Имэйл хаяг</label>
-          <input type="email" class="form-input" placeholder="example@gmail.com" required>
+          <input type="email" class="form-input" id="loginEmail" placeholder="example@gmail.com" required>
         </div>
         <div class="form-group">
           <label class="form-label">Нууц үг</label>
@@ -401,19 +401,56 @@ async function socialAuth(provider) {
   }
 }
 
-function emailAuth(e, type) {
+async function emailAuth(e, type) {
   e.preventDefault();
   if (type === 'login') {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
     toast('Нэвтэрч байна...');
-    setTimeout(() => window.location.href = 'dashboard.html', 900);
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+      toast('✓ Тавтай морил!');
+      setTimeout(() => window.location.href = 'index.html', 800);
+    } catch(err) {
+      const msg = err.code === 'auth/user-not-found'    ? 'Имэйл бүртгэлгүй байна'
+                : err.code === 'auth/wrong-password'    ? 'Нууц үг буруу байна'
+                : err.code === 'auth/invalid-email'     ? 'Имэйл хаяг буруу байна'
+                : err.code === 'auth/too-many-requests' ? 'Хэт олон оролдлого. Түр хүлээнэ үү'
+                : (err.message || err.code);
+      toast(msg, 'err');
+    }
   } else {
     const phone = document.getElementById('regPhone')?.value?.trim();
     const email = document.getElementById('regEmail')?.value?.trim();
+    const pass  = document.getElementById('regPass').value;
     if (phone && !/^\d{8}$/.test(phone)) {
       toast('Утасны дугаар 8 оронтой байна', 'err'); return;
     }
-    toast('✓ Бүртгэл амжилттай!');
-    setTimeout(() => window.location.href = 'pricing.html', 1100);
+    if (!email) {
+      toast('Имэйл хаягаа оруулна уу', 'err'); return;
+    }
+    toast('Бүртгэж байна...');
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+      // MongoDB-д хэрэглэгч хадгалах
+      await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid:      cred.user.uid,
+          email:    cred.user.email,
+          provider: 'email'
+        })
+      }).catch(() => {});
+      toast('✓ Бүртгэл амжилттай!');
+      setTimeout(() => window.location.href = 'pricing.html', 1000);
+    } catch(err) {
+      const msg = err.code === 'auth/email-already-in-use' ? 'Энэ имэйл аль хэдийн бүртгэлтэй байна'
+                : err.code === 'auth/invalid-email'        ? 'Имэйл хаяг буруу байна'
+                : err.code === 'auth/weak-password'        ? 'Нууц үг хэтэрхий энгийн байна'
+                : (err.message || err.code);
+      toast(msg, 'err');
+    }
   }
 }
 
