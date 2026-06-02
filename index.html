@@ -254,7 +254,9 @@
   </div>
 
   <div class="top3-grid" id="featured3Grid" style="margin:0 auto 4rem;max-width:720px;">
-    <div class="featured3-empty">Admin-аас 3 кино сонгоно уу</div>
+    <div class="skeleton" style="aspect-ratio:2/3;border-radius:16px;"></div>
+    <div class="skeleton" style="aspect-ratio:2/3;border-radius:16px;"></div>
+    <div class="skeleton" style="aspect-ratio:2/3;border-radius:16px;"></div>
   </div>
 
   <!-- Search result / full genre grid -->
@@ -267,7 +269,33 @@
   </div>
 
   <!-- Genre rows -->
-  <div id="genreSections"></div>
+  <div id="genreSections">
+    <!-- Skeleton genre rows -->
+    <div class="genre-skeleton-row" style="margin-bottom:2.5rem;">
+      <div class="skeleton" style="height:1.4rem;width:120px;border-radius:8px;margin-bottom:1.25rem;"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+      </div>
+    </div>
+    <div class="genre-skeleton-row" style="margin-bottom:2.5rem;">
+      <div class="skeleton" style="height:1.4rem;width:90px;border-radius:8px;margin-bottom:1.25rem;"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+      </div>
+    </div>
+    <div class="genre-skeleton-row" style="margin-bottom:2.5rem;">
+      <div class="skeleton" style="height:1.4rem;width:105px;border-radius:8px;margin-bottom:1.25rem;"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+        <div class="skeleton" style="aspect-ratio:2/3;border-radius:12px;"></div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- TOP 10 -->
@@ -283,7 +311,13 @@
         <button class="row-btn" onclick="scrollRow('top10Row',1)">›</button>
       </div>
     </div>
-    <div class="row-scroll" id="top10Row"></div>
+    <div class="row-scroll" id="top10Row">
+      <div class="skeleton" style="width:180px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:180px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:180px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:180px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:180px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+    </div>
   </div>
 </section>
 
@@ -300,7 +334,13 @@
         <button class="row-btn" onclick="scrollRow('seriesRow',1)">›</button>
       </div>
     </div>
-    <div class="row-scroll" id="seriesRow"></div>
+    <div class="row-scroll" id="seriesRow">
+      <div class="skeleton" style="width:160px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:160px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:160px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:160px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+      <div class="skeleton" style="width:160px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;"></div>
+    </div>
   </div>
 </section>
 
