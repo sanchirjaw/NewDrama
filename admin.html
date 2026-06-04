@@ -228,8 +228,8 @@ select.form-input option{background:var(--dark);}
     <div class="nav-section">Үндсэн</div>
     <div class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Хяналтын самбар</div>
     <div class="nav-item" onclick="showPanel('movies',this)"><span class="nav-icon">🎬</span> Кино удирдлага</div>
-    <div class="nav-item" onclick="showPanel('users',this)"><span class="nav-icon">👥</span> Хэрэглэгчид<span class="nav-badge" id="newUsersBadge">3</span></div>
-    <div class="nav-item" onclick="showPanel('payments',this)"><span class="nav-icon">💳</span> Төлбөрүүд<span class="nav-badge" id="pendingBadge">2</span></div>
+    <div class="nav-item" onclick="showPanel('users',this)"><span class="nav-icon">👥</span> Хэрэглэгчид<span class="nav-badge" id="newUsersBadge" style="display:none;"></span></div>
+    <div class="nav-item" onclick="showPanel('payments',this)"><span class="nav-icon">💳</span> Төлбөрүүд<span class="nav-badge" id="pendingBadge" style="display:none;"></span></div>
     <div class="nav-section">Тохиргоо</div>
     <div class="nav-item" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span> Тохиргоо</div>
     <div class="nav-item" onclick="window.open('index.html','_blank')"><span class="nav-icon">🌐</span> Сайт харах ↗</div>
@@ -246,8 +246,8 @@ select.form-input option{background:var(--dark);}
 <main class="main">
   <div class="topbar">
     <div class="topbar-title" id="topbarTitle">Хяналтын Самбар</div>
-    <div class="topbar-search"><span>🔍</span><input type="text" placeholder="Хайх..." id="globalSearch" oninput="handleSearch(this.value)"></div>
-    <button class="btn btn-primary" id="topbarActionBtn" onclick="topbarAction()">+ Кино нэмэх</button>
+    <div class="topbar-search" style="display:none;"><span>🔍</span><input type="text" placeholder="Хайх..." id="globalSearch" oninput="handleSearch(this.value)"></div>
+    <button class="btn btn-primary" id="topbarActionBtn" onclick="topbarAction()" style="display:none;">+ Кино нэмэх</button>
   </div>
 
   <div class="content">
@@ -484,7 +484,7 @@ select.form-input option{background:var(--dark);}
               <option value="success">Амжилттай</option>
               <option value="pending">Хүлээгдэж буй</option>
             </select>
-            <button class="btn btn-ghost btn-sm">📥 Экспорт</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPayments()">📥 Экспорт</button>
             <button class="btn btn-danger btn-sm" onclick="clearPayments()">🗑 Цэвэрлэх</button>
           </div>
         </div>
@@ -516,15 +516,6 @@ select.form-input option{background:var(--dark);}
             ℹ️ Дан кино үнэ нь кино тус бүрд тохируулагдана (Кино удирдлага → Засах).
           </div>
           <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="savePrices()">💾 Хадгалах</button>
-        </div>
-        <div class="settings-card">
-          <div class="settings-title">⚙️ Системийн тохиргоо</div>
-          <div class="settings-row"><span>Бүртгэл нэхэмжлэх</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="settings-row"><span>Шинэ хэрэглэгч бүртгэх</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="settings-row"><span>Maintenance горим</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
-          <div class="settings-row"><span>Email мэдэгдэл</span><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="settings-row"><span>QPay интеграц</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
-          <div style="font-size:.72rem;color:var(--text-muted);margin-top:.75rem;">* QPay backend тохиргоо хийгдэх хүртэл идэвхгүй</div>
         </div>
         <div class="settings-card">
           <div class="settings-title">🎬 Bunny.net тохиргоо</div>
@@ -629,15 +620,6 @@ select.form-input option{background:var(--dark);}
             </div>
           </div>
           <button class="btn btn-primary" style="margin-top:1.25rem;" onclick="saveHeroCards()">💾 Hero хадгалах</button>
-        </div>
-        <div class="settings-card">
-          <div class="settings-title">🔒 Аюулгүй байдал</div>
-          <div class="form-grid">
-            <div class="form-group"><label class="form-label">Одоогийн нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
-            <div class="form-group"><label class="form-label">Шинэ нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
-          </div>
-          <div class="settings-row" style="margin-top:.5rem;"><span>2FA нэвтрэлт</span><div class="toggle-sw" onclick="this.classList.toggle('on')"></div></div>
-          <button class="btn btn-ghost" style="margin-top:1rem;width:100%;" onclick="toast('Нууц үг шинэчлэгдлээ')">Нууц үг шинэчлэх</button>
         </div>
       </div>
     </div>
@@ -867,6 +849,13 @@ function showPanel(id, el) {
   document.getElementById('topbarTitle').textContent = titles[id]||'';
   const showAdd = id==='movies';
   document.getElementById('topbarActionBtn').style.display = showAdd?'':'none';
+  // Хайлт зөвхөн жагсаалттай хуудсуудад харагдана
+  const searchBox = document.querySelector('.topbar-search');
+  if (searchBox) {
+    const showSearch = ['movies','users','payments'].includes(id);
+    searchBox.style.display = showSearch ? 'flex' : 'none';
+    if (!showSearch) { const gs = document.getElementById('globalSearch'); if (gs) gs.value=''; }
+  }
   if(id==='payments') document.getElementById('pendingBadge').style.display='none';
 }
 
@@ -1006,7 +995,7 @@ function renderPayments(data) {
       <td>
         <div class="action-btns">
           ${isPending?`<button class="icon-btn edit" title="Зөвшөөрөх" onclick="approvePayment('${p._id||p.id}')" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.2);color:#4ade80;">✓</button>`:''}
-          <button class="icon-btn" title="Дэлгэрэнгүй" onclick="toast('${p.id}')">👁</button>
+          <button class="icon-btn" title="Дэлгэрэнгүй" onclick="toast('${p.user} · ${p.plan} · ${p.amount>0?p.amount.toLocaleString()+'₮':'үнэгүй'} · ${p.date}')">👁</button>
         </div>
       </td>
     </tr>`;
@@ -1213,7 +1202,7 @@ function renderTopBuyersDB() {
       <td><div style="font-weight:600;font-size:.84rem;">${u.name||u.email||'—'}</div>
           <div style="font-size:.7rem;color:var(--text-dim);">${provider} · ${planLabel}</div></td>
       <td><span style="font-weight:700;color:var(--amber);">${(u.totalPaid||0).toLocaleString()}₮</span></td>
-      <td><button class="btn btn-success btn-sm" onclick="rewardUser('${name}')" style="font-size:.65rem;padding:.25rem .6rem;">🎁 Урамшуул</button></td>
+      <td>${u.uid ? `<button class="btn btn-success btn-sm" onclick="openGrantModal('${u.uid}','${name}')" style="font-size:.65rem;padding:.25rem .6rem;">🎁 Эрх олгох</button>` : '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -1527,9 +1516,26 @@ function deleteExpense(idx) {
   toast('Зарлага устгагдлаа', 'err');
 }
 
-/* ===== TOP BUYERS ===== */
-function rewardUser(name) {
-  toast(`🎁 ${name} — урамшуулал илгээгдлээ!`);
+/* ===== EXPORT PAYMENTS (CSV) ===== */
+function exportPayments() {
+  const rows = dbPayments.length ? dbPayments : [];
+  if (!rows.length) { toast('Экспортлох төлбөр байхгүй', 'err'); return; }
+  const head = ['Огноо','Хэрэглэгч','Имэйл','Багц','Дүн','Хэлбэр','Төлөв'];
+  const lines = rows.map(p => {
+    const u = dbUsers.find(x => x.uid === p.uid);
+    const plan = p.plan==='monthly'?'1 сарын':p.plan==='quarterly'?'3 сарын':p.plan==='movie'?'Дан кино':(p.plan||'');
+    const status = (p.status==='paid'||p.status==='success')?'Амжилттай':'Хүлээгдэж буй';
+    return [p.date||'', u?.name||u?.uid||'', u?.email||'', plan, p.amount||0, p.method||'byl.mn', status]
+      .map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = '﻿' + [head.join(','), ...lines].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tolbor-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`✓ ${rows.length} төлбөр экспортлогдлоо`);
 }
 
 /* ===== FEATURED ===== */
