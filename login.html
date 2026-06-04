@@ -250,38 +250,32 @@ var _inappUrl = location.href;
     || (isAndroid && /wv\b|; wv\)/.test(ua));
   if (!isInApp) return;
 
-  document.getElementById('inappBanner').classList.add('show');
-  document.getElementById('inappUrl').textContent = _inappUrl;
-
-  if (isAndroid) {
-    document.getElementById('inappIcon').textContent = '🌍';
-    document.getElementById('inappBtnIcon').textContent = '🟢';
-    document.getElementById('inappBtnText').textContent = 'Chrome-д нээх';
-    document.getElementById('inappDesc').textContent = 'Бүртгүүлэхийн тулд Chrome браузерт нээнэ үү.';
+  // Шууд redirect хийх
+  if (isIOS) {
+    window.location.href = 'x-safari-' + _inappUrl;
+  } else if (isAndroid) {
+    window.location.href = 'intent://' + _inappUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
   }
+
+  // Redirect ажиллахгүй бол (1.5s хүлээж) fallback banner харуулах
+  setTimeout(function(){
+    document.getElementById('inappBanner').classList.add('show');
+    document.getElementById('inappUrl').textContent = _inappUrl;
+    if (isAndroid) {
+      document.getElementById('inappIcon').textContent = '🌍';
+      document.getElementById('inappBtnIcon').textContent = '🟢';
+      document.getElementById('inappBtnText').textContent = 'Chrome-д нээх';
+      document.getElementById('inappDesc').textContent = 'Бүртгүүлэхийн тулд Chrome браузерт нээнэ үү.';
+    }
+  }, 1500);
 })();
 
 function openInBrowser() {
   const ua = navigator.userAgent || '';
-  const isIOS = /iPhone|iPad|iPod/.test(ua);
-  const isAndroid = /Android/.test(ua);
-
-  if (isIOS) {
-    // Safari-д шууд нээх
+  if (/iPhone|iPad|iPod/.test(ua)) {
     window.location.href = 'x-safari-' + _inappUrl;
-    // Fallback: хэрэв 1.5s-д юм болохгүй бол hint харуулах
-    setTimeout(() => {
-      document.getElementById('inappHint').textContent = 'Safari нээгдэхгүй байвал доорх линкийг хуулж Safari хаягийн мөрөнд paste хийнэ үү.';
-      document.getElementById('inappHint').style.color = 'var(--cyan)';
-    }, 1500);
-  } else if (isAndroid) {
-    // Chrome intent
-    const intentUrl = 'intent://' + _inappUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-    window.location.href = intentUrl;
-    setTimeout(() => {
-      document.getElementById('inappHint').textContent = 'Chrome нээгдэхгүй байвал доорх линкийг хуулж браузерт paste хийнэ үү.';
-      document.getElementById('inappHint').style.color = 'var(--cyan)';
-    }, 1500);
+  } else if (/Android/.test(ua)) {
+    window.location.href = 'intent://' + _inappUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
   } else {
     window.open(_inappUrl, '_blank');
   }
@@ -300,9 +294,7 @@ function copyUrl() {
       document.execCommand('copy'); ta.remove();
       btn.textContent = '✓ Хуулагдлаа!';
       setTimeout(() => btn.textContent = 'Линк хуулах', 2500);
-    } catch(e) {
-      btn.textContent = 'Дээрх URL-г хуулна уу';
-    }
+    } catch(e) { btn.textContent = 'Дээрх URL-г хуулна уу'; }
   });
 }
 </script>
