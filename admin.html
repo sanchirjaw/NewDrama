@@ -1289,13 +1289,14 @@ async function clearPayments() {
 }
 
 async function approvePayment(id) {
+  if (!id || id === '—') { toast('ID олдсонгүй', 'err'); return; }
   if (!confirm('Энэ төлбөрийг баталгаажуулах уу? Хэрэглэгчид план идэвхжинэ.')) return;
   try {
     const res  = await fetch(`/api/payments/${id}/approve`, { method: 'POST' });
     const data = await res.json();
     if (data.ok) {
       toast('✓ Төлбөр баталгаажлаа — хэрэглэгчид план нэмэгдлээ');
-      await loadData(); // хүснэгтийг DB-ээс дахин ачаална
+      await loadData();
     } else {
       toast('Алдаа: ' + (data.error || 'Тодорхойгүй'), 'err');
     }
@@ -1329,7 +1330,8 @@ function filterPayments(status) {
     renderPayments(src.map(p => {
       const u = dbUsers.find(x => x.uid === p.uid);
       return {
-        id: String(p._id||'').slice(-6).toUpperCase()||'—',
+        id:   String(p._id||'').slice(-6).toUpperCase()||'—',
+        _id:  String(p._id||''),
         user: u?.name||u?.email||p.uid||'—',
         plan: p.plan==='monthly'?'1 сарын':p.plan==='quarterly'?'3 сарын':p.plan==='movie'?'Дан кино':(p.plan||'—'),
         amount: p.amount||0, method: p.method||'byl.mn', date: p.date||'—',
