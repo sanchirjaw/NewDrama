@@ -961,7 +961,17 @@ function renderPayments(data) {
     document.getElementById('paymentsTableBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">Төлбөр байхгүй байна</td></tr>`;
     return;
   }
-  document.getElementById('paymentsTableBody').innerHTML = data.map(p => {
+  // Хүлээгдэж буйг дээр, амжилттайг доор — тус бүр огноогоор (шинэ нь дээр)
+  const byDate = (a,b) => String(b.date).localeCompare(String(a.date));
+  const pendingList = data.filter(p => p.status !== 'success').sort(byDate);
+  const successList = data.filter(p => p.status === 'success').sort(byDate);
+
+  const groupRow = (label, count, color) =>
+    `<tr><td colspan="8" style="padding:.6rem 1.4rem;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);">
+      <span style="font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:${color};">${label} · ${count}</span>
+    </td></tr>`;
+
+  const rowHTML = p => {
     const isPending = p.status !== 'success';
     const planCls   = p.plan==='1 сарын'?'pill-monthly':p.plan==='3 сарын'?'pill-quarterly':'pill-movie';
     const planIcon  = p.plan==='1 сарын'?'📅':p.plan==='3 сарын'?'📦':'🎬';
@@ -999,7 +1009,12 @@ function renderPayments(data) {
         </div>
       </td>
     </tr>`;
-  }).join('');
+  };
+
+  let html = '';
+  if (pendingList.length) html += groupRow('⏳ Хүлээгдэж буй', pendingList.length, '#f59e0b') + pendingList.map(rowHTML).join('');
+  if (successList.length) html += groupRow('✓ Амжилттай', successList.length, '#4ade80') + successList.map(rowHTML).join('');
+  document.getElementById('paymentsTableBody').innerHTML = html;
 }
 
 function renderTopViews() {
