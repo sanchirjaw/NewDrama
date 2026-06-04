@@ -1567,7 +1567,7 @@ async function submitGrant() {
       const label = plan === 'monthly' ? '1 сарын багц' : plan === 'quarterly' ? '3 сарын багц' : `"${movieTitle}" кино`;
       toast(`✓ ${label} эрх олгогдлоо`);
       closeGrantModal();
-      await loadData();
+      await refreshAllData();
     } else {
       toast('Алдаа: ' + (data.error || 'Тодорхойгүй'), 'err');
     }
