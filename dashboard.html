@@ -432,9 +432,9 @@
         </div>
 
         <div class="settings-block">
-          <div class="settings-block-title" style="color:var(--danger);">Аюул бүхий үйлдэл</div>
-          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.6;">Аккаунт устгавал таны бүх мэдээлэл, үзсэн түүх, авсан эрхүүд бүрмөсөн устгагдана.</p>
-          <button class="btn-ghost" style="color:var(--danger);border-color:rgba(239,68,68,0.2);" onclick="deleteAcc()">🗑&nbsp; Аккаунт устгах</button>
+          <div class="settings-block-title">Гарах</div>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.6;">Аккаунтаасаа гарахдаа дахин нэвтрэх шаардлагатай болно.</p>
+          <button class="btn-ghost" onclick="logout()" style="display:flex;align-items:center;gap:.5rem;">↩&nbsp; Гарах</button>
         </div>
       </div>
     </div>
@@ -623,26 +623,6 @@ function logout() {
   if (typeof firebase !== 'undefined') {
     firebase.auth().signOut().then(() => { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); });
   } else { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
-}
-async function deleteAcc() {
-  if (!confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?\n\nЭнэ үйлдлийг буцаах боломжгүй.')) return;
-  try {
-    const user = firebase.auth().currentUser;
-    if (!user) { toast('Нэвтрээгүй байна', 'err'); return; }
-    // MongoDB-с устгах
-    await fetch(`/api/users/${user.uid}`, { method: 'DELETE' }).catch(()=>{});
-    // Firebase-с устгах
-    await user.delete();
-    toast('Аккаунт устгагдлаа.', 'err');
-    setTimeout(() => location.href = 'index.html', 1300);
-  } catch(e) {
-    if (e.code === 'auth/requires-recent-login') {
-      toast('Аккаунт устгахын тулд дахин нэвтэрнэ үү.', 'err');
-      setTimeout(() => location.href = 'login.html', 1500);
-    } else {
-      toast('Алдаа: ' + (e.message || e.code), 'err');
-    }
-  }
 }
 
 function toast(msg, type='ok') {
