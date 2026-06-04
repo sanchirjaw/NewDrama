@@ -192,8 +192,75 @@ firebase.auth().onAuthStateChanged(user => {
   }
 });
 </script>
+<style>
+#inappBanner {
+  display:none;
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(7,7,14,0.97);
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;
+}
+#inappBanner.show { display:flex; }
+.inapp-icon { font-size:3.5rem; margin-bottom:1.25rem; }
+.inapp-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:#fff;margin-bottom:.75rem; }
+.inapp-desc { color:var(--text-dim);font-size:.9rem;line-height:1.7;margin-bottom:2rem;max-width:320px; }
+.inapp-steps { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:2rem;text-align:left;width:100%;max-width:320px; }
+.inapp-step { display:flex;align-items:center;gap:.75rem;padding:.5rem 0;color:var(--text);font-size:.85rem; }
+.inapp-step:not(:last-child) { border-bottom:1px solid rgba(255,255,255,0.06); }
+.inapp-step-num { width:24px;height:24px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#07070e;flex-shrink:0; }
+.inapp-copy-btn {
+  width:100%;max-width:320px;padding:.9rem;
+  background:var(--grad);border:none;border-radius:12px;
+  color:#07070e;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;
+  cursor:pointer;letter-spacing:.3px;margin-bottom:.75rem;
+}
+.inapp-url { font-size:.75rem;color:var(--text-dim);word-break:break-all;margin-top:.5rem; }
+</style>
 </head>
 <body>
+
+<!-- IN-APP BROWSER BANNER -->
+<div id="inappBanner">
+  <div class="inapp-icon">🌐</div>
+  <div class="inapp-title">Гадаад браузерт нээнэ үү</div>
+  <div class="inapp-desc">Facebook болон бусад апп-ын дотоод браузер нь бүртгэлийг дэмждэггүй. Chrome эсвэл Safari-д нээнэ үү.</div>
+  <div class="inapp-steps">
+    <div class="inapp-step"><div class="inapp-step-num">1</div> Доорх товчийг дарж URL хуулна уу</div>
+    <div class="inapp-step"><div class="inapp-step-num">2</div> Chrome эсвэл Safari нээнэ үү</div>
+    <div class="inapp-step"><div class="inapp-step-num">3</div> URL хаягийн мөрөнд paste хийнэ үү</div>
+  </div>
+  <button class="inapp-copy-btn" onclick="copyUrl()">🔗 Линк хуулах</button>
+  <div class="inapp-url" id="inappUrl"></div>
+</div>
+
+<script>
+(function(){
+  const ua = navigator.userAgent || '';
+  const isInApp = /FBAN|FBAV|FBIOS|FB_IAB|Instagram|LinkedInApp|Twitter|TikTok|Snapchat|Line\/|MicroMessenger|WebView|wv\b/.test(ua)
+    || (ua.includes('iPhone') && !ua.includes('Safari'))
+    || (ua.includes('Android') && ua.includes('wv'));
+  if (isInApp) {
+    document.getElementById('inappBanner').classList.add('show');
+    document.getElementById('inappUrl').textContent = location.href;
+  }
+})();
+function copyUrl() {
+  navigator.clipboard?.writeText(location.href).then(() => {
+    const btn = document.querySelector('.inapp-copy-btn');
+    btn.textContent = '✓ Хуулагдлаа!';
+    setTimeout(() => btn.textContent = '🔗 Линк хуулах', 2000);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = location.href; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    const btn = document.querySelector('.inapp-copy-btn');
+    btn.textContent = '✓ Хуулагдлаа!';
+    setTimeout(() => btn.textContent = '🔗 Линк хуулах', 2000);
+  });
+}
+</script>
+
 <div class="film-strip"></div>
 
 <!-- LEFT -->
