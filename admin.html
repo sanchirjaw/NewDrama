@@ -1327,7 +1327,7 @@ async function approvePayment(id) {
     const data = await res.json();
     if (data.ok) {
       toast('✓ Төлбөр баталгаажлаа — хэрэглэгчид план нэмэгдлээ');
-      await loadData();
+      await refreshAllData();
     } else {
       toast('Алдаа: ' + (data.error || 'Тодорхойгүй'), 'err');
     }
