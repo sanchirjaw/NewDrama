@@ -285,11 +285,14 @@
     </nav>
 
     <div class="dash-side-footer">
-      <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:var(--radius);padding:1rem;text-align:center;">
+      <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.12);border-radius:var(--radius);padding:1rem;text-align:center;margin-bottom:.75rem;">
         <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;">Багц дуусах хүртэл</div>
         <div id="sidebarDaysLeft" style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
         <a href="pricing.html" class="btn-primary" style="width:100%;justify-content:center;font-size:.78rem;padding:.55rem 1rem;margin-top:.875rem;border-radius:99px;">Сунгах</a>
       </div>
+      <button onclick="logout()" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);color:var(--text-dim);font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseleave="this.style.background='rgba(255,255,255,0.04)';this.style.color='var(--text-dim)'">
+        ↩ Гарах
+      </button>
     </div>
   </aside>
 
@@ -327,7 +330,7 @@
         <h2 class="panel-title">Зогссон Кинонууд</h2>
       </div>
       <div class="cw-row" id="cwRow">
-        <div style="color:var(--text-dim);font-size:.88rem;padding:.5rem 0;">Ачааллаж байна…</div>
+        <div style="color:var(--text-dim);font-size:.88rem;padding:.5rem 0;">Үзсэн кино байхгүй байна</div>
       </div>
     </div>
 
@@ -347,7 +350,7 @@
         <h2 class="panel-title">Үзсэн Түүх</h2>
       </div>
       <div class="hist-list" id="histList">
-        <div style="color:var(--text-dim);font-size:.88rem;padding:1rem 0;">Ачааллаж байна…</div>
+        <div style="color:var(--text-dim);font-size:.88rem;padding:1rem 0;">Үзсэн кино байхгүй байна</div>
       </div>
     </div>
 
@@ -430,6 +433,7 @@
 
         <div class="settings-block">
           <div class="settings-block-title" style="color:var(--danger);">Аюул бүхий үйлдэл</div>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.6;">Аккаунт устгавал таны бүх мэдээлэл, үзсэн түүх, авсан эрхүүд бүрмөсөн устгагдана.</p>
           <button class="btn-ghost" style="color:var(--danger);border-color:rgba(239,68,68,0.2);" onclick="deleteAcc()">🗑&nbsp; Аккаунт устгах</button>
         </div>
       </div>
@@ -620,7 +624,26 @@ function logout() {
     firebase.auth().signOut().then(() => { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); });
   } else { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); }
 }
-function deleteAcc() { if(confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?')) { toast('Аккаунт устгагдлаа.','err'); setTimeout(()=>location.href='index.html',1300); } }
+async function deleteAcc() {
+  if (!confirm('Аккаунтаа бүрмөсөн устгахдаа итгэлтэй байна уу?\n\nЭнэ үйлдлийг буцаах боломжгүй.')) return;
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) { toast('Нэвтрээгүй байна', 'err'); return; }
+    // MongoDB-с устгах
+    await fetch(`/api/users/${user.uid}`, { method: 'DELETE' }).catch(()=>{});
+    // Firebase-с устгах
+    await user.delete();
+    toast('Аккаунт устгагдлаа.', 'err');
+    setTimeout(() => location.href = 'index.html', 1300);
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      toast('Аккаунт устгахын тулд дахин нэвтэрнэ үү.', 'err');
+      setTimeout(() => location.href = 'login.html', 1500);
+    } else {
+      toast('Алдаа: ' + (e.message || e.code), 'err');
+    }
+  }
+}
 
 function toast(msg, type='ok') {
   const t = document.createElement('div');

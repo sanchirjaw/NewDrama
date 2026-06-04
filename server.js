@@ -169,6 +169,17 @@ app.get('/api/users', async (req, res) => {
   res.json(users);
 });
 
+// Хэрэглэгч өөрийн аккаунт устгах
+app.delete('/api/users/:uid', async (req, res) => {
+  try {
+    await col('users').deleteOne({ uid: req.params.uid });
+    await col('payments').deleteMany({ uid: req.params.uid });
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Хэрэглэгчийн мэдээлэл (plan, planExpiry) авах
 app.get('/api/users/me/:uid', async (req, res) => {
   const user = await col('users').findOne({ uid: req.params.uid }, { projection: { password: 0 } });
