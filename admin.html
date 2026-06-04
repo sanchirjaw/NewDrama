@@ -201,6 +201,29 @@ select.form-input option{background:var(--dark);}
 .toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--text-muted);transition:all .25s;}
 .toggle-sw.on::after{left:20px;background:var(--cyan);box-shadow:0 0 8px rgba(0,229,255,0.5);}
 
+/* ===== USERS (card grid) ===== */
+.users-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;}
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;}
+.user-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;transition:all .2s;box-shadow:var(--shadow);}
+.user-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.uc-head{display:flex;align-items:center;gap:.85rem;margin-bottom:1rem;}
+.uc-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(168,85,247,0.2));border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0;}
+.uc-name{font-weight:700;font-size:.92rem;line-height:1.2;word-break:break-word;}
+.uc-email{font-size:.72rem;color:var(--text-dim);word-break:break-all;margin-top:.15rem;}
+.uc-admin-tag{margin-left:auto;flex-shrink:0;align-self:flex-start;}
+.uc-plan{margin-bottom:.85rem;}
+.uc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.85rem;padding:.75rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.uc-stat{text-align:center;}
+.uc-stat-num{font-weight:800;font-size:1.05rem;line-height:1;}
+.uc-stat-lbl{font-size:.62rem;color:var(--text-dim);margin-top:.3rem;letter-spacing:.3px;}
+.uc-login{font-size:.72rem;color:var(--text-dim);margin-bottom:.95rem;display:flex;align-items:center;gap:.4rem;}
+.uc-actions{display:flex;gap:.5rem;}
+.uc-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.55rem;border-radius:var(--radius);border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-dim);font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.uc-btn:hover{border-color:var(--border2);color:var(--text);background:rgba(255,255,255,0.06);}
+.uc-btn.grant:hover{border-color:rgba(0,229,255,0.3);color:var(--cyan);background:rgba(0,229,255,0.06);}
+.uc-btn.admin-on{border-color:rgba(168,85,247,0.3);color:var(--purple);background:rgba(168,85,247,0.08);}
+.uc-empty{grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);}
+
 /* ===== TOAST ===== */
 .toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
 .toast{padding:.85rem 1.35rem;border-radius:var(--radius);font-size:.82rem;font-weight:500;animation:fadeUp .3s ease;max-width:320px;box-shadow:var(--shadow-lg);backdrop-filter:blur(10px);}
@@ -437,26 +460,19 @@ select.form-input option{background:var(--dark);}
 
     <!-- ===== USERS ===== -->
     <div class="panel" id="panel-users">
-      <div class="table-wrap">
-        <div class="table-header">
-          <div class="table-title">Хэрэглэгчид <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;" id="userCountLabel"></span></div>
-          <div class="table-actions">
-            <select class="form-input btn-sm" style="width:auto;" onchange="filterUsers(this.value)">
-              <option value="">Бүх төлөв</option>
-              <option value="active">Идэвхтэй</option>
-              <option value="free">Үнэгүй</option>
-              <option value="expired">Дууссан</option>
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="refreshAllData()" title="Шинэчлэх">↻ Шинэчлэх</button>
-          </div>
+      <div class="users-toolbar">
+        <div class="table-title">Хэрэглэгчид <span style="color:var(--text-dim);font-weight:400;font-size:.8rem;" id="userCountLabel"></span></div>
+        <div class="table-actions">
+          <select class="form-input btn-sm" style="width:auto;" onchange="filterUsers(this.value)">
+            <option value="">Бүх төлөв</option>
+            <option value="active">Идэвхтэй</option>
+            <option value="free">Үнэгүй</option>
+            <option value="expired">Дууссан</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="refreshAllData()" title="Шинэчлэх">↻ Шинэчлэх</button>
         </div>
-        <table>
-          <thead><tr>
-            <th>Хэрэглэгч</th><th>Багц</th><th>🎬 Дан кино</th><th>📦 Сарын эрхээр</th><th>Нийт төлбөр</th><th>Сүүлийн нэвтрэлт</th><th>Эрх</th><th>Үйлдэл</th>
-          </tr></thead>
-          <tbody id="usersTableBody"></tbody>
-        </table>
       </div>
+      <div class="user-grid" id="usersTableBody"></div>
     </div>
 
     <!-- ===== PAYMENTS ===== -->
@@ -914,45 +930,58 @@ function renderUsers(data) {
   const lbl = document.getElementById('userCountLabel');
   if(lbl) lbl.textContent = `(${data.length} хэрэглэгч)`;
   const now = new Date();
-  document.getElementById('usersTableBody').innerHTML = data.map(u => {
+  const box = document.getElementById('usersTableBody');
+  if (!data.length) {
+    box.innerHTML = `<div class="uc-empty">Хэрэглэгч байхгүй байна</div>`;
+    return;
+  }
+  // Идэвхтэй багцтай → дээр, дараа нь нийт төлбөрөөр
+  const sorted = [...data].sort((a,b) => {
+    const aAct = a.planExpiry && new Date(a.planExpiry) > now ? 1 : 0;
+    const bAct = b.planExpiry && new Date(b.planExpiry) > now ? 1 : 0;
+    if (aAct !== bAct) return bAct - aAct;
+    return (b.totalPaid||0) - (a.totalPaid||0);
+  });
+  box.innerHTML = sorted.map(u => {
     const isDbUser = !!u.uid;
-    // Count дан кино purchases
     const moviePurchases = isDbUser
-      ? dbPayments.filter(p => p.uid === u.uid && p.plan === 'movie' && p.status === 'paid').length
-      : null;
-    // Count subscription purchases
+      ? dbPayments.filter(p => p.uid === u.uid && p.plan === 'movie' && p.status === 'paid').length : 0;
     const subPurchases = isDbUser
-      ? dbPayments.filter(p => p.uid === u.uid && (p.plan === 'monthly' || p.plan === 'quarterly') && p.status === 'paid').length
-      : null;
-    // Plan info
-    const planKey = isDbUser ? u.plan : u.planKey;
-    const isActive = isDbUser
-      ? (u.planExpiry && new Date(u.planExpiry) > now)
-      : (u.status === 'active');
+      ? dbPayments.filter(p => p.uid === u.uid && (p.plan === 'monthly' || p.plan === 'quarterly') && p.status === 'paid').length : 0;
+    const planKey  = isDbUser ? u.plan : u.planKey;
+    const isActive = isDbUser ? (u.planExpiry && new Date(u.planExpiry) > now) : (u.status === 'active');
     const planLabel = planKey === 'monthly' ? '1 сарын' : planKey === 'quarterly' ? '3 сарын' : '';
     const planClass = planKey === 'monthly' ? 'pill-monthly' : planKey === 'quarterly' ? 'pill-quarterly' : '';
-    // Last login
-    let ll = u.lastLogin ? (isDbUser ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : u.lastLogin) : '—';
+    const ll = u.lastLogin ? (isDbUser ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : u.lastLogin) : '—';
     const displayName = (u.name || u.email || '—').replace(/'/g, '&#39;');
+    const initial = (u.name || u.email || '?').trim().charAt(0).toUpperCase();
+
     return `
-    <tr>
-      <td><div style="font-weight:600;font-size:.85rem;">${u.name||u.email||'—'}<div style="font-size:.72rem;color:var(--text-dim);">${u.email||''}</div></div></td>
-      <td>${planLabel
-        ? `<span class="badge-pill ${planClass}">${planLabel}</span><span class="badge-pill ${isActive?'pill-active':'pill-expired'}" style="margin-left:.3rem;font-size:.6rem;">${isActive?'✓':'✕'}</span>`
-        : '<span style="color:var(--text-muted);font-size:.78rem;">Үнэгүй</span>'}</td>
-      <td><span style="font-weight:700;color:var(--amber);">${moviePurchases != null ? moviePurchases : '—'}</span></td>
-      <td><span style="font-weight:700;color:var(--cyan);">${subPurchases != null ? subPurchases : '—'}</span></td>
-      <td style="font-weight:600;">${(u.totalPaid||0).toLocaleString()}₮</td>
-      <td style="color:var(--text-dim);font-size:.78rem;">${ll}</td>
-      <td>
-        ${u.isAdmin ? '<span class="badge-pill" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#a855f7;font-size:.6rem;">👑 Admin</span>' : ''}
-      </td>
-      <td><div class="action-btns">
-        ${isDbUser ? `<button class="icon-btn edit" title="Эрх олгох" onclick="openGrantModal('${u.uid}','${displayName}')">🎁</button>` : ''}
-        ${isDbUser ? `<button class="icon-btn ${u.isAdmin ? 'danger' : 'edit'}" title="${u.isAdmin ? 'Admin эрх хасах' : 'Admin болгох'}" onclick="toggleAdmin('${u.uid}',${!u.isAdmin})">${u.isAdmin ? '👑' : '🔑'}</button>` : ''}
-        <button class="icon-btn edit" title="Дэлгэрэнгүй" onclick="toast('${displayName} — дэлгэрэнгүй')">👁</button>
-      </div></td>
-    </tr>`;
+    <div class="user-card">
+      <div class="uc-head">
+        <div class="uc-avatar">${initial}</div>
+        <div style="min-width:0;flex:1;">
+          <div class="uc-name">${u.name || u.email || '—'}</div>
+          ${u.email ? `<div class="uc-email">${u.email}</div>` : ''}
+        </div>
+        ${u.isAdmin ? '<span class="badge-pill uc-admin-tag" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#a855f7;font-size:.6rem;">👑 Admin</span>' : ''}
+      </div>
+      <div class="uc-plan">
+        ${planLabel
+          ? `<span class="badge-pill ${planClass}">${planLabel}</span> <span class="badge-pill ${isActive?'pill-active':'pill-expired'}">${isActive?'✓ Идэвхтэй':'✕ Дууссан'}</span>`
+          : '<span class="badge-pill pill-free">Үнэгүй хэрэглэгч</span>'}
+      </div>
+      <div class="uc-stats">
+        <div class="uc-stat"><div class="uc-stat-num" style="color:var(--amber);">${moviePurchases}</div><div class="uc-stat-lbl">🎬 Дан кино</div></div>
+        <div class="uc-stat"><div class="uc-stat-num" style="color:var(--cyan);">${subPurchases}</div><div class="uc-stat-lbl">📦 Сарын эрх</div></div>
+        <div class="uc-stat"><div class="uc-stat-num">${(u.totalPaid||0).toLocaleString()}<span style="font-size:.7rem;">₮</span></div><div class="uc-stat-lbl">💰 Төлбөр</div></div>
+      </div>
+      <div class="uc-login">🕐 Сүүлд нэвтэрсэн: ${ll}</div>
+      ${isDbUser ? `<div class="uc-actions">
+        <button class="uc-btn grant" onclick="openGrantModal('${u.uid}','${displayName}')">🎁 Эрх олгох</button>
+        <button class="uc-btn ${u.isAdmin?'admin-on':''}" onclick="toggleAdmin('${u.uid}',${!u.isAdmin})">${u.isAdmin ? '👑 Admin хасах' : '🔑 Admin болгох'}</button>
+      </div>` : ''}
+    </div>`;
   }).join('');
 }
 
