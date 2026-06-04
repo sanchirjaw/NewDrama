@@ -783,6 +783,36 @@ select.form-input option{background:var(--dark);}
   </div>
 </div>
 
+<!-- GRANT ACCESS MODAL -->
+<div id="grantModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div style="background:#0c0c14;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2rem;width:100%;max-width:400px;margin:1rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:#fff;">🎁 Эрх олгох</h3>
+      <button onclick="closeGrantModal()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:.85rem;color:var(--text-dim);margin-bottom:1.25rem;">
+      Хэрэглэгч: <strong id="grantUserName" style="color:#fff;"></strong>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.78rem;color:var(--text-dim);display:block;margin-bottom:.5rem;">Эрхийн төрөл</label>
+      <select id="grantPlan" onchange="onGrantPlanChange()" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
+        <option value="monthly">📅 1 сарын багц (30 хоног)</option>
+        <option value="quarterly">📅 3 сарын багц (90 хоног)</option>
+        <option value="movie">🎬 Дан кино (2 хоног)</option>
+      </select>
+    </div>
+    <div id="grantMovieWrap" style="display:none;margin-bottom:1rem;">
+      <label style="font-size:.78rem;color:var(--text-dim);display:block;margin-bottom:.5rem;">Кино сонгох</label>
+      <select id="grantMovieId" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
+        <option value="">— Кино сонгоно уу —</option>
+      </select>
+    </div>
+    <button onclick="submitGrant()" style="width:100%;padding:.9rem;background:linear-gradient(135deg,#00e5ff,#a855f7);border:none;border-radius:12px;color:#07070e;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;margin-top:.5rem;">
+      ✓ Эрх олгох
+    </button>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 
@@ -913,6 +943,7 @@ function renderUsers(data) {
         ${u.isAdmin ? '<span class="badge-pill" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#a855f7;font-size:.6rem;">👑 Admin</span>' : ''}
       </td>
       <td><div class="action-btns">
+        ${isDbUser ? `<button class="icon-btn edit" title="Эрх олгох" onclick="openGrantModal('${u.uid}','${displayName}')">🎁</button>` : ''}
         ${isDbUser ? `<button class="icon-btn ${u.isAdmin ? 'danger' : 'edit'}" title="${u.isAdmin ? 'Admin эрх хасах' : 'Admin болгох'}" onclick="toggleAdmin('${u.uid}',${!u.isAdmin})">${u.isAdmin ? '👑' : '🔑'}</button>` : ''}
         <button class="icon-btn edit" title="Дэлгэрэнгүй" onclick="toast('${displayName} — дэлгэрэнгүй')">👁</button>
       </div></td>
@@ -1485,6 +1516,64 @@ function saveFeatured() {
   const data = _featuredId ? { id: _featuredId } : {};
   localStorage.setItem('nd_featured', JSON.stringify(data));
   toast(_featuredId ? '✓ Онцлох кино хадгалагдлаа' : '✓ Авто горим (хамгийн их үзэлттэй)');
+}
+
+/* ===== GRANT ACCESS ===== */
+let _grantUid = null;
+
+function openGrantModal(uid, name) {
+  _grantUid = uid;
+  document.getElementById('grantUserName').textContent = name;
+  document.getElementById('grantPlan').value = 'monthly';
+  document.getElementById('grantMovieWrap').style.display = 'none';
+  // Кинонуудыг dropdown-д нэмэх
+  const sel = document.getElementById('grantMovieId');
+  sel.innerHTML = '<option value="">— Кино сонгоно уу —</option>';
+  moviesData.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = String(m._id || m.id || '');
+    opt.dataset.title = m.title || '';
+    opt.textContent = m.title || '—';
+    sel.appendChild(opt);
+  });
+  document.getElementById('grantModal').style.display = 'flex';
+}
+
+function closeGrantModal() {
+  document.getElementById('grantModal').style.display = 'none';
+  _grantUid = null;
+}
+
+function onGrantPlanChange() {
+  const plan = document.getElementById('grantPlan').value;
+  document.getElementById('grantMovieWrap').style.display = plan === 'movie' ? 'block' : 'none';
+}
+
+async function submitGrant() {
+  if (!_grantUid) return;
+  const plan = document.getElementById('grantPlan').value;
+  const movieSel = document.getElementById('grantMovieId');
+  const movieId = movieSel.value;
+  const movieTitle = movieSel.options[movieSel.selectedIndex]?.dataset.title || '';
+  if (plan === 'movie' && !movieId) { toast('Кино сонгоно уу', 'err'); return; }
+  try {
+    const res = await fetch(`/api/users/${_grantUid}/grant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, movieId: movieId || null, movieTitle }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const label = plan === 'monthly' ? '1 сарын багц' : plan === 'quarterly' ? '3 сарын багц' : `"${movieTitle}" кино`;
+      toast(`✓ ${label} эрх олгогдлоо`);
+      closeGrantModal();
+      await loadData();
+    } else {
+      toast('Алдаа: ' + (data.error || 'Тодорхойгүй'), 'err');
+    }
+  } catch (e) {
+    toast('Сервер алдаа: ' + e.message, 'err');
+  }
 }
 
 /* ===== ADMIN ROLE ===== */

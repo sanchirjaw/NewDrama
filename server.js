@@ -645,6 +645,33 @@ app.post('/api/payments/:id/approve', async (req, res) => {
   }
 });
 
+/* Admin: хэрэглэгчид гараар эрх олгох */
+app.post('/api/users/:uid/grant', async (req, res) => {
+  try {
+    const { plan, movieId, movieTitle } = req.body;
+    const uid = req.params.uid;
+    const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : plan === 'movie' ? 2 : 30;
+    const fakePayment = {
+      uid, plan, days,
+      movieId:    plan === 'movie' ? (movieId || null) : null,
+      movieTitle: plan === 'movie' ? (movieTitle || 'Дан Кино') : null,
+      amount: 0,
+      _id: new (require('mongodb').ObjectId)(),
+    };
+    // payments collection-д бүртгэх
+    await col('payments').insertOne({
+      ...fakePayment,
+      status: 'pending',
+      method: 'admin-grant',
+      date: new Date().toISOString().slice(0, 10),
+    });
+    await grantAccess(fakePayment);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /* ════════════════════════════════
    PAID — byl.mn success_url redirect page (auto-closes tab)
 ════════════════════════════════ */
