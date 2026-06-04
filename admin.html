@@ -230,19 +230,32 @@ select.form-input option{background:var(--dark);}
 .toast.ok{background:rgba(15,42,26,0.95);border:1px solid rgba(34,197,94,0.3);color:#4ade80;}
 .toast.err{background:rgba(42,15,15,0.95);border:1px solid rgba(239,68,68,0.3);color:#f87171;}
 
+/* ===== HAMBURGER + BACKDROP ===== */
+.hamburger{display:none;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius);width:40px;height:40px;font-size:1.2rem;color:var(--text);cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;}
+.sidebar-backdrop{display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);}
+.sidebar-backdrop.show{display:block;}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.settings-grid{grid-template-columns:1fr;}}
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar{transform:translateX(-100%);transition:transform .3s;box-shadow:var(--shadow-lg);}
   .sidebar.open{transform:translateX(0);}
   .main{margin-left:0;}
   .content{padding:1rem;}
   .topbar{padding:.85rem 1rem;}
+  .topbar-title{font-size:1.25rem;}
+  .hamburger{display:inline-flex;}
   .stats-grid{grid-template-columns:1fr 1fr;gap:.75rem;}
+  .user-grid{grid-template-columns:1fr;}
+  .users-toolbar{gap:.6rem;}
+  .modal-box{padding:1.5rem;}
 }
 </style>
 </head>
 <body>
+
+<!-- Mobile sidebar backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -268,6 +281,7 @@ select.form-input option{background:var(--dark);}
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()" aria-label="Цэс">☰</button>
     <div class="topbar-title" id="topbarTitle">Хяналтын Самбар</div>
     <div class="topbar-search" style="display:none;"><span>🔍</span><input type="text" placeholder="Хайх..." id="globalSearch" oninput="handleSearch(this.value)"></div>
     <button class="btn btn-primary" id="topbarActionBtn" onclick="topbarAction()" style="display:none;">+ Кино нэмэх</button>
@@ -873,6 +887,17 @@ function showPanel(id, el) {
     if (!showSearch) { const gs = document.getElementById('globalSearch'); if (gs) gs.value=''; }
   }
   if(id==='payments') document.getElementById('pendingBadge').style.display='none';
+  closeSidebar();  // утсан дээр цэс сонгоход sidebar хаагдана
+}
+
+/* ===== MOBILE SIDEBAR ===== */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
 }
 
 /* ===== RENDER REVENUE CHART ===== */
