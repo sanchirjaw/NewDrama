@@ -262,7 +262,7 @@ const BYL_PROJECT_ID = process.env.BYL_PROJECT_ID || '568';
 
 // Invoice үүсгэж payment URL буцаана
 app.post('/api/byl/checkout', async (req, res) => {
-  const { plan, uid, movieId } = req.body;
+  const { plan, uid, movieId, email } = req.body;
   if (!plan || !uid) return res.status(400).json({ error: 'plan болон uid шаардлагатай' });
   if (!BYL_TOKEN)    return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
 
@@ -312,6 +312,7 @@ app.post('/api/byl/checkout', async (req, res) => {
 
     await col('payments').insertOne({
       uid, plan, amount: p.amount, days: p.days,
+      email: email || null,
       movieId: plan === 'movie' ? (movieId || null) : null,
       movieTitle: plan === 'movie' ? (p.name || 'Дан Кино') : null,
       status: 'pending',
@@ -342,7 +343,9 @@ async function grantAccess(payment) {
           paidAt: new Date(),
         }},
         $inc: { totalPaid: payment.amount || 0 },
-      }
+        $setOnInsert: { uid: payment.uid, email: payment.email || '', createdAt: new Date() },
+      },
+      { upsert: true }
     );
   } else {
     // Monthly / Quarterly: ерөнхий subscription тавина
@@ -351,7 +354,9 @@ async function grantAccess(payment) {
       {
         $set: { plan: payment.plan, planExpiry: expiry },
         $inc: { totalPaid: payment.amount || 0 },
-      }
+        $setOnInsert: { uid: payment.uid, email: payment.email || '', createdAt: new Date() },
+      },
+      { upsert: true }
     );
   }
 
@@ -360,6 +365,33 @@ async function grantAccess(payment) {
     { $set: { status: 'paid', paidAt: new Date() } }
   );
 }
+
+// Fallback: byl.mn-д шууд invoice status шалгах (webhook ирэхгүй үед)
+app.get('/api/byl/check/:uid', async (req, res) => {
+  try {
+    const payment = await col('payments').findOne(
+      { uid: req.params.uid, status: 'pending' },
+      { sort: { _id: -1 } }
+    );
+    if (!payment) return res.json({ paid: false });
+
+    // был.mn-д шууд invoice status шалгах
+    const r = await fetch(`https://byl.mn/api/v1/projects/${BYL_PROJECT_ID}/invoices/${payment.bylInvoiceId}`, {
+      headers: { 'Authorization': `Bearer ${BYL_TOKEN}`, 'Accept': 'application/json' },
+    });
+    const data = await r.json();
+    const inv = data.data || data;
+    const isPaid = inv?.status === 'paid' || inv?.paid === true;
+
+    if (isPaid) {
+      await grantAccess(payment);
+      return res.json({ paid: true });
+    }
+    res.json({ paid: false, status: inv?.status });
+  } catch (e) {
+    res.json({ paid: false, error: e.message });
+  }
+});
 
 // Webhook — byl.mn invoice.paid дуудна
 app.post('/api/byl/webhook', async (req, res) => {

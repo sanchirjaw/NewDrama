@@ -1003,7 +1003,7 @@ async function openQpay(plan) {
     const res  = await fetch('/api/byl/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, uid: user.uid, movieId: _movieId || null }),
+      body: JSON.stringify({ plan, uid: user.uid, email: user.email || '', movieId: _movieId || null }),
     });
     const data = await res.json();
     if (data.url) {
@@ -1056,6 +1056,10 @@ function _startPaymentPoll(uid) {
 
   _payPollTimer = setInterval(async () => {
     attempts++;
+    // Эр 5 дахь удаа был.mn-д шууд шалгах (webhook ирэхгүй байх тохиолдолд)
+    if (attempts % 5 === 0) {
+      fetch(`/api/byl/check/${uid}`).catch(() => {});
+    }
     if (attempts > MAX) {
       clearInterval(_payPollTimer);
       _payPollTimer = null;
