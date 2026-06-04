@@ -204,59 +204,105 @@ firebase.auth().onAuthStateChanged(user => {
 .inapp-icon { font-size:3.5rem; margin-bottom:1.25rem; }
 .inapp-title { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:#fff;margin-bottom:.75rem; }
 .inapp-desc { color:var(--text-dim);font-size:.9rem;line-height:1.7;margin-bottom:2rem;max-width:320px; }
-.inapp-steps { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:2rem;text-align:left;width:100%;max-width:320px; }
-.inapp-step { display:flex;align-items:center;gap:.75rem;padding:.5rem 0;color:var(--text);font-size:.85rem; }
-.inapp-step:not(:last-child) { border-bottom:1px solid rgba(255,255,255,0.06); }
-.inapp-step-num { width:24px;height:24px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#07070e;flex-shrink:0; }
-.inapp-copy-btn {
-  width:100%;max-width:320px;padding:.9rem;
-  background:var(--grad);border:none;border-radius:12px;
-  color:#07070e;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;
+.inapp-open-btn {
+  width:100%;max-width:320px;padding:1rem;
+  background:var(--grad);border:none;border-radius:14px;
+  color:#07070e;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;
   cursor:pointer;letter-spacing:.3px;margin-bottom:.75rem;
+  display:flex;align-items:center;justify-content:center;gap:.6rem;
 }
-.inapp-url { font-size:.75rem;color:var(--text-dim);word-break:break-all;margin-top:.5rem; }
+.inapp-copy-btn {
+  width:100%;max-width:320px;padding:.8rem;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;
+  color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600;
+  cursor:pointer;letter-spacing:.3px;margin-bottom:.5rem;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+.inapp-hint { font-size:.75rem;color:var(--text-muted);margin-top:.75rem;line-height:1.6;max-width:300px; }
+.inapp-url { font-size:.72rem;color:var(--text-dim);word-break:break-all;margin-top:.4rem;max-width:320px; }
 </style>
 </head>
 <body>
 
 <!-- IN-APP BROWSER BANNER -->
 <div id="inappBanner">
-  <div class="inapp-icon">🌐</div>
-  <div class="inapp-title">Гадаад браузерт нээнэ үү</div>
-  <div class="inapp-desc">Facebook болон бусад апп-ын дотоод браузер нь бүртгэлийг дэмждэггүй. Chrome эсвэл Safari-д нээнэ үү.</div>
-  <div class="inapp-steps">
-    <div class="inapp-step"><div class="inapp-step-num">1</div> Доорх товчийг дарж URL хуулна уу</div>
-    <div class="inapp-step"><div class="inapp-step-num">2</div> Chrome эсвэл Safari нээнэ үү</div>
-    <div class="inapp-step"><div class="inapp-step-num">3</div> URL хаягийн мөрөнд paste хийнэ үү</div>
-  </div>
-  <button class="inapp-copy-btn" onclick="copyUrl()">🔗 Линк хуулах</button>
+  <div class="inapp-icon" id="inappIcon">🌐</div>
+  <div class="inapp-title">Браузерт нээнэ үү</div>
+  <div class="inapp-desc" id="inappDesc">Бүртгүүлэхийн тулд Safari эсвэл Chrome браузерт нээнэ үү.</div>
+  <button class="inapp-open-btn" id="inappOpenBtn" onclick="openInBrowser()">
+    <span id="inappBtnIcon">🧭</span> <span id="inappBtnText">Safari-д нээх</span>
+  </button>
+  <button class="inapp-copy-btn" onclick="copyUrl()">
+    <span>🔗</span> <span id="inappCopyText">Линк хуулах</span>
+  </button>
+  <div class="inapp-hint" id="inappHint">Дээрх товч ажиллахгүй бол линкийг хуулж Chrome/Safari-д paste хийнэ үү</div>
   <div class="inapp-url" id="inappUrl"></div>
 </div>
 
 <script>
+var _inappUrl = location.href;
 (function(){
   const ua = navigator.userAgent || '';
-  const isInApp = /FBAN|FBAV|FBIOS|FB_IAB|Instagram|LinkedInApp|Twitter|TikTok|Snapchat|Line\/|MicroMessenger|WebView|wv\b/.test(ua)
-    || (ua.includes('iPhone') && !ua.includes('Safari'))
-    || (ua.includes('Android') && ua.includes('wv'));
-  if (isInApp) {
-    document.getElementById('inappBanner').classList.add('show');
-    document.getElementById('inappUrl').textContent = location.href;
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isInApp = /FBAN|FBAV|FBIOS|FB_IAB|Instagram|LinkedInApp|Twitter|TikTok|Snapchat|Line\/|MicroMessenger/.test(ua)
+    || (isIOS && !/Safari\//.test(ua))
+    || (isAndroid && /wv\b|; wv\)/.test(ua));
+  if (!isInApp) return;
+
+  document.getElementById('inappBanner').classList.add('show');
+  document.getElementById('inappUrl').textContent = _inappUrl;
+
+  if (isAndroid) {
+    document.getElementById('inappIcon').textContent = '🌍';
+    document.getElementById('inappBtnIcon').textContent = '🟢';
+    document.getElementById('inappBtnText').textContent = 'Chrome-д нээх';
+    document.getElementById('inappDesc').textContent = 'Бүртгүүлэхийн тулд Chrome браузерт нээнэ үү.';
   }
 })();
+
+function openInBrowser() {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+
+  if (isIOS) {
+    // Safari-д шууд нээх
+    window.location.href = 'x-safari-' + _inappUrl;
+    // Fallback: хэрэв 1.5s-д юм болохгүй бол hint харуулах
+    setTimeout(() => {
+      document.getElementById('inappHint').textContent = 'Safari нээгдэхгүй байвал доорх линкийг хуулж Safari хаягийн мөрөнд paste хийнэ үү.';
+      document.getElementById('inappHint').style.color = 'var(--cyan)';
+    }, 1500);
+  } else if (isAndroid) {
+    // Chrome intent
+    const intentUrl = 'intent://' + _inappUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+    window.location.href = intentUrl;
+    setTimeout(() => {
+      document.getElementById('inappHint').textContent = 'Chrome нээгдэхгүй байвал доорх линкийг хуулж браузерт paste хийнэ үү.';
+      document.getElementById('inappHint').style.color = 'var(--cyan)';
+    }, 1500);
+  } else {
+    window.open(_inappUrl, '_blank');
+  }
+}
+
 function copyUrl() {
-  navigator.clipboard?.writeText(location.href).then(() => {
-    const btn = document.querySelector('.inapp-copy-btn');
+  const btn = document.getElementById('inappCopyText');
+  navigator.clipboard?.writeText(_inappUrl).then(() => {
     btn.textContent = '✓ Хуулагдлаа!';
-    setTimeout(() => btn.textContent = '🔗 Линк хуулах', 2000);
+    setTimeout(() => btn.textContent = 'Линк хуулах', 2500);
   }).catch(() => {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = location.href; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy'); ta.remove();
-    const btn = document.querySelector('.inapp-copy-btn');
-    btn.textContent = '✓ Хуулагдлаа!';
-    setTimeout(() => btn.textContent = '🔗 Линк хуулах', 2000);
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = _inappUrl; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); ta.remove();
+      btn.textContent = '✓ Хуулагдлаа!';
+      setTimeout(() => btn.textContent = 'Линк хуулах', 2500);
+    } catch(e) {
+      btn.textContent = 'Дээрх URL-г хуулна уу';
+    }
   });
 }
 </script>
