@@ -213,7 +213,22 @@ app.put('/api/users/:uid/role', async (req, res) => {
 /* ════════════════════════════════
    PAYMENTS
 ════════════════════════════════ */
+// Хүлээгдэж буй (төлөгдөөгүй) төлбөрийг хэдэн хоногийн дараа автоматаар устгах
+const PENDING_TTL_DAYS = 7;
+
 app.get('/api/payments', async (req, res) => {
+  // Lazy cleanup: 7 хоногоос хэтэрсэн pending төлбөрийг устгана
+  try {
+    const cutoff = new Date(Date.now() - PENDING_TTL_DAYS * 86400000);
+    await col('payments').deleteMany({
+      status: 'pending',
+      $or: [
+        { createdAt: { $lt: cutoff } },
+        { createdAt: { $exists: false }, date: { $lt: cutoff.toISOString().slice(0,10) } },
+      ],
+    });
+  } catch (e) { console.warn('Pending cleanup алдаа:', e.message); }
+
   const payments = await col('payments').find().sort({ date: -1 }).toArray();
   res.json(payments);
 });
@@ -328,6 +343,7 @@ app.post('/api/byl/checkout', async (req, res) => {
       movieTitle: plan === 'movie' ? (p.name || 'Дан Кино') : null,
       status: 'pending',
       date: new Date().toISOString().slice(0, 10),
+      createdAt: new Date(),
       bylInvoiceId: inv.id,
     });
 
