@@ -197,22 +197,27 @@
   #featured3Grid .top3-card { flex:0 0 62vw; max-width:220px; scroll-snap-align:start; }
   #featured3Grid .featured3-empty { flex:0 0 100%; }
 
-  /* Genre rows + full grid — mobile 3 баганатай */
+  /* Genre rows + full grid — таблетад 3 баганатай */
   .genre-row-cards,
   .full-grid {
     grid-template-columns:repeat(3,1fr);
-    gap:.45rem;
+    gap:.6rem;
   }
-  .genre-row-cards .movie-card-info,
-  .full-grid .movie-card-info { padding:.35rem .3rem; }
-  .genre-row-cards .movie-card-title,
-  .full-grid .movie-card-title { font-size:.65rem; line-height:1.2; }
-  .genre-row-cards .movie-card-meta,
-  .full-grid .movie-card-meta  { font-size:.58rem; gap:.25rem; }
-  .genre-row-cards .movie-card-rating,
-  .full-grid .movie-card-rating { display:none; }
-
   .promo-strip { padding:2rem; flex-direction:column; text-align:center; }
+}
+
+/* Утас — 2 багана, том постер, уншигдахуйц текст */
+@media (max-width:600px) {
+  .genre-row-cards,
+  .full-grid {
+    grid-template-columns:repeat(2,1fr);
+    gap:.75rem;
+  }
+  .genre-row-cards .movie-card-title,
+  .full-grid .movie-card-title { font-size:.82rem; line-height:1.25; }
+  .genre-row-cards .movie-card-meta,
+  .full-grid .movie-card-meta  { font-size:.68rem; }
+  .section-title { font-size:1.5rem; }
 }
 </style>
 </head>
