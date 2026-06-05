@@ -704,6 +704,9 @@ const PLAN_LABEL = {
   free:      '✦ Үнэгүй',
   monthly:   '✦ 1 Сарын Багц',
   quarterly: '✦ 3 Сарын Багц',
+  halfyear:  '✦ 6 Сарын Багц',
+  custom:    '✦ Тусгай Багц',
+  unlimited: '♾️ Хязгааргүй Багц',
   movie:     '✦ Дан Кино',
 };
 
@@ -787,10 +790,12 @@ firebase.auth().onAuthStateChanged(async user => {
     const data = await res.json();
     const plan     = data.plan || 'free';
     const expiry   = data.planExpiry ? new Date(data.planExpiry) : null;
-    // plan === 'movie' бол ерөнхий subscription биш — зөвхөн monthly/quarterly харуулна
-    const isSubPlan = plan === 'monthly' || plan === 'quarterly';
+    const unlimited = !!data.planUnlimited;
+    // 'movie'/'free' биш бөгөөд хугацаа байгаа бол багц гэж үзнэ
+    const isSubPlan = plan !== 'movie' && plan !== 'free' && !!expiry;
     const active    = isSubPlan && expiry ? expiry > new Date() : false;
     const daysLeft  = isSubPlan && expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
+    const daysDisplay = unlimited ? '♾️' : daysLeft;
     // Дан кино тоолох
     const now = new Date();
     const activeSingleMovies = (data.purchasedMovies || []).filter(pm => new Date(pm.expiry) > now).length;
@@ -799,11 +804,11 @@ firebase.auth().onAuthStateChanged(async user => {
     const badge = document.getElementById('dashPlanBadge');
     if (badge) badge.textContent = isSubPlan ? (PLAN_LABEL[plan] || '✦ ' + plan) : '✦ Үнэгүй';
     const sdl = document.getElementById('sidebarDaysLeft');
-    if (sdl) sdl.textContent = isSubPlan && active ? daysLeft + ' хоног' : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
+    if (sdl) sdl.textContent = isSubPlan && active ? (unlimited ? '♾️' : daysLeft + ' хоног') : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
 
     // Quick stat — дансны хоног
     const qsDL = document.getElementById('qsDaysLeft');
-    if (qsDL) qsDL.textContent = isSubPlan && active ? daysLeft : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
+    if (qsDL) qsDL.textContent = isSubPlan && active ? daysDisplay : activeSingleMovies > 0 ? activeSingleMovies + ' кино' : '—';
 
     // Sub panel
     const planName   = document.getElementById('subPlanName');
@@ -814,9 +819,9 @@ firebase.auth().onAuthStateChanged(async user => {
     if (planStatus) planStatus.textContent = !isSubPlan
       ? 'Идэвхгүй · Багц авна уу'
       : active
-        ? `Идэвхтэй · ${expiry.toLocaleDateString('mn-MN')} хүртэл`
+        ? (unlimited ? 'Идэвхтэй · Хязгааргүй хугацаа' : `Идэвхтэй · ${expiry.toLocaleDateString('mn-MN')} хүртэл`)
         : 'Дуусгавар болсон';
-    if (daysEl) daysEl.textContent = isSubPlan && active ? daysLeft : '—';
+    if (daysEl) daysEl.textContent = isSubPlan && active ? daysDisplay : '—';
     if (paidEl) paidEl.textContent = (data.totalPaid || 0).toLocaleString() + '₮';
 
     // Миний авсан кино section

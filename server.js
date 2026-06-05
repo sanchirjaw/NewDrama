@@ -293,9 +293,9 @@ app.post('/api/byl/checkout', async (req, res) => {
   if (!BYL_TOKEN)    return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
 
   const planCfg = {
-    monthly:   { amount: 12000, name: '1 Сарын Багц',  days: 30 },
-    quarterly: { amount: 20000, name: '3 Сарын Багц',  days: 90 },
-    movie:     { amount: 3400,  name: 'Дан Кино',      days: 2  },
+    monthly:   { amount: 12000, name: '1 Сарын Багц',  days: 30  },
+    quarterly: { amount: 20000, name: '3 Сарын Багц',  days: 90  },
+    movie:     { amount: 3400,  name: 'Дан Кино',      days: 180 },  // 6 сар
   };
   // Settings + movie price fetched in parallel
   try {
@@ -367,6 +367,7 @@ async function grantAccess(payment) {
           movieId:    payment.movieId || null,
           movieTitle: payment.movieTitle || 'Дан Кино',
           expiry,
+          unlimited:  !!payment.unlimited,
           paidAt: new Date(),
         }},
         $inc: { totalPaid: payment.amount || 0 },
@@ -375,11 +376,11 @@ async function grantAccess(payment) {
       { upsert: true }
     );
   } else {
-    // Monthly / Quarterly: ерөнхий subscription тавина
+    // Багц: ерөнхий subscription тавина
     await col('users').updateOne(
       { uid: payment.uid },
       {
-        $set: { plan: payment.plan, planExpiry: expiry },
+        $set: { plan: payment.plan, planExpiry: expiry, planUnlimited: !!payment.unlimited },
         $inc: { totalPaid: payment.amount || 0 },
         $setOnInsert: { uid: payment.uid, email: payment.email || '', createdAt: new Date() },
       },
@@ -672,20 +673,34 @@ app.post('/api/payments/:id/approve', async (req, res) => {
   }
 });
 
-/* Admin: хэрэглэгчид гараар эрх олгох */
+/* Admin: хэрэглэгчид гараар эрх олгох (custom хугацаа / хязгааргүй) */
 app.post('/api/users/:uid/grant', async (req, res) => {
   try {
-    const { plan, movieId, movieTitle } = req.body;
+    const { plan, movieId, movieTitle, days, unlimited } = req.body;
     const uid = req.params.uid;
-    const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : plan === 'movie' ? 2 : 30;
+    // Хугацаа: unlimited бол ~100 жил, custom days өгсөн бол түүнийг, эс бол plan-аас
+    let grantDays;
+    if (unlimited) grantDays = 36500;                 // ≈ хязгааргүй
+    else if (Number(days) > 0) grantDays = Number(days);
+    else grantDays = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : plan === 'movie' ? 180 : 30;
+
+    // Багцын хувьд хугацаанаас тохирох plan key (зөв label-д)
+    let planKey = plan;
+    if (plan !== 'movie') {
+      planKey = unlimited ? 'unlimited'
+        : grantDays <= 30  ? 'monthly'
+        : grantDays <= 90  ? 'quarterly'
+        : grantDays <= 180 ? 'halfyear'
+        : 'custom';
+    }
+
     const fakePayment = {
-      uid, plan, days,
+      uid, plan: planKey, days: grantDays, unlimited: !!unlimited,
       movieId:    plan === 'movie' ? (movieId || null) : null,
       movieTitle: plan === 'movie' ? (movieTitle || 'Дан Кино') : null,
       amount: 0,
       _id: new (require('mongodb').ObjectId)(),
     };
-    // payments collection-д бүртгэх
     await col('payments').insertOne({
       ...fakePayment,
       status: 'pending',

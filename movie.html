@@ -313,7 +313,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
           <div class="buy-opt-price">12,000₮</div>
         </div>
         <div class="buy-opt" onclick="openChoiceModal()">
-          <div><div class="buy-opt-name">🎬 Зөвхөн энэ кино</div><div class="buy-opt-sub">48 цагийн хандалт</div></div>
+          <div><div class="buy-opt-name">🎬 Зөвхөн энэ кино</div><div class="buy-opt-sub">6 сарын хандалт</div></div>
           <div class="buy-opt-price">3,400₮</div>
         </div>
         <button class="btn-primary" style="width:100%;margin-top:1.25rem;justify-content:center;border-radius:12px;" onclick="openChoiceModal()">QPay-ээр төлөх</button>
@@ -411,7 +411,7 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
         <div class="choice-icon">🎬</div>
         <div style="flex:1;">
           <div class="choice-name">Дан кино</div>
-          <div class="choice-sub">Зөвхөн энэ кино · 48 цагийн хандалт · HD 1080p</div>
+          <div class="choice-sub">Зөвхөн энэ кино · 6 сарын хандалт · HD 1080p</div>
         </div>
         <div class="choice-price">3,400₮</div>
       </div>
@@ -550,7 +550,8 @@ firebase.auth().onAuthStateChanged(async user => {
     const plan   = data.plan || 'free';
     const expiry = data.planExpiry ? new Date(data.planExpiry) : null;
     const active = expiry ? expiry > new Date() : false;
-    if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
+    // Идэвхтэй багц (1сар/3сар/6сар/custom/хязгааргүй) бол бүх кино үзнэ
+    if (active && plan !== 'free' && plan !== 'movie') subscribed = true;
     if (data.isAdmin) subscribed = true;
     // Дан кино худалдаж авсан эсэх — энэ киноны эрхтэй бол тоглуулна
     const ownsMovie = Array.isArray(data.purchasedMovies)
@@ -659,7 +660,7 @@ const _mv = (_pp.movie     || 3400).toLocaleString();
 const _mo = (_pp.monthly   || 12000).toLocaleString();
 const _qu = (_pp.quarterly || 20000).toLocaleString();
 const planInfo = {
-  movie:     { title:'Дан кино',      amount:`${_mv}₮`,  desc:'Дан кино · 48 цагийн хандалт' },
+  movie:     { title:'Дан кино',      amount:`${_mv}₮`,  desc:'Дан кино · 6 сарын хандалт' },
   monthly:   { title:'1 Сарын багц', amount:`${_mo}₮`, desc:'1 сарын хязгааргүй хандалт' },
   quarterly: { title:'3 Сарын багц', amount:`${_qu}₮`, desc:'3 сарын хязгааргүй хандалт' },
 };

@@ -827,9 +827,8 @@ select.form-input option{background:var(--dark);}
     <div style="margin-bottom:1rem;">
       <label style="font-size:.78rem;color:var(--text-dim);display:block;margin-bottom:.5rem;">Эрхийн төрөл</label>
       <select id="grantPlan" onchange="onGrantPlanChange()" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
-        <option value="monthly">📅 1 сарын багц (30 хоног)</option>
-        <option value="quarterly">📅 3 сарын багц (90 хоног)</option>
-        <option value="movie">🎬 Дан кино (2 хоног)</option>
+        <option value="monthly">📦 Багц — бүх кино үзэх эрх</option>
+        <option value="movie">🎬 Дан кино — нэг кино</option>
       </select>
     </div>
     <div id="grantMovieWrap" style="display:none;margin-bottom:1rem;">
@@ -837,6 +836,20 @@ select.form-input option{background:var(--dark);}
       <select id="grantMovieId" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
         <option value="">— Кино сонгоно уу —</option>
       </select>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:.78rem;color:var(--text-dim);display:block;margin-bottom:.5rem;">Хугацаа</label>
+      <select id="grantDuration" onchange="onGrantDurationChange()" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
+        <option value="30">📅 1 сар (30 хоног)</option>
+        <option value="90">📅 3 сар (90 хоног)</option>
+        <option value="180">📅 6 сар (180 хоног)</option>
+        <option value="custom">✍️ Гараар оруулах</option>
+        <option value="unlimited">♾️ Хязгааргүй</option>
+      </select>
+    </div>
+    <div id="grantCustomWrap" style="display:none;margin-bottom:1rem;">
+      <label style="font-size:.78rem;color:var(--text-dim);display:block;margin-bottom:.5rem;">Хэдэн хоног?</label>
+      <input id="grantCustomDays" type="number" min="1" placeholder="Жишээ: 365" style="width:100%;padding:.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:.88rem;">
     </div>
     <button onclick="submitGrant()" style="width:100%;padding:.9rem;background:linear-gradient(135deg,#00e5ff,#a855f7);border:none;border-radius:12px;color:#07070e;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;margin-top:.5rem;">
       ✓ Эрх олгох
@@ -978,8 +991,9 @@ function renderUsers(data) {
       ? dbPayments.filter(p => p.uid === u.uid && (p.plan === 'monthly' || p.plan === 'quarterly') && p.status === 'paid').length : 0;
     const planKey  = isDbUser ? u.plan : u.planKey;
     const isActive = isDbUser ? (u.planExpiry && new Date(u.planExpiry) > now) : (u.status === 'active');
-    const planLabel = planKey === 'monthly' ? '1 сарын' : planKey === 'quarterly' ? '3 сарын' : '';
-    const planClass = planKey === 'monthly' ? 'pill-monthly' : planKey === 'quarterly' ? 'pill-quarterly' : '';
+    const PLAN_NAMES = { monthly:'1 сарын', quarterly:'3 сарын', halfyear:'6 сарын', custom:'Тусгай', unlimited:'♾️ Хязгааргүй' };
+    const planLabel = u.planUnlimited ? '♾️ Хязгааргүй' : (PLAN_NAMES[planKey] || '');
+    const planClass = planKey === 'quarterly' ? 'pill-quarterly' : (planKey && planKey!=='free' && planKey!=='movie') ? 'pill-monthly' : '';
     const ll = u.lastLogin ? (isDbUser ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : u.lastLogin) : '—';
     const displayName = (u.name || u.email || '—').replace(/'/g, '&#39;');
     const initial = (u.name || u.email || '?').trim().charAt(0).toUpperCase();
@@ -1649,6 +1663,9 @@ function openGrantModal(uid, name) {
   document.getElementById('grantUserName').textContent = name;
   document.getElementById('grantPlan').value = 'monthly';
   document.getElementById('grantMovieWrap').style.display = 'none';
+  document.getElementById('grantDuration').value = '30';
+  document.getElementById('grantCustomWrap').style.display = 'none';
+  document.getElementById('grantCustomDays').value = '';
   // Кинонуудыг dropdown-д нэмэх
   const sel = document.getElementById('grantMovieId');
   sel.innerHTML = '<option value="">— Кино сонгоно уу —</option>';
@@ -1672,6 +1689,11 @@ function onGrantPlanChange() {
   document.getElementById('grantMovieWrap').style.display = plan === 'movie' ? 'block' : 'none';
 }
 
+function onGrantDurationChange() {
+  const dur = document.getElementById('grantDuration').value;
+  document.getElementById('grantCustomWrap').style.display = dur === 'custom' ? 'block' : 'none';
+}
+
 async function submitGrant() {
   if (!_grantUid) return;
   const plan = document.getElementById('grantPlan').value;
@@ -1679,16 +1701,27 @@ async function submitGrant() {
   const movieId = movieSel.value;
   const movieTitle = movieSel.options[movieSel.selectedIndex]?.dataset.title || '';
   if (plan === 'movie' && !movieId) { toast('Кино сонгоно уу', 'err'); return; }
+
+  // Хугацаа тодорхойлох
+  const dur = document.getElementById('grantDuration').value;
+  let days = null, unlimited = false;
+  if (dur === 'unlimited') unlimited = true;
+  else if (dur === 'custom') {
+    days = parseInt(document.getElementById('grantCustomDays').value);
+    if (!days || days < 1) { toast('Хоногийн тоо оруулна уу', 'err'); return; }
+  } else days = parseInt(dur);
+
   try {
     const res = await fetch(`/api/users/${_grantUid}/grant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, movieId: movieId || null, movieTitle }),
+      body: JSON.stringify({ plan, movieId: movieId || null, movieTitle, days, unlimited }),
     });
     const data = await res.json();
     if (data.ok) {
-      const label = plan === 'monthly' ? '1 сарын багц' : plan === 'quarterly' ? '3 сарын багц' : `"${movieTitle}" кино`;
-      toast(`✓ ${label} эрх олгогдлоо`);
+      const typeLabel = plan === 'movie' ? `"${movieTitle}" кино` : 'Багцын эрх';
+      const durLabel = unlimited ? 'хязгааргүй' : `${days} хоног`;
+      toast(`✓ ${typeLabel} — ${durLabel} олгогдлоо`);
       closeGrantModal();
       await refreshAllData();
     } else {
