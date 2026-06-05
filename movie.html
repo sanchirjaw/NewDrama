@@ -541,6 +541,10 @@ firebase.auth().onAuthStateChanged(async user => {
   });
   // MongoDB-с plan шалгах
   try {
+    // Эхлээд был.mn-д хүлээгдэж буй төлбөр төлөгдсөн эсэхийг нөхөн шалгах
+    // (webhook саатсан/ирээгүй тохиолдолд эрхийг сэргээнэ)
+    await fetch(`/api/byl/check/${user.uid}`).catch(() => {});
+
     const res  = await fetch(`/api/users/me/${user.uid}`);
     const data = await res.json();
     const plan   = data.plan || 'free';
@@ -548,6 +552,10 @@ firebase.auth().onAuthStateChanged(async user => {
     const active = expiry ? expiry > new Date() : false;
     if ((plan === 'monthly' || plan === 'quarterly') && active) subscribed = true;
     if (data.isAdmin) subscribed = true;
+    // Дан кино худалдаж авсан эсэх — энэ киноны эрхтэй бол тоглуулна
+    const ownsMovie = Array.isArray(data.purchasedMovies)
+      && data.purchasedMovies.some(pm => String(pm.movieId) === String(_movieId) && new Date(pm.expiry) > new Date());
+    if (ownsMovie) subscribed = true;
   } catch (e) { console.warn('Plan шалгахад алдаа:', e.message); }
   _authReady = true;
   _maybeAutoPlay();
@@ -1050,13 +1058,13 @@ async function _checkAndPlay(uid) {
     const expiry = me.planExpiry ? new Date(me.planExpiry) : null;
     // Дан кино: purchasedMovies дотор тухайн кино байгаа эсэх
     const movieAccess = Array.isArray(me.purchasedMovies)
-      ? me.purchasedMovies.some(pm => pm.movieId === _movieId && new Date(pm.expiry) > new Date())
+      ? me.purchasedMovies.some(pm => String(pm.movieId) === String(_movieId) && new Date(pm.expiry) > new Date())
       : false;
     const subActive = !!(expiry && expiry > new Date());
     if (movieAccess || subActive) {
       if (_payPollTimer) { clearInterval(_payPollTimer); _payPollTimer = null; }
       _payPollUid = null;
-      if (subActive) subscribed = true;
+      subscribed = true;  // эрхтэй болсон тул бүрэн киног тоглуулна
       document.getElementById('choiceModal')?.classList.remove('show');
       document.getElementById('qpayModal')?.classList.remove('show');
       toast('✅ Төлбөр амжилттай! Кино тоглуулж байна...', 'ok');
