@@ -304,7 +304,7 @@
       <div class="welcome-card">
         <div>
           <h2>Сайн байна уу, <span id="welcomeName">...</span>! 👋</h2>
-          <p>Өнөөдөр ямар кино үзэх вэ? 2,400+ контент хүлээж байна.</p>
+          <p>Өнөөдөр ямар кино үзэх вэ? Шинэ кино, цувралууд хүлээж байна.</p>
         </div>
         <a href="index.html#movies" class="btn-primary">▶&nbsp; Кино үзэх</a>
       </div>
@@ -399,36 +399,16 @@
       <div class="settings-wrap">
         <div class="settings-block">
           <div class="settings-block-title">Хувийн мэдээлэл</div>
-          <div class="form-row-2">
-            <div class="form-group"><label class="form-label">Нэр</label><input class="form-input" id="settingFirstName" value=""></div>
-            <div class="form-group"><label class="form-label">Овог</label><input class="form-input" id="settingLastName" value=""></div>
-          </div>
-          <div class="form-group"><label class="form-label">Имэйл</label><input class="form-input" id="settingEmail" type="email" value=""></div>
-          <div class="form-group"><label class="form-label">Утас</label><input class="form-input" type="tel" placeholder="+976 9999 9999"></div>
-          <button class="btn-primary" onclick="toast('✓ Тохиргоо хадгалагдлаа')">Хадгалах</button>
+          <div class="form-group"><label class="form-label">Нэр</label><input class="form-input" id="settingName" value="" placeholder="Таны нэр"></div>
+          <div class="form-group"><label class="form-label">Имэйл</label><input class="form-input" id="settingEmail" type="email" value="" readonly style="opacity:.6;cursor:not-allowed;"></div>
+          <button class="btn-primary" id="saveProfileBtn" onclick="saveProfile()">Хадгалах</button>
         </div>
 
-        <div class="settings-block">
-          <div class="settings-block-title">Мэдэгдэл</div>
-          <div class="toggle-row">
-            <div><div class="toggle-row-label">Имэйл мэдэгдэл</div><div class="toggle-row-sub">Шинэ кино, цуврал гарахад</div></div>
-            <div class="mini-sw on" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
-          </div>
-          <div class="toggle-row">
-            <div><div class="toggle-row-label">Төлбөрийн мэдэгдэл</div><div class="toggle-row-sub">Багц дуусахаас 3 хоногийн өмнө</div></div>
-            <div class="mini-sw on" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
-          </div>
-          <div class="toggle-row">
-            <div><div class="toggle-row-label">Telegram мэдэгдэл</div><div class="toggle-row-sub">Bot холбох</div></div>
-            <div class="mini-sw" onclick="this.classList.toggle('on')"><div class="mini-knob"></div></div>
-          </div>
-        </div>
-
-        <div class="settings-block">
+        <div class="settings-block" id="passwordBlock">
           <div class="settings-block-title">Нууц үг солих</div>
-          <div class="form-group"><label class="form-label">Одоогийн нууц үг</label><input class="form-input" type="password" placeholder="••••••••"></div>
-          <div class="form-group"><label class="form-label">Шинэ нууц үг</label><input class="form-input" type="password" placeholder="8+ тэмдэгт"></div>
-          <button class="btn-secondary" onclick="toast('✓ Нууц үг солигдлоо')">Нууц үг солих</button>
+          <div class="form-group"><label class="form-label">Одоогийн нууц үг</label><input class="form-input" id="curPass" type="password" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Шинэ нууц үг</label><input class="form-input" id="newPass" type="password" placeholder="8+ тэмдэгт"></div>
+          <button class="btn-secondary" id="changePassBtn" onclick="changePassword()">Нууц үг солих</button>
         </div>
 
         <div class="settings-block">
@@ -619,6 +599,52 @@ function go(id, el) {
   }
 }
 
+async function saveProfile() {
+  const name = document.getElementById('settingName').value.trim();
+  if (!name) { toast('Нэрээ оруулна уу', 'err'); return; }
+  const user = firebase.auth().currentUser;
+  if (!user) { toast('Нэвтрээгүй байна', 'err'); return; }
+  const btn = document.getElementById('saveProfileBtn');
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Хадгалж байна...';
+  try {
+    await user.updateProfile({ displayName: name });
+    await fetch('/api/users/sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid, name, email: user.email || '' })
+    }).catch(()=>{});
+    // UI шинэчлэх
+    document.getElementById('dashUserName')?.replaceChildren(document.createTextNode(name));
+    const av = name.charAt(0).toUpperCase();
+    const avEl = document.getElementById('dashAv'); if (avEl && !user.photoURL) avEl.textContent = av;
+    toast('✓ Мэдээлэл хадгалагдлаа');
+  } catch(e) { toast('Алдаа: ' + (e.message||e.code), 'err'); }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+
+async function changePassword() {
+  const cur = document.getElementById('curPass').value;
+  const nw  = document.getElementById('newPass').value;
+  if (!cur || !nw) { toast('Бүх талбарыг бөглөнө үү', 'err'); return; }
+  if (nw.length < 8) { toast('Шинэ нууц үг 8+ тэмдэгт байх ёстой', 'err'); return; }
+  const user = firebase.auth().currentUser;
+  if (!user) { toast('Нэвтрээгүй байна', 'err'); return; }
+  const btn = document.getElementById('changePassBtn');
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Солиж байна...';
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(nw);
+    document.getElementById('curPass').value = '';
+    document.getElementById('newPass').value = '';
+    toast('✓ Нууц үг амжилттай солигдлоо');
+  } catch(e) {
+    const msg = e.code === 'auth/wrong-password' ? 'Одоогийн нууц үг буруу байна'
+              : e.code === 'auth/weak-password'  ? 'Шинэ нууц үг хэтэрхий энгийн байна'
+              : (e.message || e.code);
+    toast(msg, 'err');
+  } finally { btn.disabled = false; btn.textContent = old; }
+}
+
 function logout() {
   if (typeof firebase !== 'undefined') {
     firebase.auth().signOut().then(() => { toast('Гарлаа. Баяртай!'); setTimeout(()=>location.href='index.html',900); });
@@ -699,13 +725,14 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 
   // ── Settings хэсгийн утга ────────────────────────────────────────
-  const parts = displayName.split(' ');
-  const sfn = document.getElementById('settingFirstName');
-  const sln = document.getElementById('settingLastName');
+  const snm = document.getElementById('settingName');
   const sem = document.getElementById('settingEmail');
-  if (sfn) sfn.value = parts[0] || '';
-  if (sln) sln.value = parts.slice(1).join(' ') || '';
+  if (snm) snm.value = displayName;
   if (sem) sem.value = user.email || '';
+  // Google-ээр нэвтэрсэн бол нууц үг солих хэсгийг нуух
+  const isPasswordUser = (user.providerData || []).some(p => p.providerId === 'password');
+  const pwBlock = document.getElementById('passwordBlock');
+  if (pwBlock && !isPasswordUser) pwBlock.style.display = 'none';
 
   // ── Watch history (localStorage) ────────────────────────────────
   let watchHistory = [];
