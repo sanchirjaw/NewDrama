@@ -1,6 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 /* =============================================
+   PAGE LOADER
+============================================= */
+#pageLoader {
+  position:fixed; inset:0; z-index:99999;
+  background:#07070e;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4rem;
+  transition:opacity .45s ease, visibility .45s ease;
+}
+#pageLoader.hide { opacity:0; visibility:hidden; pointer-events:none; }
+.pl-logo {
+  font-family:'Bebas Neue', sans-serif; font-size:2.2rem; letter-spacing:7px;
+  background:linear-gradient(135deg,#00e5ff,#a855f7);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.pl-spin {
+  width:42px; height:42px; border-radius:50%;
+  border:3px solid rgba(255,255,255,0.1); border-top-color:#00e5ff;
+  animation:spin 0.9s linear infinite;
+}
+
+/* =============================================
    DESIGN TOKENS
 ============================================= */
 :root {
@@ -519,19 +540,25 @@ footer {
   /* Mobile dropdown menu */
   .nav-links {
     position:fixed; inset-block-start:60px; inset-inline:0;
-    flex-direction:column; justify-content:flex-start; gap:0.25rem;
-    background:rgba(10,10,18,0.98); backdrop-filter:blur(24px);
+    z-index:1002;
+    flex-direction:column; justify-content:flex-start; gap:0.35rem;
+    background:rgba(10,10,18,0.99); backdrop-filter:blur(24px);
     border-bottom:1px solid rgba(255,255,255,0.08);
-    padding:0.75rem 1rem 1rem;
+    padding:0 1rem; margin:0;
     max-height:0; overflow:hidden; opacity:0;
+    pointer-events:none;
     transition:max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
     box-shadow:0 16px 40px rgba(0,0,0,0.5);
   }
   .nav-toggle-cb:checked ~ .nav-links {
-    max-height:320px; opacity:1; padding:0.75rem 1rem 1rem;
+    max-height:340px; opacity:1; padding:0.75rem 1rem 1rem;
+    pointer-events:auto;
   }
+  .nav-links li { width:100%; list-style:none; }
   .nav-links a {
-    width:100%; padding:0.85rem 1rem; font-size:0.95rem;
-    border-radius:12px;
+    display:block; width:100%; padding:0.95rem 1rem; font-size:1rem;
+    border-radius:12px; position:relative; z-index:1;
   }
+  /* Burger icon → X when open */
+  .nav-toggle-cb:checked ~ .nav-right .nav-burger { background:rgba(0,229,255,0.12); border-color:rgba(0,229,255,0.3); }
 }

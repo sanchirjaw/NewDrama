@@ -211,6 +211,23 @@ bunny-iframe { width:100%; height:100%; border:none; display:block; }
 </style>
 </head>
 <body>
+<!-- PAGE LOADER -->
+<div id="pageLoader"><div class="pl-logo">NEW DRAMA</div><div class="pl-spin"></div></div>
+<script>
+(function(){
+  function hide(){var l=document.getElementById('pageLoader');if(l)l.classList.add('hide');}
+  window.addEventListener('load',function(){setTimeout(hide,350);});
+  setTimeout(hide,3000);
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[href]'); if(!a) return;
+    if(a.closest('.nav-links')){var cb=document.getElementById('navToggle'); if(cb) cb.checked=false;}
+    var href=a.getAttribute('href');
+    if(!href||href.charAt(0)==='#'||a.target==='_blank'||href.indexOf('javascript')===0) return;
+    if(a.hostname&&a.hostname!==location.hostname) return;
+    var l=document.getElementById('pageLoader'); if(l) l.classList.remove('hide');
+  });
+})();
+</script>
 <div class="film-strip"></div>
 
 <nav id="mainNav">
