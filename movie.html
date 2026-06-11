@@ -604,6 +604,8 @@ firebase.auth().onAuthStateChanged(async user => {
 
 // ── Stream token (IDM хамгаалалт) ─────────────────────────────
 let _streamToken = '';
+let _guestStreamToken = '';
+let _guestStreamTokenExpires = 0;
 let _hlsInstance = null;
 
 async function _getStreamToken() {
@@ -615,6 +617,26 @@ async function _getStreamToken() {
     setTimeout(() => { _streamToken = ''; }, 55 * 60 * 1000); // 55 мин дараа цэвэрлэх
   } catch(e) {}
   return _streamToken;
+}
+
+async function _getGuestStreamToken() {
+  if (_guestStreamToken && _guestStreamTokenExpires > Date.now() + 60000) return _guestStreamToken;
+  const phone = localStorage.getItem('nd_phone');
+  if (!phone || !_movieId || !_videoId) return '';
+  try {
+    const res = await fetch('/api/stream-token/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, movieId: _movieId, videoId: _videoId }),
+    });
+    if (!res.ok) return '';
+    const data = await res.json();
+    _guestStreamToken = data.token || '';
+    _guestStreamTokenExpires = data.expiresAt ? new Date(data.expiresAt).getTime() : Date.now() + 55 * 60 * 1000;
+    return _guestStreamToken;
+  } catch(e) {
+    return '';
+  }
 }
 
 // useProxy=true → IDM хамгаалалттай прокси, false → CDN шууд (trailer/free)
@@ -633,11 +655,13 @@ async function _playWithHls(videoId, useProxy = false, onFatalError = null) {
   let src;
   if (useProxy) {
     const token = await _getStreamToken();
+    const guestToken = token ? '' : await _getGuestStreamToken();
     src = `/api/stream/${videoId}/playlist.m3u8`;
     if (Hls.isSupported()) {
       const hls = new Hls({
         xhrSetup(xhr, url) {
           if (token && url.includes('/api/stream/')) xhr.setRequestHeader('x-stream-token', token);
+          if (guestToken && url.includes('/api/stream/')) xhr.setRequestHeader('x-guest-stream-token', guestToken);
         }
       });
       hls.loadSource(src);
@@ -646,7 +670,7 @@ async function _playWithHls(videoId, useProxy = false, onFatalError = null) {
       hls.on(Hls.Events.ERROR, _onErr);
       _hlsInstance = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = token ? `${src}?t=${encodeURIComponent(token)}` : src;
+      video.src = token ? `${src}?t=${encodeURIComponent(token)}` : guestToken ? `${src}?gt=${encodeURIComponent(guestToken)}` : src;
       video.play().catch(() => {});
     }
   } else {

@@ -64,6 +64,38 @@ async function connect() {
 /* ── helpers ── */
 function col(name) { return db.collection(name); }
 function oid(id)   { return new ObjectId(id); }
+function normalizePhone(phone) { return String(phone || '').replace(/\D/g, ''); }
+function guestStreamSecret() {
+  return process.env.GUEST_STREAM_SECRET || process.env.BYL_TOKEN || process.env.BUNNY_TOKEN_KEY || 'newdrama-guest-stream';
+}
+function signGuestStreamToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig = crypto.createHmac('sha256', guestStreamSecret()).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+function verifyGuestStreamToken(token) {
+  try {
+    const [body, sig] = String(token || '').split('.');
+    if (!body || !sig) return null;
+    const expected = crypto.createHmac('sha256', guestStreamSecret()).update(body).digest('base64url');
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    return payload;
+  } catch (_) {
+    return null;
+  }
+}
+async function findActiveGuestMoviePayment(phone, movieId) {
+  const normalizedPhone = normalizePhone(phone);
+  const pay = await col('payments').findOne({
+    phone: { $in: [normalizedPhone, String(phone || '')] }, movieId, plan: 'movie', status: 'paid',
+  }, { sort: { _id: -1 } });
+  if (!pay) return null;
+  const base = new Date(pay.paidAt || pay.createdAt || Date.now());
+  const expiry = new Date(base.getTime() + (pay.days || 180) * 86400000);
+  return expiry > new Date() ? { pay, expiry } : null;
+}
 
 /* ════════════════════════════════
    MOVIES
@@ -345,7 +377,7 @@ app.post('/api/byl/checkout', async (req, res) => {
     await col('payments').insertOne({
       uid: uid || null, plan, amount: p.amount, days: p.days,
       email: email || null,
-      phone: phone || null,
+      phone: phone ? normalizePhone(phone) : null,
       movieId: plan === 'movie' ? (movieId || null) : null,
       movieTitle: plan === 'movie' ? (p.name || 'Дан Кино') : null,
       status: 'pending',
@@ -441,8 +473,9 @@ app.get('/api/byl/check/:uid', async (req, res) => {
 // Guest: утсаар хүлээгдэж буй төлбөрийг был.mn-д нөхөн шалгах
 app.get('/api/byl/check-phone/:phone', async (req, res) => {
   try {
+    const normalizedPhone = normalizePhone(req.params.phone);
     const payment = await col('payments').findOne(
-      { phone: req.params.phone, status: 'pending' },
+      { phone: { $in: [normalizedPhone, String(req.params.phone || '')] }, status: 'pending' },
       { sort: { _id: -1 } }
     );
     if (!payment) return res.json({ paid: false });
@@ -466,16 +499,25 @@ app.get('/api/access/movie', async (req, res) => {
   try {
     const { phone, movieId } = req.query;
     if (!phone || !movieId) return res.json({ access: false });
-    const pay = await col('payments').findOne({
-      phone, movieId, plan: 'movie', status: 'paid',
-    }, { sort: { _id: -1 } });
-    if (!pay) return res.json({ access: false });
-    // Хугацаа шалгах (createdAt/paidAt + days)
-    const base = new Date(pay.paidAt || pay.createdAt || Date.now());
-    const expiry = new Date(base.getTime() + (pay.days || 180) * 86400000);
-    res.json({ access: expiry > new Date(), expiry });
+    const access = await findActiveGuestMoviePayment(phone, movieId);
+    res.json({ access: !!access, expiry: access?.expiry || null });
   } catch (e) {
     res.json({ access: false, error: e.message });
+  }
+});
+
+// Guest stream token: utasaar tulbur tulsun kino l proxy stream neeh erhtei.
+app.post('/api/stream-token/guest', async (req, res) => {
+  try {
+    const { phone, movieId, videoId } = req.body || {};
+    if (!phone || !movieId || !videoId) return res.status(400).json({ error: 'phone, movieId, videoId шаардлагатай' });
+    const access = await findActiveGuestMoviePayment(phone, movieId);
+    if (!access) return res.status(403).json({ error: 'Энэ киноны эрх олдсонгүй' });
+    const exp = Math.min(access.expiry.getTime(), Date.now() + 4 * 60 * 60 * 1000);
+    const token = signGuestStreamToken({ phone: normalizePhone(phone), movieId, videoId, exp });
+    res.json({ token, expiresAt: new Date(exp).toISOString() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -644,11 +686,14 @@ app.get('/api/stream/:videoId/playlist.m3u8', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   const isFree = req.query.free === '1';
   const idToken = req.headers['x-stream-token'] || req.query.t;
+  const guestToken = req.headers['x-guest-stream-token'] || req.query.gt;
 
   if (!isFree) {
     // Firebase JWT: 3 хэсэгтэй (header.payload.signature)
     // IDM-д token байхгүй → DECOY буцаана
-    if (!idToken || idToken.split('.').length !== 3) return res.send(DECOY_M3U8);
+    const guestPayload = verifyGuestStreamToken(guestToken);
+    const guestAllowed = guestPayload && String(guestPayload.videoId) === String(req.params.videoId);
+    if (!guestAllowed && (!idToken || idToken.split('.').length !== 3)) return res.send(DECOY_M3U8);
   }
 
   const { host: cdnHost } = await _getCdnCfg();
