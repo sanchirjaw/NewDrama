@@ -1263,7 +1263,7 @@ function renderPaymentsDB() {
     return {
       id:     String(p._id||'').slice(-6).toUpperCase() || '—',
       _id:    String(p._id || ''),   // бүтэн MongoDB _id — approve API-д хэрэгтэй
-      user:   u?.name || u?.email || p.uid || '—',
+      user:   u?.name || u?.email || (p.phone ? '📱 ' + p.phone : null) || p.uid || '—',
       plan:   p.plan === 'monthly' ? '1 сарын' : p.plan === 'quarterly' ? '3 сарын' : p.plan === 'movie' ? 'Дан кино' : (p.plan||'—'),
       amount: p.amount || 0,
       method: p.method || 'byl.mn',

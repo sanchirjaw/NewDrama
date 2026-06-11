@@ -288,9 +288,15 @@ const BYL_PROJECT_ID = process.env.BYL_PROJECT_ID || '568';
 
 // Invoice үүсгэж payment URL буцаана
 app.post('/api/byl/checkout', async (req, res) => {
-  const { plan, uid, movieId, email } = req.body;
-  if (!plan || !uid) return res.status(400).json({ error: 'plan болон uid шаардлагатай' });
-  if (!BYL_TOKEN)    return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
+  const { plan, uid, movieId, email, phone } = req.body;
+  // Дан кино: utas (guest) эсвэл uid аль нэг хангалттай. Багц: заавал uid (нэвтэрсэн)
+  if (!plan) return res.status(400).json({ error: 'plan шаардлагатай' });
+  if (plan === 'movie') {
+    if (!uid && !phone) return res.status(400).json({ error: 'Утасны дугаар эсвэл нэвтрэлт шаардлагатай' });
+  } else {
+    if (!uid) return res.status(400).json({ error: 'Багц авахын тулд нэвтэрнэ үү' });
+  }
+  if (!BYL_TOKEN) return res.status(500).json({ error: 'BYL_TOKEN тохируулаагүй' });
 
   const planCfg = {
     monthly:   { amount: 12000, name: '1 Сарын Багц',  days: 30  },
@@ -337,8 +343,9 @@ app.post('/api/byl/checkout', async (req, res) => {
     if (!inv?.url) return res.status(500).json({ error: 'Invoice үүсгэхэд алдаа', raw: data });
 
     await col('payments').insertOne({
-      uid, plan, amount: p.amount, days: p.days,
+      uid: uid || null, plan, amount: p.amount, days: p.days,
       email: email || null,
+      phone: phone || null,
       movieId: plan === 'movie' ? (movieId || null) : null,
       movieTitle: plan === 'movie' ? (p.name || 'Дан Кино') : null,
       status: 'pending',
@@ -357,6 +364,16 @@ app.post('/api/byl/checkout', async (req, res) => {
 async function grantAccess(payment) {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + (payment.days || 30));
+
+  // Guest (зөвхөн утсаар, нэвтрээгүй) дан кино: user doc шинэчлэхгүй —
+  // төлбөрийн бичлэг (status=paid) өөрөө эрхийн баталгаа болно (phone-аар шалгана)
+  if (!payment.uid) {
+    await col('payments').updateOne(
+      { _id: payment._id },
+      { $set: { status: 'paid', paidAt: new Date() } }
+    );
+    return;
+  }
 
   if (payment.plan === 'movie') {
     // Дан кино: purchasedMovies array-д нэмнэ, subscription-г өөрчлөхгүй
@@ -418,6 +435,47 @@ app.get('/api/byl/check/:uid', async (req, res) => {
     res.json({ paid: false, status: inv?.status });
   } catch (e) {
     res.json({ paid: false, error: e.message });
+  }
+});
+
+// Guest: утсаар хүлээгдэж буй төлбөрийг был.mn-д нөхөн шалгах
+app.get('/api/byl/check-phone/:phone', async (req, res) => {
+  try {
+    const payment = await col('payments').findOne(
+      { phone: req.params.phone, status: 'pending' },
+      { sort: { _id: -1 } }
+    );
+    if (!payment) return res.json({ paid: false });
+    const r = await fetch(`https://byl.mn/api/v1/projects/${BYL_PROJECT_ID}/invoices/${payment.bylInvoiceId}`, {
+      headers: { 'Authorization': `Bearer ${BYL_TOKEN}`, 'Accept': 'application/json' },
+    });
+    const data = await r.json();
+    const inv = data.data || data;
+    if (inv?.status === 'paid' || inv?.paid === true) {
+      await grantAccess(payment);
+      return res.json({ paid: true });
+    }
+    res.json({ paid: false, status: inv?.status });
+  } catch (e) {
+    res.json({ paid: false, error: e.message });
+  }
+});
+
+// Guest: утас+кино эрхтэй эсэхийг шалгах (төлбөрийн бичлэгээс)
+app.get('/api/access/movie', async (req, res) => {
+  try {
+    const { phone, movieId } = req.query;
+    if (!phone || !movieId) return res.json({ access: false });
+    const pay = await col('payments').findOne({
+      phone, movieId, plan: 'movie', status: 'paid',
+    }, { sort: { _id: -1 } });
+    if (!pay) return res.json({ access: false });
+    // Хугацаа шалгах (createdAt/paidAt + days)
+    const base = new Date(pay.paidAt || pay.createdAt || Date.now());
+    const expiry = new Date(base.getTime() + (pay.days || 180) * 86400000);
+    res.json({ access: expiry > new Date(), expiry });
+  } catch (e) {
+    res.json({ access: false, error: e.message });
   }
 });
 
